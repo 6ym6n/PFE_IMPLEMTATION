@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+.tox/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+
+# Notebook outputs (keep notebooks themselves)
+.ipynb_checkpoints/
+
+# Local data / outputs (everything lives on Drive when running on Colab)
+data/raw/
+data/processed/
+checkpoints/
+results/
+
+# OS
+.DS_Store
+Thumbs.db
