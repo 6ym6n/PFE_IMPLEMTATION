@@ -48,20 +48,27 @@ _UNICODE_FONT_OBLIQUE = "Helvetica-Oblique"
 
 
 def _register_unicode_fonts() -> None:
-    """Try a chain of Unicode-capable TTFs; first hit wins.
+    """Try a chain of Unicode-capable TTFs (regular + bold + italic).
 
-    Sets the module-level ``_UNICODE_FONT_*`` names. Falls back to built-in
-    Helvetica (limited encoding) if nothing usable is found.
+    First triple where the regular file exists wins. Cambria comes first
+    because it covers everything we need (subscripts, superscripts, ℝ, ∪,
+    Greek, etc.) AND has proper bold + italic siblings on Windows. On
+    Linux/Colab we fall back to DejaVu.
+
+    Also registers a font family alias so reportlab's <b>/<i> Paragraph
+    tags route to the right TTF.
     """
     global _UNICODE_FONT_NAME, _UNICODE_FONT_BOLD, _UNICODE_FONT_OBLIQUE
     candidates = [
-        # (regular, bold, italic) — first triple where regular exists wins.
-        ("C:/Windows/Fonts/seguisym.ttf",
-         "C:/Windows/Fonts/seguisym.ttf",
-         "C:/Windows/Fonts/seguisym.ttf"),
+        # Cambria — full Unicode coverage with proper bold/italic
+        ("C:/Windows/Fonts/cambria.ttc",
+         "C:/Windows/Fonts/cambriab.ttf",
+         "C:/Windows/Fonts/cambriai.ttf"),
+        # DejaVu — Linux / Colab default
         ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
          "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
          "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf"),
+        # Last-resort: Arial (subscripts/ℝ/∪ will still miss but most chars work)
         ("C:/Windows/Fonts/arial.ttf",
          "C:/Windows/Fonts/arialbd.ttf",
          "C:/Windows/Fonts/ariali.ttf"),
@@ -70,11 +77,24 @@ def _register_unicode_fonts() -> None:
         if not os.path.isfile(reg):
             continue
         try:
-            pdfmetrics.registerFont(TTFont("UFont", reg))
+            # Cambria.ttc is a TrueType collection — needs subfontIndex.
+            if reg.endswith(".ttc"):
+                pdfmetrics.registerFont(TTFont("UFont", reg, subfontIndex=0))
+            else:
+                pdfmetrics.registerFont(TTFont("UFont", reg))
             pdfmetrics.registerFont(TTFont("UFont-Bold",
                                            bold if os.path.isfile(bold) else reg))
             pdfmetrics.registerFont(TTFont("UFont-Oblique",
                                            italic if os.path.isfile(italic) else reg))
+            # Family alias so <b>/<i> in Paragraph markup picks the variant.
+            from reportlab.pdfbase.pdfmetrics import registerFontFamily
+            registerFontFamily(
+                "UFont",
+                normal="UFont",
+                bold="UFont-Bold",
+                italic="UFont-Oblique",
+                boldItalic="UFont-Bold",
+            )
             _UNICODE_FONT_NAME = "UFont"
             _UNICODE_FONT_BOLD = "UFont-Bold"
             _UNICODE_FONT_OBLIQUE = "UFont-Oblique"
@@ -112,11 +132,14 @@ OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "poi_baseline_report.pdf")
 # ===========================================================================
 def build_styles() -> dict:
     base = getSampleStyleSheet()
+    F = _UNICODE_FONT_NAME           # "UFont" if Cambria/DejaVu found
+    FB = _UNICODE_FONT_BOLD          # "UFont-Bold"
+    FO = _UNICODE_FONT_OBLIQUE       # "UFont-Oblique"
     s = {}
     s["Title"] = ParagraphStyle(
         "Title",
         parent=base["Title"],
-        fontName="Helvetica-Bold",
+        fontName=FB,
         fontSize=26,
         leading=32,
         textColor=NAVY,
@@ -126,7 +149,7 @@ def build_styles() -> dict:
     s["Subtitle"] = ParagraphStyle(
         "Subtitle",
         parent=base["Normal"],
-        fontName="Helvetica-Oblique",
+        fontName=FO,
         fontSize=14,
         leading=18,
         textColor=GREY_MED,
@@ -136,7 +159,7 @@ def build_styles() -> dict:
     s["Author"] = ParagraphStyle(
         "Author",
         parent=base["Normal"],
-        fontName="Helvetica",
+        fontName=F,
         fontSize=11,
         leading=14,
         textColor=GREY_DARK,
@@ -146,7 +169,7 @@ def build_styles() -> dict:
     s["H1"] = ParagraphStyle(
         "H1",
         parent=base["Heading1"],
-        fontName="Helvetica-Bold",
+        fontName=FB,
         fontSize=18,
         leading=22,
         textColor=NAVY,
@@ -156,7 +179,7 @@ def build_styles() -> dict:
     s["H2"] = ParagraphStyle(
         "H2",
         parent=base["Heading2"],
-        fontName="Helvetica-Bold",
+        fontName=FB,
         fontSize=13.5,
         leading=17,
         textColor=INDIGO,
@@ -166,7 +189,7 @@ def build_styles() -> dict:
     s["H3"] = ParagraphStyle(
         "H3",
         parent=base["Heading3"],
-        fontName="Helvetica-Bold",
+        fontName=FB,
         fontSize=11.5,
         leading=14,
         textColor=TEAL,
@@ -176,7 +199,7 @@ def build_styles() -> dict:
     s["Body"] = ParagraphStyle(
         "Body",
         parent=base["Normal"],
-        fontName="Helvetica",
+        fontName=F,
         fontSize=10.5,
         leading=15,
         textColor=GREY_DARK,
@@ -191,7 +214,7 @@ def build_styles() -> dict:
     s["Caption"] = ParagraphStyle(
         "Caption",
         parent=base["Normal"],
-        fontName="Helvetica-Oblique",
+        fontName=FO,
         fontSize=9,
         leading=12,
         textColor=GREY_MED,
@@ -211,10 +234,12 @@ def build_styles() -> dict:
         spaceBefore=4,
         spaceAfter=8,
     )
+    # Regular weight — italic Cambria lacks ℝ, ∈, ∪. Equations stay
+    # visually distinct via the centered alignment and navy color.
     s["Eq"] = ParagraphStyle(
         "Eq",
         parent=base["Normal"],
-        fontName="Helvetica-Oblique",
+        fontName=F,
         fontSize=11,
         leading=15,
         textColor=NAVY,
@@ -259,14 +284,20 @@ class Diagram(Flowable):
     def _label(self, c, text, x, y, font="Helvetica-Bold", size=10, color=NAVY,
                anchor="center"):
         # Re-route built-in Helvetica names to the Unicode-capable TTF we
-        # registered at module load. Everything in the diagrams thus renders
-        # subscripts, superscripts, ℝ, ∪ etc. correctly.
+        # registered at module load. Cambria-Bold (and -Italic) are missing
+        # ℝ, ∈, ∪ — only the Regular weight has them — so for any label that
+        # contains those characters we transparently fall back to Regular.
         font_map = {
             "Helvetica":         _UNICODE_FONT_NAME,
             "Helvetica-Bold":    _UNICODE_FONT_BOLD,
             "Helvetica-Oblique": _UNICODE_FONT_OBLIQUE,
         }
-        c.setFont(font_map.get(font, font), size)
+        chosen = font_map.get(font, font)
+        bold_only_missing = ("ℝ", "∈", "∪")
+        if (chosen in (_UNICODE_FONT_BOLD, _UNICODE_FONT_OBLIQUE)
+                and any(ch in text for ch in bold_only_missing)):
+            chosen = _UNICODE_FONT_NAME
+        c.setFont(chosen, size)
         c.setFillColor(color)
         if anchor == "center":
             c.drawCentredString(x, y, text)
@@ -654,14 +685,14 @@ def make_table(data, col_widths=None, highlight_first_row=True,
         col_widths = [total_width / n_cols] * n_cols
     t = Table(data, colWidths=col_widths)
     style = [
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, 0), _UNICODE_FONT_BOLD),
         ("BACKGROUND", (0, 0), (-1, 0), NAVY),
         ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
         ("ALIGN", (0, 0), (-1, 0), "CENTER"),
         ("FONTSIZE", (0, 0), (-1, 0), 10),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 7),
         ("TOPPADDING", (0, 0), (-1, 0), 7),
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTNAME", (0, 1), (-1, -1), _UNICODE_FONT_NAME),
         ("FONTSIZE", (0, 1), (-1, -1), 9.5),
         ("TEXTCOLOR", (0, 1), (-1, -1), GREY_DARK),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -697,7 +728,7 @@ def on_page(c, doc):
         c.setLineWidth(0.6)
         c.line(2 * cm, A4[1] - 1.4 * cm, A4[0] - 2 * cm, A4[1] - 1.4 * cm)
         # header text
-        c.setFont("Helvetica", 8)
+        c.setFont(_UNICODE_FONT_NAME, 8)
         c.setFillColor(GREY_MED)
         c.drawString(2 * cm, A4[1] - 1.1 * cm,
                      "Next-POI recommendation — TLMR-faithful baseline")
@@ -706,7 +737,7 @@ def on_page(c, doc):
         # footer
         c.setStrokeColor(GREY_LIGHT)
         c.line(2 * cm, 1.4 * cm, A4[0] - 2 * cm, 1.4 * cm)
-        c.setFont("Helvetica", 8)
+        c.setFont(_UNICODE_FONT_NAME, 8)
         c.setFillColor(GREY_MED)
         c.drawCentredString(A4[0] / 2, 1.0 * cm, f"— {page_num} —")
     c.restoreState()
@@ -768,7 +799,7 @@ def build_story():
     s.append(section("1. Problem formulation", 1))
     s.append(body(
         "Let <i>U</i> be the set of users and <i>V</i> the vocabulary of "
-        "POIs. Each user <i>u ∈ U</i> produces a chronological sequence "
+        "POIs. Each user <i>u</i> ∈ <i>U</i> produces a chronological sequence "
         "of check-ins; we segment these into <b>sessions</b> by splitting "
         "at temporal gaps larger than 24 hours (Foursquare convention). "
         "A session of length <i>L</i> is an ordered tuple "
@@ -818,7 +849,7 @@ def build_story():
         "POIs are not isolated tokens — they sit in geographic space "
         "and are linked by user behavior. The model exploits both signals "
         "by building a single hybrid graph "
-        "<i>G = (V, E_cov ∪ E_geo)</i>:"
+        "<i>G = (V, E_cov</i> ∪ <i>E_geo)</i>:"
     ))
     s.append(bullet(
         "<b>Co-visit edges (E_cov).</b> For every pair (p_i, p_j), count "
@@ -853,7 +884,7 @@ def build_story():
 
     s.append(section("3.2 GCN encoder", 2))
     s.append(body(
-        "A learnable embedding table <i>E⁽⁰⁾ ∈ ℝ^(|V| × d_p)</i> "
+        "A learnable embedding table <i>E⁽⁰⁾</i> ∈ ℝ<i>^(|V| × d_p)</i> "
         "(d_p = 128, Xavier init) holds initial POI embeddings. Two "
         "GCN layers propagate them through the hybrid graph using the "
         "standard symmetric normalization:"
@@ -865,7 +896,7 @@ def build_story():
         "where <i>Ã = A + I</i> adds self-loops and <i>D̃</i> is the "
         "corresponding degree matrix. ReLU + dropout(p=0.2) is applied "
         "between the two layers. The output "
-        "<i>h_p^GCN = E⁽²⁾ ∈ ℝ^(|V| × d_p)</i> is the matrix of POI "
+        "<i>h_p^GCN = E⁽²⁾</i> ∈ ℝ<i>^(|V| × d_p)</i> is the matrix of POI "
         "features used downstream — the sequence model gathers rows "
         "from this matrix by POI index. Two layers is the standard "
         "depth: more leads to over-smoothing (POI features collapse "
@@ -902,7 +933,7 @@ def build_story():
 
     s.append(section("3.4 User embedding", 2))
     s.append(body(
-        "Each user has a learnable embedding <i>e_u ∈ ℝ^(d_u=64)</i> "
+        "Each user has a learnable embedding <i>e_u</i> ∈ ℝ<i>^(d_u=64)</i> "
         "stored in an <code>nn.Embedding(|U|, 64)</code> table "
         "(Xavier init). This captures stable, user-specific preferences "
         "(e.g. a user who systematically prefers cafés to bars) that "
@@ -915,12 +946,12 @@ def build_story():
     s.append(section("4.1 GRU encoder", 2))
     s.append(body(
         "Per-step input is the concatenation of POI feature and context: "
-        "<i>x_t = [h_{p_t}^GCN ; c_t] ∈ ℝ^(d_p + d_c) = ℝ^160</i>. "
+        "<i>x_t = [h_{p_t}^GCN ; c_t]</i> ∈ ℝ<i>^(d_p + d_c)</i> = ℝ<i>^160</i>. "
         "Sessions in a minibatch have variable length, so they are "
         "right-padded to the batch maximum and consumed by the GRU via "
         "<code>pack_padded_sequence</code> (lengths must live on CPU "
         "for PyTorch's packing). The final hidden state "
-        "<i>h_T ∈ ℝ^(d_h=128)</i> summarizes the entire prefix."
+        "<i>h_T</i> ∈ ℝ<i>^(d_h=128)</i> summarizes the entire prefix."
     ))
     s.append(GRUDiagram())
     s.append(caption(
@@ -932,7 +963,7 @@ def build_story():
     s.append(section("4.2 Scoring head", 2))
     s.append(body(
         "The user embedding is concatenated with the GRU summary, "
-        "<i>z = [h_T ; e_u] ∈ ℝ^(d_h + d_u) = ℝ^192</i>, and fed to a "
+        "<i>z = [h_T ; e_u]</i> ∈ ℝ<i>^(d_h + d_u)</i> = ℝ<i>^192</i>, and fed to a "
         "two-layer MLP with hidden dim 256:"
     ))
     s.append(eq("ŷ = W₂ · ReLU(W₁ z + b₁) + b₂  ∈  ℝ^|V|"))
