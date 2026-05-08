@@ -16,6 +16,8 @@ from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm, mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas as canvasmod
 from reportlab.platypus import (
     BaseDocTemplate,
@@ -29,6 +31,59 @@ from reportlab.platypus import (
     TableStyle,
 )
 from reportlab.platypus.flowables import Flowable
+
+
+# ---------------------------------------------------------------------------
+# Unicode font registration
+# ---------------------------------------------------------------------------
+# Built-in Helvetica is WinAnsi-only and chokes on subscripts (₁ ₂),
+# superscripts (⁽ ⁰ ⁾), ℝ, ∪, etc. — they render as missing-glyph boxes.
+# Register a Unicode-capable TTF for the diagrams (which use raw canvas
+# drawString). Body Paragraphs route through reportlab's text engine which
+# handles fallbacks differently and renders OK with Helvetica.
+
+_UNICODE_FONT_NAME = "Helvetica"     # safe default
+_UNICODE_FONT_BOLD = "Helvetica-Bold"
+_UNICODE_FONT_OBLIQUE = "Helvetica-Oblique"
+
+
+def _register_unicode_fonts() -> None:
+    """Try a chain of Unicode-capable TTFs; first hit wins.
+
+    Sets the module-level ``_UNICODE_FONT_*`` names. Falls back to built-in
+    Helvetica (limited encoding) if nothing usable is found.
+    """
+    global _UNICODE_FONT_NAME, _UNICODE_FONT_BOLD, _UNICODE_FONT_OBLIQUE
+    candidates = [
+        # (regular, bold, italic) — first triple where regular exists wins.
+        ("C:/Windows/Fonts/seguisym.ttf",
+         "C:/Windows/Fonts/seguisym.ttf",
+         "C:/Windows/Fonts/seguisym.ttf"),
+        ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf"),
+        ("C:/Windows/Fonts/arial.ttf",
+         "C:/Windows/Fonts/arialbd.ttf",
+         "C:/Windows/Fonts/ariali.ttf"),
+    ]
+    for reg, bold, italic in candidates:
+        if not os.path.isfile(reg):
+            continue
+        try:
+            pdfmetrics.registerFont(TTFont("UFont", reg))
+            pdfmetrics.registerFont(TTFont("UFont-Bold",
+                                           bold if os.path.isfile(bold) else reg))
+            pdfmetrics.registerFont(TTFont("UFont-Oblique",
+                                           italic if os.path.isfile(italic) else reg))
+            _UNICODE_FONT_NAME = "UFont"
+            _UNICODE_FONT_BOLD = "UFont-Bold"
+            _UNICODE_FONT_OBLIQUE = "UFont-Oblique"
+            return
+        except Exception:
+            continue
+
+
+_register_unicode_fonts()
 
 # ---------------------------------------------------------------------------
 # Color palette (deep but readable; thesis-friendly)
@@ -203,7 +258,15 @@ class Diagram(Flowable):
 
     def _label(self, c, text, x, y, font="Helvetica-Bold", size=10, color=NAVY,
                anchor="center"):
-        c.setFont(font, size)
+        # Re-route built-in Helvetica names to the Unicode-capable TTF we
+        # registered at module load. Everything in the diagrams thus renders
+        # subscripts, superscripts, ℝ, ∪ etc. correctly.
+        font_map = {
+            "Helvetica":         _UNICODE_FONT_NAME,
+            "Helvetica-Bold":    _UNICODE_FONT_BOLD,
+            "Helvetica-Oblique": _UNICODE_FONT_OBLIQUE,
+        }
+        c.setFont(font_map.get(font, font), size)
         c.setFillColor(color)
         if anchor == "center":
             c.drawCentredString(x, y, text)
