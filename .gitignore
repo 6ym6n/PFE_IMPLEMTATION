@@ -24,6 +24,10 @@ data/processed/
 checkpoints/
 results/
 
+# Downloaded papers — kept locally only (copyright + repo size).
+# The bibliography (articles/README.md) and downloader (articles/_download.sh) ARE tracked.
+articles/*.pdf
+
 # OS
 .DS_Store
 Thumbs.db
