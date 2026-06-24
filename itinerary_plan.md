@@ -234,3 +234,56 @@ res = run_itinerary("NYC", project_root=PROJECT_ROOT, device=DEVICE)   # greedy 
 It loads the frozen `best.pt`, builds one query per test session, decodes greedy and beam routes, and
 writes `results/NYC_itinerary_{greedy,beam}.json` with pairs-F1 / set-F1 / exact-match over **all** and
 **length≥3** sessions. No training, ~minutes on a T4.
+
+### Strategy-A measured result (NYC, frozen rollout)
+
+| Decoder | pairs-F1 (len≥3) | set-F1 | exact | note |
+|---|---|---|---|---|
+| greedy | 0.2887 | 0.6089 | 0.054 | the floor |
+| beam(3) | 0.2902 | 0.6101 | 0.057 | +0.5% over greedy |
+
+Beam barely beats greedy → the next-POI scorer is myopic; **decoding cannot fix it**. The set-F1≫pairs-F1
+gap (right places, wrong order) is the headroom, and it motivates Strategy B.
+
+---
+
+## 11. Strategy B — pointer network (implemented scaffold)
+
+A **trained** sequence decoder, not a decoded frozen model. Reuses the GCN encoder + user embedding;
+replaces the MLP head with an **inner-product pointer** (the design panel's #1 priority for path B).
+
+**Architecture** (`src/itinerary/pointer_model.py`, `PointerItineraryModel`):
+- Encoder: `H = GCN(edge_index)` (POI features, |V|×d_p) + user embedding `e_u`.
+- Initial decoder state: `h_0 = tanh(W_init [H_start ; H_end ; e_u])` — the query (start, end, user) seeds it.
+- Decoder: a GRU rolled over the trajectory; input at step t is the previous POI's GCN feature.
+- **Pointer scoring**: `logits_v = ⟨ W_o[h_t ; e_u], H_v ⟩` — inner product of the projected decoder state
+  against every POI feature. Ties the output directly to the graph signal (vs. a free MLP-to-|V| head).
+- Training: teacher-forced sequence cross-entropy over **whole** length≥3 trajectories
+  (`ItinerarySeqDataset`: one example per session, not L−1 prefixes). No visited-mask in the loss
+  (Foursquare sessions can revisit; masking the target would NaN); the mask is applied only at decode.
+- Inference: greedy / beam rollout with the same loop-free + reserved-fixed-end discipline as Strategy A
+  (`pointer_rollout_greedy` / `pointer_rollout_beam`).
+- Early stopping on **val pairs-F1** (not loss).
+
+**Modules**
+```
+src/itinerary/seq_dataset.py    ItinerarySeqDataset, seq_collate_fn   (whole-session examples)
+src/itinerary/pointer_model.py  PointerItineraryModel, pointer_rollout_{greedy,beam}, evaluate_pointer
+src/itinerary/train_pointer.py  make_seq_loaders, train_one_epoch_pointer, train_pointer_model
+tests/test_pointer.py           dataset, forward+backward, decode invariants, overfit-sanity
+```
+
+**What to run (Colab, Section 11 of `train_poi.ipynb`)** — needs the same `data/processed/NYC/` as Phase-1;
+trains a *new* model (does NOT touch `checkpoints/NYC/best.pt`):
+```python
+from src.itinerary.train_pointer import train_pointer_model
+model, test_greedy, history = train_pointer_model(
+    "NYC", project_root=PROJECT_ROOT, device=DEVICE, epochs=50, patience=8, beam=3)
+```
+Writes `checkpoints/NYC_pointer/{best,latest}.pt` and `results/NYC_pointer_test.json`
+(test pairs-F1 greedy + beam, length≥3). Compare its pairs-F1 against the Strategy-A floor above.
+
+**Honest risk (measured by Strategy A first):** training examples shrink to one per length≥3 session —
+**2,880 on NYC**. That is a small set for a sequence model, so watch for overfitting (the val-pairs-F1
+early stop guards it). If B does not clearly beat the 0.29 floor, that thinness is the likely reason and
+is itself a reportable finding.

@@ -16,9 +16,17 @@ from src.itinerary.eval_itinerary import (
     pairs_f1,
     set_f1,
 )
+from src.itinerary.pointer_model import (
+    PointerItineraryModel,
+    evaluate_pointer,
+    pointer_rollout_beam,
+    pointer_rollout_greedy,
+)
 from src.itinerary.query import ItineraryQuery, build_eval_queries
+from src.itinerary.seq_dataset import ItinerarySeqDataset, seq_collate_fn
 
 __all__ = [
+    # Strategy A (frozen rollout)
     "ItineraryQuery",
     "build_eval_queries",
     "rollout_greedy",
@@ -27,4 +35,11 @@ __all__ = [
     "set_f1",
     "evaluate_itinerary",
     "fmt_itinerary_metrics",
+    # Strategy B (pointer network)
+    "PointerItineraryModel",
+    "pointer_rollout_greedy",
+    "pointer_rollout_beam",
+    "evaluate_pointer",
+    "ItinerarySeqDataset",
+    "seq_collate_fn",
 ]
