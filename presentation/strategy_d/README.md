@@ -1,18 +1,22 @@
 # Strategy D — supervisor presentation
 
-Deliverables for presenting the Flickr itinerary-recommendation work (Strategy D):
+Deliverables for the Flickr itinerary-recommendation work (Strategy D).
+
+**Suggested reading order:** `strategy_d_primer.pdf` → `strategy_d_explained.pdf` → `strategy_d_slides.pptx`.
 
 | File | What it is |
 |---|---|
+| **`strategy_d_primer.pdf`** | **Read first.** A plain-English primer (5 pages) — the few ideas you need before the detailed doc (POIs/trips, the task, precision/recall/F1, pairs-F1, leave-one-out, the "same exam" idea) with everyday analogies, worked examples and a mini-glossary. |
+| **`strategy_d_explained.pdf`** | The detailed companion document (9 pages) — data, task, metric, protocol, methods, validation, results, honest limitations, with worked examples and the full published comparison. |
 | **`strategy_d_slides.pptx`** | The talk — 17 widescreen slides, editable in PowerPoint/Google Slides. Native shapes for the diagrams; the three analytical charts are images. |
-| **`strategy_d_explained.pdf`** | The detailed companion document (9 pages) — explains data, task, metric, protocol, methods, validation, results, honest limitations, with worked examples. |
 
-Both are generated from one source of truth, so the deck and the document never disagree.
+All are generated from one source of truth, so they never disagree.
 
 ## Rebuild
 
 ```bash
 pip install python-pptx matplotlib reportlab        # build-only deps
+py -3.11 presentation/strategy_d/make_primer.py      # -> strategy_d_primer.pdf
 py -3.11 presentation/strategy_d/make_pdf.py         # -> strategy_d_explained.pdf
 py -3.11 presentation/strategy_d/make_pptx.py        # -> strategy_d_slides.pptx
 ```
