@@ -402,7 +402,8 @@ def test_pointer_forward_shapes():
     _city, model, edge_index, _dev = _tiny_pointer_setup()
     poi_seq = torch.tensor([[0, 1, 2, 3], [0, 2, 4, 0]])   # 2nd is length 3 (pad 0)
     lengths = torch.tensor([4, 3])
-    logits, targets, mask = model(poi_seq, lengths, edge_index)
+    user_ids = torch.tensor([0, 0])
+    logits, targets, mask = model(poi_seq, lengths, user_ids, edge_index)
     assert logits.shape == (2, 3, model.n_pois)
     assert targets.shape == (2, 3)
     assert mask.tolist() == [[True, True, True], [True, True, False]]
@@ -418,6 +419,39 @@ def test_pointer_decode_invariants():
         for beam in (1, 3):
             r = pointer_decode(model, q, edge_index, dev, beam=beam)
             assert _valid_route(r, q)
+
+
+def test_pointer_use_user_forward_and_decode():
+    # The user-embedding lever: forward + decode still produce valid routes.
+    from src.flickr.data import FlickrCity
+    from src.flickr.pointer import FlickrPointerNet, build_poi_graph, pointer_decode
+
+    torch.manual_seed(0)
+    n = 9
+    coords = np.random.default_rng(0).uniform([43.6, -79.5], [43.75, -79.1], size=(n, 2))
+    city = FlickrCity("Tiny", n, 3, coords, [""] * n, [], {}, {})
+    edge_index = build_poi_graph(city, _toy_train(), knn_k=3)
+    model = FlickrPointerNet(n, n_users=3, dim=16, d_u=8, use_user=True).eval()
+    poi_seq = torch.tensor([[0, 1, 2, 3]])
+    logits, _t, _m = model(poi_seq, torch.tensor([4]), torch.tensor([2]), edge_index)
+    assert logits.shape == (1, 3, n)
+    q = ItineraryQuery(user_idx=2, start_poi=0, end_poi=7, K=5, ground_truth=list(range(5)))
+    r = pointer_decode(model, q, edge_index, torch.device("cpu"), beam=3)
+    assert _valid_route(r, q)
+
+
+def test_pointer_markov_prior_decode_invariant():
+    # The Markov-prior lever: blending log P(j|i) into the logits stays loop-free.
+    from src.flickr.baselines import fit_log_transition
+    from src.flickr.pointer import pointer_decode
+
+    _city, model, edge_index, dev = _tiny_pointer_setup()
+    logtrans = torch.tensor(fit_log_transition(9, _toy_train(), alpha=0.1), dtype=torch.float)
+    q = ItineraryQuery(user_idx=0, start_poi=0, end_poi=7, K=5, ground_truth=list(range(5)))
+    for w in (0.0, 1.0, 5.0):
+        r = pointer_decode(model, q, edge_index, dev, beam=3,
+                           markov_logtrans=logtrans, markov_weight=w)
+        assert _valid_route(r, q)
 
 
 # ===========================================================================

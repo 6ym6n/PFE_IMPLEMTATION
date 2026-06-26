@@ -412,6 +412,30 @@ Osaka (0.851 > AR-Trip's 0.828)** — there is no single SOTA across all cities 
 paper reports only Edin/Glas/Osaka; the Toronto value is from SelfTrip's reproduction. Melbourne is reported
 almost only by the classical line; best there is Rank+Markov 0.351.)
 
+**Measured learned-model result (Colab, GCN + pointer, 60 epochs/fold, GPU).** A real run of
+`colab_flickr.ipynb`:
+
+| pairs-F1 | Toronto | Osaka | Glasgow | Edinburgh | Melbourne |
+|---|---|---|---|---|---|
+| Pointer (beam 3) | 0.431 | 0.399 | 0.489 | 0.414 | 0.312 |
+| Pointer (greedy) | 0.430 | 0.362 | 0.486 | 0.414 | 0.309 |
+| (point-F1, beam) | 0.705 | 0.684 | 0.734 | 0.689 | 0.614 |
+| — for reference: Random | 0.298 | 0.301 | 0.301 | 0.271 | 0.227 |
+| — for reference: Markov | 0.513 | 0.421 | 0.592 | 0.450 | 0.333 |
+
+**Honest reading (the Strategy-D lesson, mirroring Strategy B on NYC).** The light from-scratch pointer
+reaches pairs-F1 **0.31–0.49 — on the published scale and clearly above Random** — and its point-F1
+(~0.68–0.73) shows it recovers the *right POIs*. But its **ordering trails the simple Markov transition
+baseline on every city**, and it is far below the neural SOTA band (DeepTrip 0.66–0.78; SelfTrip/AR-Trip
+0.78–0.85). As on Foursquare NYC, *naively training a dedicated pointer on the tiny per-fold data does not
+beat a strong simple model.* The published neural methods reach SOTA with machinery our light model omits:
+self-supervised / contrastive pre-training on the unlabelled trajectories, trajectory augmentation, and
+adversarial training. Implemented levers to close the gap (opt-in in `PointerConfig`): a decode-time
+**Markov transition prior** (`markov_prior_weight` — blends the fold's empirical `logP(j|i)` into the
+pointer logits, directly targeting the weak-ordering gap), an optional **user embedding** (`use_user`), and
+**early stopping** on an internal val split (`val_frac`, `patience`). The notebook runs both the pure
+pointer and a `Pointer+Markov+user` variant so the two are reported side by side.
+
 **Honest deviations / caveats (write these in the thesis):**
 - **Markov ≠ Chen's Markov.** Ours is a raw empirical first-order transition matrix (Laplace-smoothed);
   Chen's is a *feature-factored* Markov. Ours therefore differs and on the data-rich cities (Toronto,

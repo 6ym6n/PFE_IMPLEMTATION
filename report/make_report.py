@@ -1341,7 +1341,7 @@ def build_story():
         "<b>The headline.</b> Our pairs-F1 is <b>0.23–0.59 — squarely on the "
         "published 0.26–0.85 scale</b>, versus 0.26–0.29 on Foursquare NYC. The "
         "thesis goal (numbers on the literature's scale) is met by the classical "
-        "baselines alone; the learned model targets the neural band below. "
+        "baselines alone; the learned GCN + pointer model is measured in §10.5. "
         "(MarkovPath beam-searches for the maximum-transition-likelihood path — a "
         "surrogate for, not identical to, pairs-F1 — so it slightly trails greedy "
         "Markov on Osaka.)"
@@ -1393,9 +1393,43 @@ def build_story():
     s.append(bullet(
         "<b>Learned model.</b> A light self-contained GCN + GRU pointer "
         "(<code>src/flickr/pointer.py</code>, no PyTorch-Geometric needed) is "
-        "trained per leave-one-out fold on Colab via <code>colab_flickr.ipynb</code>; "
-        "a 20-epoch CPU smoke run already reaches pairs-F1 ≈ 0.40 on Osaka, with "
-        "the GPU run targeting the DeepTrip/SelfTrip band (0.66–0.85)."
+        "trained per leave-one-out fold on Colab via <code>colab_flickr.ipynb</code> "
+        "— measured result in §10.5."
+    ))
+
+    s.append(section("10.5 Measured learned model (Colab, GCN + pointer, GPU)", 2))
+    s.append(body(
+        "A real run of <code>colab_flickr.ipynb</code> (60 epochs per leave-one-out "
+        "fold, T4 GPU):"
+    ))
+    ptr_data = [
+        ["pairs-F1", "Toronto", "Osaka", "Glasgow", "Edinburgh", "Melbourne"],
+        ["Pointer (beam 3)", "0.431", "0.399", "0.489", "0.414", "0.312"],
+        ["Pointer (greedy)", "0.430", "0.362", "0.486", "0.414", "0.309"],
+        ["point-F1 (beam)", "0.705", "0.684", "0.734", "0.689", "0.614"],
+        ["ref: Random", "0.298", "0.301", "0.301", "0.271", "0.227"],
+        ["ref: Markov", "0.513", "0.421", "0.592", "0.450", "0.333"],
+    ]
+    s.append(make_table(ptr_data,
+                        col_widths=[5 * cm, 2.2 * cm, 2.2 * cm, 2.2 * cm, 2.6 * cm, 2.6 * cm]))
+    s.append(Spacer(1, 0.2 * cm))
+    s.append(body(
+        "<b>Honest reading (the Strategy-D lesson).</b> The light from-scratch "
+        "pointer reaches pairs-F1 <b>0.31–0.49 — on the published scale and clearly "
+        "above Random</b>, and its point-F1 (~0.68–0.73) shows it recovers the "
+        "<i>right POIs</i>. But its <b>ordering trails the simple Markov baseline on "
+        "every city</b>, and it is far below the neural SOTA band (0.66–0.85). Exactly "
+        "as on Foursquare NYC (Strategy B), <i>naively training a dedicated pointer on "
+        "the tiny per-fold data does not beat a strong simple model</i> — the published "
+        "neural methods reach SOTA with self-supervised / contrastive pre-training, "
+        "trajectory augmentation, and adversarial training that this light model omits."
+    ))
+    s.append(body(
+        "Implemented levers to close the gap (opt-in in <code>PointerConfig</code>, "
+        "reported side-by-side in the notebook): a decode-time <b>Markov transition "
+        "prior</b> (blends the fold's empirical log P(j|i) into the pointer logits, "
+        "directly targeting the weak-ordering gap), an optional <b>user embedding</b>, "
+        "and <b>early stopping</b> on an internal validation split."
     ))
 
     # ----- Appendix: implementation summary -----

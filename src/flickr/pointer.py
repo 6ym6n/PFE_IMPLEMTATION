@@ -2,28 +2,34 @@
 
 The learned recommender for Strategy D. It trims the Foursquare pointer model
 (``src.itinerary.pointer_model``) to the tiny Flickr vocabularies (27-88 POIs)
-and the leave-one-out protocol, where a *fresh* model is trained on every fold:
+and the leave-one-out protocol, where a *fresh* model is trained on every fold.
 
-* **Encoder.** A 2-layer GCN over a per-fold POI graph (geographic kNN union
-  training-fold co-visit transitions) produces POI features ``H`` (|V| x d).
-  Optional user embedding (off by default — the leave-one-out folds give almost
-  no per-user signal on these datasets, matching the literature which is not
-  user-personalised here).
-* **Decoder.** A GRU seeded from ``tanh(W[H_start ; H_end])`` (the query), rolled
-  over the trajectory; at each step the state is scored against every POI by
-  inner product (a pointer), masked to be loop-free with the end reserved for the
-  final hop — the same discipline as the Foursquare decoders.
+* **Encoder.** A self-contained 2-layer GCN (no ``torch_geometric``) over a
+  per-fold POI graph (geographic kNN union training-fold co-visit transitions)
+  produces POI features ``H`` (|V| x d).
+* **Decoder.** A GRU seeded from ``tanh(W[H_start ; H_end ( ; e_u)])`` (the
+  query), rolled over the trajectory; at each step the state is scored against
+  every POI by inner product (a pointer), masked to be loop-free with the end
+  reserved for the final hop — the same discipline as the Foursquare decoders.
 * **Training.** Teacher-forced sequence cross-entropy over whole training-fold
-  trajectories (length >= 3). Small + fast: each fold trains in well under a
-  second on a GPU, so strict leave-one-out is tractable.
+  trajectories (length >= 3), optionally with early stopping on an internal
+  validation split.
 
-This module imports torch lazily-friendly (top-level import is fine on Colab and
-locally, where torch-CPU is installed) and depends only on numpy + torch +
-:mod:`src.flickr.data`. No global state; every hyperparameter is an argument.
+A measured 60-epoch run reaches pairs-F1 ~0.31-0.49 — on the published scale and
+above Random, but its *ordering* trails the simple Markov baseline (the same
+lesson as Strategy B on NYC). Three opt-in levers in :class:`PointerConfig` help
+close the gap:
 
-NOTE: training is intended for **Colab** (see ``colab_itinerary.ipynb``). The
-unit tests exercise only forward/decoder *shape & invariants* on a tiny random
-model (CPU, no real training), per the project convention.
+* ``markov_prior_weight`` — blend the fold's empirical ``log P(j|i)`` into the
+  pointer logits *at decode time* (no retraining), directly targeting the weak
+  ordering. ``0`` = pure pointer.
+* ``use_user`` — add a per-user embedding to the query and decoder state.
+* ``val_frac`` / ``patience`` — hold out a slice of the train fold and early-stop
+  on its loss, restoring the best weights.
+
+Training is intended for **Colab** (see ``colab_flickr.ipynb``). The unit tests
+exercise only forward/decoder *shape & invariants* on a tiny random model (CPU).
+No global state; every hyperparameter is an argument.
 """
 
 from __future__ import annotations
@@ -71,13 +77,12 @@ def build_poi_graph(
     """
     n = city.n_pois
     coords = np.radians(city.poi_coords)  # (n, 2) lat, lon in radians
-    # pairwise haversine via broadcasting (n is small)
     lat = coords[:, 0:1]
     lon = coords[:, 1:2]
     dlat = lat - lat.T
     dlon = lon - lon.T
     a = np.sin(dlat / 2) ** 2 + np.cos(lat) * np.cos(lat.T) * np.sin(dlon / 2) ** 2
-    dist = 2 * np.arcsin(np.sqrt(np.clip(a, 0.0, 1.0)))  # (n, n) great-circle angle
+    dist = 2 * np.arcsin(np.sqrt(np.clip(a, 0.0, 1.0)))  # (n, n)
 
     edges: set = set()
     k = min(knn_k, n - 1) if n > 1 else 0
@@ -115,9 +120,6 @@ def build_poi_graph(
 class _GCN(nn.Module):
     """Tiny symmetric-normalised 2-layer GCN over a learnable POI embedding table.
 
-    Self-contained (does not need torch_geometric), since the Flickr graphs are
-    small. Computes ``Â = D^-1/2 (A) D^-1/2`` once per forward from ``edge_index``.
-
     Args:
         n_pois: vocabulary size |V|.
         dim: embedding / hidden dim d.
@@ -152,8 +154,7 @@ class _GCN(nn.Module):
 
         def propagate(x: torch.Tensor) -> torch.Tensor:
             msg = x[src] * norm.unsqueeze(-1)
-            out = torch.zeros_like(x).index_add_(0, dst, msg)
-            return out
+            return torch.zeros_like(x).index_add_(0, dst, msg)
 
         h = self.emb.weight
         h = F.relu(self.lin1(propagate(h)))
@@ -170,61 +171,95 @@ class FlickrPointerNet(nn.Module):
 
     Args:
         n_pois: vocabulary size |V|.
+        n_users: number of users |U| (only used if ``use_user``).
         dim: GCN / GRU hidden dim (default 64; the data is tiny).
+        d_u: user embedding dim (only used if ``use_user``).
+        use_user: add a per-user embedding to the query + decoder state.
         dropout: GCN dropout.
     """
 
-    def __init__(self, n_pois: int, dim: int = 64, dropout: float = 0.2) -> None:
+    def __init__(
+        self,
+        n_pois: int,
+        n_users: int = 1,
+        dim: int = 64,
+        d_u: int = 32,
+        use_user: bool = False,
+        dropout: float = 0.2,
+    ) -> None:
         super().__init__()
         self.n_pois = n_pois
         self.dim = dim
+        self.use_user = use_user
         self.gcn = _GCN(n_pois, dim, dropout=dropout)
-        self.init_proj = nn.Linear(2 * dim, dim)   # [H_start ; H_end] -> h0
+        u_dim = d_u if use_user else 0
+        if use_user:
+            self.user_emb = nn.Embedding(n_users, d_u)
+            nn.init.xavier_uniform_(self.user_emb.weight)
+        self.init_proj = nn.Linear(2 * dim + u_dim, dim)   # [H_start ; H_end ( ; e_u)] -> h0
         self.gru = nn.GRU(dim, dim, batch_first=True)
-        self.out_proj = nn.Linear(dim, dim)         # decoder state -> query vec
+        self.out_proj = nn.Linear(dim + u_dim, dim)         # decoder state ( ; e_u) -> query
 
     def encode(self, edge_index: torch.Tensor) -> torch.Tensor:
         """Run the GCN once; returns (|V|, dim) POI features."""
         return self.gcn(edge_index, self.n_pois)
 
-    def init_state(self, H: torch.Tensor, start: torch.Tensor, end: torch.Tensor) -> torch.Tensor:
-        """Initial GRU hidden state from the query endpoints.
+    def user_vec(self, user_ids: torch.Tensor) -> Optional[torch.Tensor]:
+        """(B,) long user ids -> (B, d_u) embeddings, or None if ``use_user`` off."""
+        return self.user_emb(user_ids) if self.use_user else None
+
+    def init_state(
+        self, H: torch.Tensor, start: torch.Tensor, end: torch.Tensor,
+        e_u: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        """Initial GRU hidden state from the query endpoints (+ optional user).
 
         Args:
             H: (|V|, dim) POI features.
             start: (B,) long start POI indices.
             end: (B,) long end POI indices.
+            e_u: (B, d_u) user embeddings, or None.
 
         Returns:
             (1, B, dim) initial hidden state.
         """
-        z = torch.cat([H[start], H[end]], dim=-1)
-        return torch.tanh(self.init_proj(z)).unsqueeze(0)
+        parts = [H[start], H[end]]
+        if e_u is not None:
+            parts.append(e_u)
+        return torch.tanh(self.init_proj(torch.cat(parts, dim=-1))).unsqueeze(0)
 
-    def step(self, prev_feat: torch.Tensor, h: torch.Tensor, H: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def step(
+        self, prev_feat: torch.Tensor, h: torch.Tensor, H: torch.Tensor,
+        e_u: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """One decoder step -> pointer logits over the vocabulary.
 
         Args:
             prev_feat: (B, dim) previous POI's GCN feature.
             h: (1, B, dim) GRU hidden state.
             H: (|V|, dim) POI features.
+            e_u: (B, d_u) user embeddings, or None.
 
         Returns:
             ``(logits, h_next)``: logits (B, |V|), h_next (1, B, dim).
         """
         out, h_next = self.gru(prev_feat.unsqueeze(1), h)   # (B, 1, dim)
-        q = self.out_proj(out.squeeze(1))                   # (B, dim)
-        logits = q @ H.t()                                  # (B, |V|)
+        q_in = out.squeeze(1)
+        if e_u is not None:
+            q_in = torch.cat([q_in, e_u], dim=-1)
+        logits = self.out_proj(q_in) @ H.t()                # (B, |V|)
         return logits, h_next
 
     def forward(
-        self, poi_seq: torch.Tensor, lengths: torch.Tensor, edge_index: torch.Tensor
+        self, poi_seq: torch.Tensor, lengths: torch.Tensor, user_ids: torch.Tensor,
+        edge_index: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Teacher-forced forward over whole padded trajectories.
 
         Args:
             poi_seq: (B, T) long padded ordered POI sequences (pad value 0).
             lengths: (B,) long true lengths.
+            user_ids: (B,) long user indices (ignored unless ``use_user``).
             edge_index: (2, E) long graph on the model device.
 
         Returns:
@@ -234,12 +269,13 @@ class FlickrPointerNet(nn.Module):
         B, T = poi_seq.shape
         device = poi_seq.device
         H = self.encode(edge_index)
+        e_u = self.user_vec(user_ids)
         start = poi_seq[:, 0]
         end = poi_seq[torch.arange(B, device=device), lengths - 1]
-        h = self.init_state(H, start, end)
+        h = self.init_state(H, start, end, e_u)
         outs = []
         for t in range(1, T):
-            logits_t, h = self.step(H[poi_seq[:, t - 1]], h, H)
+            logits_t, h = self.step(H[poi_seq[:, t - 1]], h, H, e_u)
             outs.append(logits_t)
         logits = torch.stack(outs, dim=1)                   # (B, T-1, |V|)
         targets = poi_seq[:, 1:]
@@ -249,7 +285,7 @@ class FlickrPointerNet(nn.Module):
 
 
 # ---------------------------------------------------------------------------
-# Decoding (loop-free, reserved fixed end) -> route for a query
+# Decoding (loop-free, reserved fixed end, optional Markov prior) -> route
 # ---------------------------------------------------------------------------
 @torch.no_grad()
 def pointer_decode(
@@ -260,16 +296,21 @@ def pointer_decode(
     *,
     beam: int = 1,
     H: Optional[torch.Tensor] = None,
+    markov_logtrans: Optional[torch.Tensor] = None,
+    markov_weight: float = 0.0,
 ) -> List[int]:
     """Greedy (``beam==1``) or beam decode of a loop-free route for one query.
 
     Args:
         model: a :class:`FlickrPointerNet` (eval mode set internally).
-        query: the itinerary query (start, end, K).
+        query: the itinerary query (start, end, K, user).
         edge_index: (2, E) long graph on ``device``.
         device: torch device.
         beam: beam width (1 == greedy).
         H: optional cached GCN features (shared across queries in a fold).
+        markov_logtrans: optional (|V|, |V|) tensor of ``log P(j | i)`` to blend
+            into the pointer logits at each step (the Markov-prior lever).
+        markov_weight: blend weight for ``markov_logtrans`` (0 = pure pointer).
 
     Returns:
         Ordered loop-free route of length ``query.K`` from start to fixed end.
@@ -278,11 +319,16 @@ def pointer_decode(
     if H is None:
         H = model.encode(edge_index)
     start, end, K = query.start_poi, query.end_poi, query.K
+    use_prior = markov_logtrans is not None and markov_weight != 0.0
+    e_u = None
+    if model.use_user:
+        e_u = model.user_vec(torch.tensor([query.user_idx], device=device))
     end_for_init = end if end is not None else start
     h0 = model.init_state(
         H,
         torch.tensor([start], device=device),
         torch.tensor([end_for_init], device=device),
+        e_u,
     )
     if K <= 1:
         return [start]
@@ -292,8 +338,13 @@ def pointer_decode(
         is_last = step == K - 1
         cand = []
         for route, score, visited, h in beams:
-            logits, h_next = model.step(H[torch.tensor([route[-1]], device=device)], h, H)
-            logp = torch.log_softmax(logits.squeeze(0), dim=-1)
+            logits, h_next = model.step(
+                H[torch.tensor([route[-1]], device=device)], h, H, e_u
+            )
+            logits = logits.squeeze(0)
+            if use_prior:
+                logits = logits + markov_weight * markov_logtrans[route[-1]]
+            logp = torch.log_softmax(logits, dim=-1)
             if is_last and end is not None and end not in visited:
                 cand.append((route + [end], score + float(logp[end]), visited | {end}, h_next))
                 continue
@@ -323,14 +374,21 @@ class PointerConfig:
     """Hyperparameters for training :class:`FlickrPointerNet` on one fold.
 
     Attributes:
-        dim: hidden dim. epochs: training epochs. lr: Adam learning rate.
+        dim: hidden dim. d_u: user embedding dim (if ``use_user``).
+        epochs: max training epochs. lr: Adam learning rate.
         weight_decay: Adam weight decay. dropout: GCN dropout.
         knn_k: geographic neighbours in the POI graph.
         covisit_threshold: min co-visit count for a transition edge.
         beam: decode beam width at eval. seed: torch seed for this fold.
+        use_user: add a per-user embedding (lever).
+        markov_prior_weight: blend weight for the fold Markov log P(j|i) at
+            decode (lever; 0 = pure pointer). markov_alpha: its Laplace smoothing.
+        val_frac: fraction of the train fold held out for early stopping
+            (0 = train all ``epochs``). patience: early-stop patience (epochs).
     """
 
     dim: int = 64
+    d_u: int = 32
     epochs: int = 40
     lr: float = 5e-3
     weight_decay: float = 1e-5
@@ -339,17 +397,25 @@ class PointerConfig:
     covisit_threshold: int = 1
     beam: int = 3
     seed: int = 0
+    use_user: bool = False
+    markov_prior_weight: float = 0.0
+    markov_alpha: float = 0.1
+    val_frac: float = 0.0
+    patience: int = 8
 
 
-def _pad_batch(trajs: Sequence[Trajectory], device: torch.device) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Right-pad a set of trajectories into ``(poi_seq, lengths)`` tensors.
+def _pad_batch(
+    trajs: Sequence[Trajectory], device: torch.device
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Right-pad trajectories into ``(poi_seq, lengths, user_ids)`` tensors.
 
     Args:
         trajs: trajectories (each length >= 2).
         device: torch device.
 
     Returns:
-        ``(poi_seq, lengths)``: poi_seq (B, T_max) long padded with 0, lengths (B,).
+        ``(poi_seq, lengths, user_ids)``: poi_seq (B, T_max) long padded with 0,
+        lengths (B,), user_ids (B,).
     """
     lengths = [len(t.pois) for t in trajs]
     T = max(lengths)
@@ -357,7 +423,15 @@ def _pad_batch(trajs: Sequence[Trajectory], device: torch.device) -> Tuple[torch
     poi_seq = torch.zeros(B, T, dtype=torch.long)
     for i, t in enumerate(trajs):
         poi_seq[i, : len(t.pois)] = torch.tensor(t.pois, dtype=torch.long)
-    return poi_seq.to(device), torch.tensor(lengths, dtype=torch.long, device=device)
+    user_ids = torch.tensor([t.user_idx for t in trajs], dtype=torch.long)
+    return poi_seq.to(device), torch.tensor(lengths, dtype=torch.long, device=device), user_ids.to(device)
+
+
+def _masked_ce(model: FlickrPointerNet, batch, edge_index: torch.Tensor) -> torch.Tensor:
+    """Teacher-forced masked cross-entropy loss for one padded batch."""
+    poi_seq, lengths, user_ids = batch
+    logits, targets, mask = model(poi_seq, lengths, user_ids, edge_index)
+    return F.cross_entropy(logits[mask], targets[mask], reduction="mean")
 
 
 def train_pointer_fold(
@@ -367,56 +441,93 @@ def train_pointer_fold(
     config: PointerConfig,
     *,
     min_len: int = 3,
-) -> Tuple[FlickrPointerNet, torch.Tensor]:
+) -> Tuple[FlickrPointerNet, torch.Tensor, Optional[torch.Tensor]]:
     """Train a fresh pointer model on one fold's training trajectories.
 
     Args:
-        city: the city (for |V| and coordinates).
+        city: the city (for |V|, |U| and coordinates).
         train: training-fold trajectories (the held-out one already removed).
         device: torch device.
         config: :class:`PointerConfig` hyperparameters.
-        min_len: only train on trajectories of at least this length (default 3;
-            length-2 trajectories carry a single forced [start, end] step and add
-            little, but can be included by setting min_len=2).
+        min_len: only train on trajectories of at least this length (default 3).
 
     Returns:
-        ``(model, edge_index)`` — the trained model (eval mode) and the per-fold
-        graph it was trained with (reuse for decoding).
+        ``(model, edge_index, markov_logtrans)`` — the trained model (eval mode),
+        the per-fold graph, and the fold's Markov ``log P(j|i)`` tensor (or None
+        if ``markov_prior_weight == 0``) for the decode-time prior.
     """
     torch.manual_seed(config.seed)
     train_trajs = [t for t in train if len(t.pois) >= min_len]
-    # Build the graph from the SAME (length>=min_len) pool used for the loss, so
-    # the neural fold sees exactly the co-visit structure the comparable protocol
-    # exposes (not the length<3 transitions that a raw `train` would smuggle in).
+    # Build the graph from the SAME (length>=min_len) pool used for the loss.
     edge_index = build_poi_graph(
         city, train_trajs, knn_k=config.knn_k, covisit_threshold=config.covisit_threshold
     ).to(device)
-    model = FlickrPointerNet(city.n_pois, dim=config.dim, dropout=config.dropout).to(device)
-    if not train_trajs:  # degenerate fold (no other length>=min_len traj); cannot train
+
+    markov_logtrans: Optional[torch.Tensor] = None
+    if config.markov_prior_weight != 0.0:
+        from src.flickr.baselines import fit_log_transition
+        markov_logtrans = torch.tensor(
+            fit_log_transition(city.n_pois, train_trajs, alpha=config.markov_alpha),
+            dtype=torch.float, device=device,
+        )
+
+    model = FlickrPointerNet(
+        city.n_pois, n_users=max(city.n_users, 1), dim=config.dim, d_u=config.d_u,
+        use_user=config.use_user, dropout=config.dropout,
+    ).to(device)
+    if not train_trajs:  # degenerate fold; cannot train
         model.eval()
-        return model, edge_index
+        return model, edge_index, markov_logtrans
+
+    # Optional internal validation split for early stopping.
+    use_val = config.val_frac > 0.0 and len(train_trajs) >= 10
+    if use_val:
+        perm = torch.randperm(len(train_trajs), generator=torch.Generator().manual_seed(config.seed))
+        order = [train_trajs[i] for i in perm.tolist()]
+        n_val = max(1, int(round(config.val_frac * len(order))))
+        val_trajs, fit_trajs = order[:n_val], order[n_val:]
+    else:
+        fit_trajs, val_trajs = train_trajs, []
 
     opt = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
-    poi_seq, lengths = _pad_batch(train_trajs, device)
-    model.train()
+    fit_batch = _pad_batch(fit_trajs, device)
+    val_batch = _pad_batch(val_trajs, device) if val_trajs else None
+
+    best_val = float("inf")
+    best_state = None
+    bad = 0
     for _ in range(config.epochs):
+        model.train()
         opt.zero_grad()
-        logits, targets, mask = model(poi_seq, lengths, edge_index)
-        loss = F.cross_entropy(
-            logits[mask], targets[mask], reduction="mean"
-        )
+        loss = _masked_ce(model, fit_batch, edge_index)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
         opt.step()
+
+        if val_batch is not None:
+            model.eval()
+            with torch.no_grad():
+                vloss = float(_masked_ce(model, val_batch, edge_index))
+            if vloss < best_val - 1e-4:
+                best_val, bad = vloss, 0
+                best_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
+            else:
+                bad += 1
+                if bad >= config.patience:
+                    break
+
+    if best_state is not None:
+        model.load_state_dict(best_state)
     model.eval()
-    return model, edge_index
+    return model, edge_index, markov_logtrans
 
 
 def pointer_factory(device: torch.device, config: Optional[PointerConfig] = None, *, min_len: int = 3):
     """Return a :data:`~src.flickr.evaluate.RecommenderFactory` for the pointer net.
 
     Each call trains a fresh model on the fold (leave-one-out), then wraps it in a
-    recommender that decodes with the cached per-fold graph + GCN features.
+    recommender that decodes with the cached per-fold graph + GCN features and the
+    optional Markov-prior blend.
 
     Args:
         device: torch device to train/decode on.
@@ -429,19 +540,25 @@ def pointer_factory(device: torch.device, config: Optional[PointerConfig] = None
     cfg = config or PointerConfig()
 
     def factory(city: FlickrCity, train: List[Trajectory]):
-        # Degenerate fold (no other length>=min_len trajectory to train on):
-        # fall back to a defined popularity route rather than untrained-net noise.
-        # Unreachable on the real Flickr data (every city has >=47 length>=3 trajs).
+        # Degenerate fold (no other length>=min_len trajectory): fall back to a
+        # defined popularity route rather than untrained-net noise. Unreachable on
+        # the real Flickr data (every city has >=47 length>=3 trajectories).
         if not any(len(t.pois) >= min_len for t in train):
             from src.flickr.baselines import PopularityRecommender, _visit_counts
             return PopularityRecommender(_visit_counts(city.n_pois, train))
 
-        model, edge_index = train_pointer_fold(city, train, device, cfg, min_len=min_len)
+        model, edge_index, markov_logtrans = train_pointer_fold(
+            city, train, device, cfg, min_len=min_len
+        )
         H = model.encode(edge_index)
 
         class _Rec:
             def recommend(self, query: ItineraryQuery) -> List[int]:
-                return pointer_decode(model, query, edge_index, device, beam=cfg.beam, H=H)
+                return pointer_decode(
+                    model, query, edge_index, device, beam=cfg.beam, H=H,
+                    markov_logtrans=markov_logtrans,
+                    markov_weight=cfg.markov_prior_weight,
+                )
 
         return _Rec()
 
