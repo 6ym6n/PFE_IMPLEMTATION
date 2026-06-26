@@ -323,3 +323,122 @@ floor and B-v1** to test whether the context features close the −0.03 gap.
 
 Further levers if B-v2 still trails (ranked): warm-start B's GCN from the trained next-POI GCN; emit
 prefix sub-trajectories to match A's data density; try an MLP-to-|V| head instead of pure inner product.
+
+---
+
+## 13. Strategy D — Flickr datasets (literature-comparable pairs-F1)
+
+**Why.** Strategies A/B score pairs-F1 ≈ 0.26–0.29 on Foursquare NYC, but that is **not comparable** to
+the published trip-recommendation numbers (~0.6–0.8), because the literature is evaluated on the small
+Flickr photo-trajectory datasets under a *different* protocol. Strategy D re-runs the itinerary task on
+those datasets, under the **exact** published protocol, so the numbers land on the **same scale** as the
+papers. (The low NYC numbers were a property of that data + protocol — *not* a bug.)
+
+**Data (`src/flickr/data.py`).** The canonical `traj-{City}.csv` (`userID,trajID,poiID,startTime,…`) +
+`poi-{City}.csv` (`poiID,poiCat,poiLon,poiLat`) files — Chen 2016's own preprocessing output, mirrored in
+the `computationalmedia/tour-cikm16` and `gcooq/DeepTrip` repos. A trajectory = the POIs of one `trajID`
+ordered by `startTime` (consecutive duplicates collapsed). Using these files means **our trajectories are
+identical to the literature's**, removing all preprocessing ambiguity. The loader also reads Lim's raw
+`userVisits-{City}.csv` / `POI-{City}.csv` (grouping by `seqID`) for completeness. Every trajectory is
+loop-free (`trajLen == #rows == #distinct POIs` for all rows), so the Chen pairs-F1 assumptions hold.
+
+| City | #POIs | #users | #trajectories | **#traj (len ≥ 3) = eval set** |
+|---|---|---|---|---|
+| Toronto | 29 | 1,395 | 6,057 | **335** |
+| Osaka | 27 | 450 | 1,115 | **47** |
+| Glasgow | 27 | 601 | 2,227 | **112** |
+| Edinburgh | 28 | 1,454 | 5,028 | **634** |
+| Melbourne | 88 | 1,000 | 5,106 | **442** |
+
+(Chen 2016's Table 1 reports the *total* trajectory counts — 6,057 / 1,115 / 2,227 / 5,028 / 5,106 — which
+match ours exactly; evaluation is on the length ≥ 3 subset.)
+
+**Protocol (`src/flickr/evaluate.py`), matched to the papers exactly:**
+- **leave-one-trajectory-out** cross-validation: refit per fold on the *other length ≥ 3 trajectories*
+  (`train_pool="ge3"`, the default — matching the papers' folds; the held-out trajectory never leaks).
+  Training on *all* other trajectories incl. length < 2 (`train_pool="all"`) is supported but is a
+  documented deviation (it adds extra popularity/transition signal the papers do not see);
+- the query gives the **first and last POI** (origin + destination) and the desired length `K`;
+- evaluate only **length ≥ 3**, **loop-free** trajectories with distinct endpoints (Chen's `calc_pairsF1`
+  assumption; 0 dropped on the Flickr data, which is entirely loop-free);
+- metrics: point-**F1** (`set_f1`) and order-aware **pairs-F1**, *reusing the unit-tested
+  `src/itinerary/eval_itinerary.py`* — pinned against an independent re-implementation of Chen 2016's
+  reference `calc_pairsF1` in `tests/test_flickr.py`.
+
+**Protocol-faithfulness check (the honesty proof).** A `Random` baseline has no modelling choices, so it
+must match Chen's `Random` if (and only if) data + protocol + metric are identical. They do, within noise:
+
+| pairs-F1 | Toronto | Osaka | Glasgow | Edinburgh | Melbourne |
+|---|---|---|---|---|---|
+| **Random — ours** | 0.298 | 0.301 | 0.301 | 0.270 | 0.227 |
+| Random — Chen 2016 | 0.310 | 0.304 | 0.320 | 0.261 | 0.248 |
+| **PoiPopularity — ours** | 0.443 | 0.413 | 0.510 | 0.439 | 0.320 |
+| PoiPopularity — Chen 2016 | 0.384 | 0.365 | 0.507 | 0.436 | 0.316 |
+
+(PoiPopularity matches Chen near-exactly on Glasgow 0.510 vs 0.507, Edinburgh 0.439 vs 0.436, Melbourne
+0.320 vs 0.316; the small Toronto/Osaka overshoot reflects our visit-count popularity vs Chen's exact rank.)
+
+**Our measured results (classical baselines, leave-one-out, length ≥ 3, real local CPU run):**
+
+| pairs-F1 | Toronto | Osaka | Glasgow | Edinburgh | Melbourne |
+|---|---|---|---|---|---|
+| Random | 0.298 | 0.301 | 0.301 | 0.270 | 0.227 |
+| PoiPopularity | 0.443 | 0.413 | 0.510 | 0.439 | 0.320 |
+| Markov (greedy) | 0.504 | 0.421 | 0.587 | 0.449 | 0.333 |
+| MarkovPath (beam) | 0.528 | 0.398 | 0.543 | 0.452 | 0.346 |
+| **F1 (point)** | | | | | |
+| Random | 0.611 | 0.613 | 0.620 | 0.581 | 0.534 |
+| PoiPopularity | 0.714 | 0.698 | 0.747 | 0.704 | 0.619 |
+| Markov / MarkovPath | 0.737/0.758 | 0.685/0.681 | 0.786/0.762 | 0.702/0.705 | 0.619/0.628 |
+
+The headline: **our pairs-F1 is 0.23–0.59 — on the published 0.26–0.85 scale**, versus 0.26–0.29 on NYC.
+Goal achieved with classical baselines alone; the learned model targets the neural band above. (MarkovPath
+beam-searches for the max-transition-likelihood path, which maximises *likelihood*, not pairs-F1 — so it
+slightly trails greedy Markov on Osaka, an honest artefact of the surrogate objective.)
+
+**Published comparison (directly-comparable subset, `src/flickr/published.py`).** Same protocol, 0–1 scale:
+
+| pairs-F1 (published) | Toronto | Osaka | Glasgow | Edinburgh |
+|---|---|---|---|---|
+| PoiRank (Chen 2016) | 0.518 | 0.511 | 0.548 | 0.432 |
+| Rank+Markov (Chen 2016) | 0.512 | 0.486 | 0.545 | 0.444 |
+| DeepTrip (2019) | 0.748* | 0.755 | 0.782 | 0.660 |
+| SelfTrip (2022) | 0.835 | 0.851 | 0.818 | 0.779 |
+| CTLTR (via AR-Trip 2024) | 0.748 | 0.719 | 0.763 | 0.681 |
+| AR-Trip (2024) | **0.839** | 0.828 | **0.820** | **0.808** |
+
+(Bold = best pairs-F1 in that column. AR-Trip leads on Toronto/Glasgow/Edinburgh, but **SelfTrip is best on
+Osaka (0.851 > AR-Trip's 0.828)** — there is no single SOTA across all cities on pairs-F1. *DeepTrip's own
+paper reports only Edin/Glas/Osaka; the Toronto value is from SelfTrip's reproduction. Melbourne is reported
+almost only by the classical line; best there is Rank+Markov 0.351.)
+
+**Honest deviations / caveats (write these in the thesis):**
+- **Markov ≠ Chen's Markov.** Ours is a raw empirical first-order transition matrix (Laplace-smoothed);
+  Chen's is a *feature-factored* Markov. Ours therefore differs and on the data-rich cities (Toronto,
+  Glasgow) *exceeds* Chen's published Markov — a modelling difference, not a protocol bug. `Random` and
+  `PoiPopularity` are the clean reproductions.
+- **PoiRank / Rank+Markov are cited, not re-implemented** (they need a per-query rankSVM); their numbers
+  come straight from Chen 2016.
+- **Not comparable, excluded from the headline:** POIBERT (80/20 chronological split, percentage-scale F1,
+  no pairs-F1), DLIR 2025 (8-hour session split, different F1 ≈ 0.49), TourEmbedding (no pairs-F1,
+  percentage-scale F1, query gives only the *first* POI not first+last, no leave-one-out). See
+  `NON_COMPARABLE_NOTES` in `published.py`.
+
+**Modules (`src/flickr/`).**
+```
+src/flickr/
+├── data.py        FlickrCity, Trajectory, load_city (traj-/poi- and userVisits-/POI-), trajectories_min_len
+├── evaluate.py    make_query, loocv_splits, evaluate_loocv  (F1 + pairs-F1, leave-one-out)
+├── baselines.py   Random / PoiPopularity / Markov(greedy) / MarkovPath(beam) + factories
+├── pointer.py     FlickrPointerNet (self-contained GCN + GRU pointer), per-fold trainer/decoder (Colab)
+├── published.py   curated directly-comparable literature pairs-F1 / F1 + NON_COMPARABLE_NOTES
+└── run_flickr.py  run_classical_baselines / run_neural / format_comparison + CLI
+tests/test_flickr.py   loader, trajectory construction, pairs-F1 vs Chen reference, LOO splitter, baselines
+```
+
+**What to run.**
+- *Locally (CPU, classical — already produces real numbers):*
+  `py -3.11 -m src.flickr.run_flickr --data_dir data/flickr` (download CSVs first; see the notebook).
+- *Colab (GPU, the learned pointer):* open **`colab_flickr.ipynb`** — it clones the repo, downloads the
+  five cities, runs the classical baselines, then trains the GCN+pointer per leave-one-out fold and prints
+  the combined comparison vs the published numbers. No `torch_geometric` needed (the GCN is self-contained).

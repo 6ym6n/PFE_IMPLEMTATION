@@ -21,8 +21,12 @@ env/
 # Local data / outputs (everything lives on Drive when running on Colab)
 data/raw/
 data/processed/
+# downloaded Flickr CSVs (fetched fresh by colab_flickr.ipynb)
+data/flickr/
 checkpoints/
-results/
+results/*
+# ...but DO track the small Flickr result/literature artifacts (deliverables).
+!results/flickr/
 
 # Downloaded papers — kept locally only (copyright + repo size).
 # The bibliography (articles/README.md) and downloader (articles/_download.sh) ARE tracked.

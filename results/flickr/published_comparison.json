@@ -1,0 +1,578 @@
+[
+  {
+    "method": "Random",
+    "city": "Edinburgh",
+    "F1": 0.57,
+    "pairs_F1": 0.261,
+    "source": "Chen2016",
+    "family": "naive",
+    "comparable": true
+  },
+  {
+    "method": "Random",
+    "city": "Glasgow",
+    "F1": 0.632,
+    "pairs_F1": 0.32,
+    "source": "Chen2016",
+    "family": "naive",
+    "comparable": true
+  },
+  {
+    "method": "Random",
+    "city": "Melbourne",
+    "F1": 0.558,
+    "pairs_F1": 0.248,
+    "source": "Chen2016",
+    "family": "naive",
+    "comparable": true
+  },
+  {
+    "method": "Random",
+    "city": "Osaka",
+    "F1": 0.621,
+    "pairs_F1": 0.304,
+    "source": "Chen2016",
+    "family": "naive",
+    "comparable": true
+  },
+  {
+    "method": "Random",
+    "city": "Toronto",
+    "F1": 0.621,
+    "pairs_F1": 0.31,
+    "source": "Chen2016",
+    "family": "naive",
+    "comparable": true
+  },
+  {
+    "method": "PersTour",
+    "city": "Edinburgh",
+    "F1": 0.656,
+    "pairs_F1": 0.417,
+    "source": "Chen2016",
+    "family": "OR",
+    "comparable": true
+  },
+  {
+    "method": "PersTour",
+    "city": "Glasgow",
+    "F1": 0.801,
+    "pairs_F1": 0.643,
+    "source": "Chen2016",
+    "family": "OR",
+    "comparable": true
+  },
+  {
+    "method": "PersTour",
+    "city": "Melbourne",
+    "F1": 0.483,
+    "pairs_F1": 0.216,
+    "source": "Chen2016",
+    "family": "OR",
+    "comparable": true
+  },
+  {
+    "method": "PersTour",
+    "city": "Osaka",
+    "F1": 0.686,
+    "pairs_F1": 0.468,
+    "source": "Chen2016",
+    "family": "OR",
+    "comparable": true
+  },
+  {
+    "method": "PersTour",
+    "city": "Toronto",
+    "F1": 0.72,
+    "pairs_F1": 0.504,
+    "source": "Chen2016",
+    "family": "OR",
+    "comparable": true
+  },
+  {
+    "method": "PersTour-L",
+    "city": "Edinburgh",
+    "F1": 0.651,
+    "pairs_F1": 0.359,
+    "source": "Chen2016",
+    "family": "OR",
+    "comparable": true
+  },
+  {
+    "method": "PersTour-L",
+    "city": "Glasgow",
+    "F1": 0.66,
+    "pairs_F1": 0.352,
+    "source": "Chen2016",
+    "family": "OR",
+    "comparable": true
+  },
+  {
+    "method": "PersTour-L",
+    "city": "Melbourne",
+    "F1": 0.576,
+    "pairs_F1": 0.266,
+    "source": "Chen2016",
+    "family": "OR",
+    "comparable": true
+  },
+  {
+    "method": "PersTour-L",
+    "city": "Osaka",
+    "F1": 0.686,
+    "pairs_F1": 0.406,
+    "source": "Chen2016",
+    "family": "OR",
+    "comparable": true
+  },
+  {
+    "method": "PersTour-L",
+    "city": "Toronto",
+    "F1": 0.643,
+    "pairs_F1": 0.333,
+    "source": "Chen2016",
+    "family": "OR",
+    "comparable": true
+  },
+  {
+    "method": "PoiPopularity",
+    "city": "Edinburgh",
+    "F1": 0.701,
+    "pairs_F1": 0.436,
+    "source": "Chen2016",
+    "family": "naive",
+    "comparable": true
+  },
+  {
+    "method": "PoiPopularity",
+    "city": "Glasgow",
+    "F1": 0.745,
+    "pairs_F1": 0.507,
+    "source": "Chen2016",
+    "family": "naive",
+    "comparable": true
+  },
+  {
+    "method": "PoiPopularity",
+    "city": "Melbourne",
+    "F1": 0.62,
+    "pairs_F1": 0.316,
+    "source": "Chen2016",
+    "family": "naive",
+    "comparable": true
+  },
+  {
+    "method": "PoiPopularity",
+    "city": "Osaka",
+    "F1": 0.663,
+    "pairs_F1": 0.365,
+    "source": "Chen2016",
+    "family": "naive",
+    "comparable": true
+  },
+  {
+    "method": "PoiPopularity",
+    "city": "Toronto",
+    "F1": 0.678,
+    "pairs_F1": 0.384,
+    "source": "Chen2016",
+    "family": "naive",
+    "comparable": true
+  },
+  {
+    "method": "PoiRank",
+    "city": "Edinburgh",
+    "F1": 0.7,
+    "pairs_F1": 0.432,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "PoiRank",
+    "city": "Glasgow",
+    "F1": 0.768,
+    "pairs_F1": 0.548,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "PoiRank",
+    "city": "Melbourne",
+    "F1": 0.637,
+    "pairs_F1": 0.339,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "PoiRank",
+    "city": "Osaka",
+    "F1": 0.745,
+    "pairs_F1": 0.511,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "PoiRank",
+    "city": "Toronto",
+    "F1": 0.754,
+    "pairs_F1": 0.518,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Markov",
+    "city": "Edinburgh",
+    "F1": 0.645,
+    "pairs_F1": 0.417,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Markov",
+    "city": "Glasgow",
+    "F1": 0.725,
+    "pairs_F1": 0.495,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Markov",
+    "city": "Melbourne",
+    "F1": 0.577,
+    "pairs_F1": 0.288,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Markov",
+    "city": "Osaka",
+    "F1": 0.697,
+    "pairs_F1": 0.445,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Markov",
+    "city": "Toronto",
+    "F1": 0.669,
+    "pairs_F1": 0.407,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "MarkovPath",
+    "city": "Edinburgh",
+    "F1": 0.678,
+    "pairs_F1": 0.4,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "MarkovPath",
+    "city": "Glasgow",
+    "F1": 0.732,
+    "pairs_F1": 0.485,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "MarkovPath",
+    "city": "Melbourne",
+    "F1": 0.595,
+    "pairs_F1": 0.294,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "MarkovPath",
+    "city": "Osaka",
+    "F1": 0.706,
+    "pairs_F1": 0.442,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "MarkovPath",
+    "city": "Toronto",
+    "F1": 0.688,
+    "pairs_F1": 0.405,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Rank+Markov",
+    "city": "Edinburgh",
+    "F1": 0.659,
+    "pairs_F1": 0.444,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Rank+Markov",
+    "city": "Glasgow",
+    "F1": 0.754,
+    "pairs_F1": 0.545,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Rank+Markov",
+    "city": "Melbourne",
+    "F1": 0.613,
+    "pairs_F1": 0.351,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Rank+Markov",
+    "city": "Osaka",
+    "F1": 0.715,
+    "pairs_F1": 0.486,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Rank+Markov",
+    "city": "Toronto",
+    "F1": 0.723,
+    "pairs_F1": 0.512,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Rank+MarkovPath",
+    "city": "Edinburgh",
+    "F1": 0.697,
+    "pairs_F1": 0.428,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Rank+MarkovPath",
+    "city": "Glasgow",
+    "F1": 0.762,
+    "pairs_F1": 0.533,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Rank+MarkovPath",
+    "city": "Melbourne",
+    "F1": 0.639,
+    "pairs_F1": 0.344,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Rank+MarkovPath",
+    "city": "Osaka",
+    "F1": 0.732,
+    "pairs_F1": 0.489,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "Rank+MarkovPath",
+    "city": "Toronto",
+    "F1": 0.751,
+    "pairs_F1": 0.514,
+    "source": "Chen2016",
+    "family": "classical",
+    "comparable": true
+  },
+  {
+    "method": "DeepTrip",
+    "city": "Edinburgh",
+    "F1": 0.765,
+    "pairs_F1": 0.66,
+    "source": "DeepTrip2019",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "DeepTrip",
+    "city": "Glasgow",
+    "F1": 0.831,
+    "pairs_F1": 0.782,
+    "source": "DeepTrip2019",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "DeepTrip",
+    "city": "Osaka",
+    "F1": 0.834,
+    "pairs_F1": 0.755,
+    "source": "DeepTrip2019",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "SelfTrip",
+    "city": "Edinburgh",
+    "F1": 0.783,
+    "pairs_F1": 0.779,
+    "source": "SelfTrip2022",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "SelfTrip",
+    "city": "Glasgow",
+    "F1": 0.855,
+    "pairs_F1": 0.818,
+    "source": "SelfTrip2022",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "SelfTrip",
+    "city": "Osaka",
+    "F1": 0.857,
+    "pairs_F1": 0.851,
+    "source": "SelfTrip2022",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "SelfTrip",
+    "city": "Toronto",
+    "F1": 0.851,
+    "pairs_F1": 0.835,
+    "source": "SelfTrip2022",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "CTLTR",
+    "city": "Edinburgh",
+    "F1": 0.728,
+    "pairs_F1": 0.681,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "Bert-Trip",
+    "city": "Edinburgh",
+    "F1": 0.814,
+    "pairs_F1": 0.672,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "AR-Trip",
+    "city": "Edinburgh",
+    "F1": 0.868,
+    "pairs_F1": 0.808,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "CTLTR",
+    "city": "Glasgow",
+    "F1": 0.838,
+    "pairs_F1": 0.763,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "Bert-Trip",
+    "city": "Glasgow",
+    "F1": 0.849,
+    "pairs_F1": 0.74,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "AR-Trip",
+    "city": "Glasgow",
+    "F1": 0.881,
+    "pairs_F1": 0.82,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "CTLTR",
+    "city": "Osaka",
+    "F1": 0.802,
+    "pairs_F1": 0.719,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "Bert-Trip",
+    "city": "Osaka",
+    "F1": 0.854,
+    "pairs_F1": 0.74,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "AR-Trip",
+    "city": "Osaka",
+    "F1": 0.871,
+    "pairs_F1": 0.828,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "CTLTR",
+    "city": "Toronto",
+    "F1": 0.806,
+    "pairs_F1": 0.748,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "Bert-Trip",
+    "city": "Toronto",
+    "F1": 0.859,
+    "pairs_F1": 0.733,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  },
+  {
+    "method": "AR-Trip",
+    "city": "Toronto",
+    "F1": 0.892,
+    "pairs_F1": 0.839,
+    "source": "ARTrip2024",
+    "family": "neural",
+    "comparable": true
+  }
+]

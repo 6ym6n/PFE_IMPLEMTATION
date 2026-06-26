@@ -1,0 +1,2748 @@
+{
+  "Chen2016": {
+    "paper": "Chen2016",
+    "reports_flickr_metrics": true,
+    "proposed_methods": [
+      "PoiRank",
+      "Markov",
+      "MarkovPath",
+      "Rank+Markov",
+      "Rank+MarkovPath"
+    ],
+    "protocol_notes": "Leave-one-out cross validation. Quote: \"We use leave-one-out cross validation to evaluate different trajectory recommendation algorithms, i.e., when testing on a trajectory, all other trajectories are used for training.\" The query gives the start and end POI plus desired length: \"The user provides the desired start (p1 = ps) and end point (pL = pe), as well as the number L of POIs desired, from which we propose a trajectory through the city.\" So endpoints (first + last POI) are given. F1 = harmonic mean of precision and recall of POIs in trajectory (point/set F1, ignores order). pairs-F1 (this paper's new metric) = \"considers both POI identity and visiting order, by measuring the F1 score of every pair of POIs, whether they are adjacent or not in trajectory, pairs-F1 = 2*P_PAIR*R_PAIR/(P_PAIR+R_PAIR)\"; it is 1 iff both POIs and their visiting order exactly match ground truth, 0 if none of the ordered pairs were actually visited. The paper does not state an explicit length>=3 filter in this v1; trajectories are of varying length L and constrained to start/end at given points.",
+    "dataset_sizes": [
+      {
+        "city": "Edinburgh",
+        "n_trajectories": 5028,
+        "n_pois": null,
+        "n_users": 1454
+      },
+      {
+        "city": "Glasgow",
+        "n_trajectories": 2227,
+        "n_pois": null,
+        "n_users": 601
+      },
+      {
+        "city": "Melbourne",
+        "n_trajectories": 5106,
+        "n_pois": null,
+        "n_users": 1000
+      },
+      {
+        "city": "Osaka",
+        "n_trajectories": 1115,
+        "n_pois": null,
+        "n_users": 450
+      },
+      {
+        "city": "Toronto",
+        "n_trajectories": 6057,
+        "n_pois": null,
+        "n_users": 1395
+      }
+    ],
+    "results": [
+      {
+        "method": "Random",
+        "city": "Edinburgh",
+        "F1": 0.57,
+        "pairs_F1": 0.261,
+        "is_proposed": false
+      },
+      {
+        "method": "Random",
+        "city": "Glasgow",
+        "F1": 0.632,
+        "pairs_F1": 0.32,
+        "is_proposed": false
+      },
+      {
+        "method": "Random",
+        "city": "Melbourne",
+        "F1": 0.558,
+        "pairs_F1": 0.248,
+        "is_proposed": false
+      },
+      {
+        "method": "Random",
+        "city": "Osaka",
+        "F1": 0.621,
+        "pairs_F1": 0.304,
+        "is_proposed": false
+      },
+      {
+        "method": "Random",
+        "city": "Toronto",
+        "F1": 0.621,
+        "pairs_F1": 0.31,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour [14]",
+        "city": "Edinburgh",
+        "F1": 0.656,
+        "pairs_F1": 0.417,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour [14]",
+        "city": "Glasgow",
+        "F1": 0.801,
+        "pairs_F1": 0.643,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour [14]",
+        "city": "Melbourne",
+        "F1": 0.483,
+        "pairs_F1": 0.216,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour [14]",
+        "city": "Osaka",
+        "F1": 0.686,
+        "pairs_F1": 0.468,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour [14]",
+        "city": "Toronto",
+        "F1": 0.72,
+        "pairs_F1": 0.504,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour-L",
+        "city": "Edinburgh",
+        "F1": 0.651,
+        "pairs_F1": 0.359,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour-L",
+        "city": "Glasgow",
+        "F1": 0.66,
+        "pairs_F1": 0.352,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour-L",
+        "city": "Melbourne",
+        "F1": 0.576,
+        "pairs_F1": 0.266,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour-L",
+        "city": "Osaka",
+        "F1": 0.686,
+        "pairs_F1": 0.406,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour-L",
+        "city": "Toronto",
+        "F1": 0.643,
+        "pairs_F1": 0.333,
+        "is_proposed": false
+      },
+      {
+        "method": "PoiPopularity",
+        "city": "Edinburgh",
+        "F1": 0.701,
+        "pairs_F1": 0.436,
+        "is_proposed": false
+      },
+      {
+        "method": "PoiPopularity",
+        "city": "Glasgow",
+        "F1": 0.745,
+        "pairs_F1": 0.507,
+        "is_proposed": false
+      },
+      {
+        "method": "PoiPopularity",
+        "city": "Melbourne",
+        "F1": 0.62,
+        "pairs_F1": 0.316,
+        "is_proposed": false
+      },
+      {
+        "method": "PoiPopularity",
+        "city": "Osaka",
+        "F1": 0.663,
+        "pairs_F1": 0.365,
+        "is_proposed": false
+      },
+      {
+        "method": "PoiPopularity",
+        "city": "Toronto",
+        "F1": 0.678,
+        "pairs_F1": 0.384,
+        "is_proposed": false
+      },
+      {
+        "method": "PoiRank",
+        "city": "Edinburgh",
+        "F1": 0.7,
+        "pairs_F1": 0.432,
+        "is_proposed": true
+      },
+      {
+        "method": "PoiRank",
+        "city": "Glasgow",
+        "F1": 0.768,
+        "pairs_F1": 0.548,
+        "is_proposed": true
+      },
+      {
+        "method": "PoiRank",
+        "city": "Melbourne",
+        "F1": 0.637,
+        "pairs_F1": 0.339,
+        "is_proposed": true
+      },
+      {
+        "method": "PoiRank",
+        "city": "Osaka",
+        "F1": 0.745,
+        "pairs_F1": 0.511,
+        "is_proposed": true
+      },
+      {
+        "method": "PoiRank",
+        "city": "Toronto",
+        "F1": 0.754,
+        "pairs_F1": 0.518,
+        "is_proposed": true
+      },
+      {
+        "method": "Markov",
+        "city": "Edinburgh",
+        "F1": 0.645,
+        "pairs_F1": 0.417,
+        "is_proposed": true
+      },
+      {
+        "method": "Markov",
+        "city": "Glasgow",
+        "F1": 0.725,
+        "pairs_F1": 0.495,
+        "is_proposed": true
+      },
+      {
+        "method": "Markov",
+        "city": "Melbourne",
+        "F1": 0.577,
+        "pairs_F1": 0.288,
+        "is_proposed": true
+      },
+      {
+        "method": "Markov",
+        "city": "Osaka",
+        "F1": 0.697,
+        "pairs_F1": 0.445,
+        "is_proposed": true
+      },
+      {
+        "method": "Markov",
+        "city": "Toronto",
+        "F1": 0.669,
+        "pairs_F1": 0.407,
+        "is_proposed": true
+      },
+      {
+        "method": "MarkovPath",
+        "city": "Edinburgh",
+        "F1": 0.678,
+        "pairs_F1": 0.4,
+        "is_proposed": true
+      },
+      {
+        "method": "MarkovPath",
+        "city": "Glasgow",
+        "F1": 0.732,
+        "pairs_F1": 0.485,
+        "is_proposed": true
+      },
+      {
+        "method": "MarkovPath",
+        "city": "Melbourne",
+        "F1": 0.595,
+        "pairs_F1": 0.294,
+        "is_proposed": true
+      },
+      {
+        "method": "MarkovPath",
+        "city": "Osaka",
+        "F1": 0.706,
+        "pairs_F1": 0.442,
+        "is_proposed": true
+      },
+      {
+        "method": "MarkovPath",
+        "city": "Toronto",
+        "F1": 0.688,
+        "pairs_F1": 0.405,
+        "is_proposed": true
+      },
+      {
+        "method": "Rank+Markov",
+        "city": "Edinburgh",
+        "F1": 0.659,
+        "pairs_F1": 0.444,
+        "is_proposed": true
+      },
+      {
+        "method": "Rank+Markov",
+        "city": "Glasgow",
+        "F1": 0.754,
+        "pairs_F1": 0.545,
+        "is_proposed": true
+      },
+      {
+        "method": "Rank+Markov",
+        "city": "Melbourne",
+        "F1": 0.613,
+        "pairs_F1": 0.351,
+        "is_proposed": true
+      },
+      {
+        "method": "Rank+Markov",
+        "city": "Osaka",
+        "F1": 0.715,
+        "pairs_F1": 0.486,
+        "is_proposed": true
+      },
+      {
+        "method": "Rank+Markov",
+        "city": "Toronto",
+        "F1": 0.723,
+        "pairs_F1": 0.512,
+        "is_proposed": true
+      },
+      {
+        "method": "Rank+MarkovPath",
+        "city": "Edinburgh",
+        "F1": 0.697,
+        "pairs_F1": 0.428,
+        "is_proposed": true
+      },
+      {
+        "method": "Rank+MarkovPath",
+        "city": "Glasgow",
+        "F1": 0.762,
+        "pairs_F1": 0.533,
+        "is_proposed": true
+      },
+      {
+        "method": "Rank+MarkovPath",
+        "city": "Melbourne",
+        "F1": 0.639,
+        "pairs_F1": 0.344,
+        "is_proposed": true
+      },
+      {
+        "method": "Rank+MarkovPath",
+        "city": "Osaka",
+        "F1": 0.732,
+        "pairs_F1": 0.489,
+        "is_proposed": true
+      },
+      {
+        "method": "Rank+MarkovPath",
+        "city": "Toronto",
+        "F1": 0.751,
+        "pairs_F1": 0.514,
+        "is_proposed": true
+      }
+    ],
+    "confidence": "high",
+    "notes": "Source: Chen, Ong, Xie, \"Learning Points and Routes to Recommend Trajectories\", CIKM 2016 (arXiv:1608.07051v1, 25 Aug 2016). This is THE primary source of the pairs-F1 metric (Section 4.1). Numbers extracted from Table 3 (F1 score, page 5) and Table 4 (pairs-F1 score, page 5). All values are on a 0-1 scale (NOT percentages); reported in the paper as mean +/- std deviation. I recorded only the means (e.g., Edinburgh/Random F1 = \"0.570 +/- 0.139\" -> F1=0.570; pairs-F1 = \"0.261 +/- 0.155\" -> 0.261). Std devs available if needed.\n\nCaveat on this version: This v1 arXiv preprint does NOT contain the structured SVM (SP, SR) baselines mentioned in the task hint. Those appear in a later/extended version of the work (e.g., the journal SSVM-Tour paper). The methods present here are: Random, PersTour[14], PersTour-L, PoiPopularity, PoiRank, Markov, MarkovPath, Rank+Markov, Rank+MarkovPath. The dataset also includes MELBOURNE here (5 cities), in addition to Osaka/Glasgow/Edinburgh/Toronto.\n\nis_proposed assignment: PoiRank, Markov, MarkovPath, Rank+Markov, Rank+MarkovPath are this paper's own proposed/introduced methods (Sections 3.1-3.3). Random and PoiPopularity are naive baselines. PersTour[14] and PersTour-L are from prior work (Lim et al. [14]) used for comparison, so is_proposed=false. Bold-best cells in the paper (for reference, F1 Table 3 best): Edinburgh=PoiPopularity 0.701, Glasgow=PersTour 0.801, Melbourne=Rank+MarkovPath 0.639, Osaka=PoiRank 0.745, Toronto=PoiRank 0.754. pairs-F1 Table 4 best: Edinburgh=Rank+Markov 0.444, Glasgow=PersTour 0.643, Melbourne=Rank+Markov 0.351, Osaka=PoiRank 0.511, Toronto=PoiRank 0.518.\n\nDataset sizes from Table 1 (page 4, 'Statistics of trajectory dataset'): columns are #Photos, #Visits, #Traj., #Users. I mapped #Traj. to n_trajectories and #Users to n_users. The table does NOT report #POIs, so n_pois=null for all cities. The #Traj. count is the total trajectories used; the paper does not break out a separate length>=3 count in this v1. Full Table 1: Edinburgh (82,060 photos; 33,944 visits; 5,028 traj; 1,454 users); Glasgow (29,019; 11,434; 2,227; 601); Melbourne (94,142; 23,995; 5,106; 1,000); Osaka (392,420; 7,747; 1,115; 450); Toronto (157,505; 39,419; 6,057; 1,395). Trajectories extracted from Flickr photos; Melbourne built per Lim et al. [14], the other four datasets provided by Lim et al. [14]. Benchmark data/results: https://bitbucket.org/d-chen/tour-cikm16."
+  },
+  "Chen2017_StructRec": {
+    "paper": "Chen2017_StructRec",
+    "reports_flickr_metrics": true,
+    "proposed_methods": [
+      "SP",
+      "SR",
+      "SPpath",
+      "SRpath"
+    ],
+    "protocol_notes": "Leave-one-query-out cross validation. Quote: \"We evaluate each algorithm using leave-one-query-out cross validation. That is, holding out all the relevant trajectories for each query x^(i) (i.e. {y^(ij)}_{j=1}^{n_i}) in each round. The regularisation constant C is tuned using Monte Carlo cross validation on the training set.\" Metrics quote: \"We use three performance measures for POIs, sequences and ordered lists. The F1 score on points [11] computes F1 on the predicted versus seen points without considering their relative order. The F1 score on pairs [12] is proposed to mitigate this by computing F1 on all ordered pairs in the predicted versus ground truth sequence.\" A trajectory query is x=(s,l), a start POI s plus trip length l>1, i.e. the start POI (and length) are given as the query. Top-k evaluation: \"Structured recommendation performs ranking on a very large labelset (of size m^l). We report results on the best of top k [42]. That is, for all methods described in Section 4.2, We predict the top k trajectories and then report the best match of any in the top k to any trajectory in the ground truth set.\" Table 2 reports \"best of top-10\" (k=10). No explicit length>=3 filter is stated; Table 1 reports a profile split of #shortTraj (length < 5) vs #longTraj (length > 5).",
+    "dataset_sizes": [
+      {
+        "city": "Glasgow",
+        "n_trajectories": 351,
+        "n_pois": 25,
+        "n_users": 219
+      },
+      {
+        "city": "Osaka",
+        "n_trajectories": 186,
+        "n_pois": 26,
+        "n_users": 130
+      },
+      {
+        "city": "Toronto",
+        "n_trajectories": 977,
+        "n_pois": 27,
+        "n_users": 454
+      }
+    ],
+    "results": [
+      {
+        "method": "Random",
+        "city": "Glasgow",
+        "F1": 0.731,
+        "pairs_F1": 0.495,
+        "is_proposed": false
+      },
+      {
+        "method": "Popularity",
+        "city": "Glasgow",
+        "F1": 0.771,
+        "pairs_F1": 0.623,
+        "is_proposed": false
+      },
+      {
+        "method": "PoiRank",
+        "city": "Glasgow",
+        "F1": 0.847,
+        "pairs_F1": 0.726,
+        "is_proposed": false
+      },
+      {
+        "method": "SP",
+        "city": "Glasgow",
+        "F1": 0.81,
+        "pairs_F1": 0.658,
+        "is_proposed": true
+      },
+      {
+        "method": "SPpath",
+        "city": "Glasgow",
+        "F1": 0.807,
+        "pairs_F1": 0.648,
+        "is_proposed": true
+      },
+      {
+        "method": "SR",
+        "city": "Glasgow",
+        "F1": 0.883,
+        "pairs_F1": 0.77,
+        "is_proposed": true
+      },
+      {
+        "method": "SRpath",
+        "city": "Glasgow",
+        "F1": 0.868,
+        "pairs_F1": 0.746,
+        "is_proposed": true
+      },
+      {
+        "method": "Random",
+        "city": "Osaka",
+        "F1": 0.703,
+        "pairs_F1": 0.451,
+        "is_proposed": false
+      },
+      {
+        "method": "Popularity",
+        "city": "Osaka",
+        "F1": 0.786,
+        "pairs_F1": 0.626,
+        "is_proposed": false
+      },
+      {
+        "method": "PoiRank",
+        "city": "Osaka",
+        "F1": 0.804,
+        "pairs_F1": 0.661,
+        "is_proposed": false
+      },
+      {
+        "method": "SP",
+        "city": "Osaka",
+        "F1": 0.77,
+        "pairs_F1": 0.62,
+        "is_proposed": true
+      },
+      {
+        "method": "SPpath",
+        "city": "Osaka",
+        "F1": 0.809,
+        "pairs_F1": 0.664,
+        "is_proposed": true
+      },
+      {
+        "method": "SR",
+        "city": "Osaka",
+        "F1": 0.82,
+        "pairs_F1": 0.637,
+        "is_proposed": true
+      },
+      {
+        "method": "SRpath",
+        "city": "Osaka",
+        "F1": 0.823,
+        "pairs_F1": 0.671,
+        "is_proposed": true
+      },
+      {
+        "method": "Random",
+        "city": "Toronto",
+        "F1": 0.696,
+        "pairs_F1": 0.438,
+        "is_proposed": false
+      },
+      {
+        "method": "Popularity",
+        "city": "Toronto",
+        "F1": 0.746,
+        "pairs_F1": 0.55,
+        "is_proposed": false
+      },
+      {
+        "method": "PoiRank",
+        "city": "Toronto",
+        "F1": 0.807,
+        "pairs_F1": 0.649,
+        "is_proposed": false
+      },
+      {
+        "method": "SP",
+        "city": "Toronto",
+        "F1": 0.733,
+        "pairs_F1": 0.552,
+        "is_proposed": true
+      },
+      {
+        "method": "SPpath",
+        "city": "Toronto",
+        "F1": 0.755,
+        "pairs_F1": 0.552,
+        "is_proposed": true
+      },
+      {
+        "method": "SR",
+        "city": "Toronto",
+        "F1": 0.828,
+        "pairs_F1": 0.66,
+        "is_proposed": true
+      },
+      {
+        "method": "SRpath",
+        "city": "Toronto",
+        "F1": 0.823,
+        "pairs_F1": 0.657,
+        "is_proposed": true
+      }
+    ],
+    "confidence": "high",
+    "notes": "Source: Table 2 (\"Results on trajectory recommendation datasets on best of top-10\"), page 8, of Chen et al. 2017 \"Structured Recommendation\" (arXiv:1706.09067v1). Scale: all values are on the 0-1 scale (e.g. F1=0.883), reported as mean ± standard deviation. I recorded only the mean; the printed std devs are: Glasgow points (Random ±0.026, Popularity ±0.033, PoiRank ±0.025, SP ±0.027, SPpath ±0.026, SR ±0.023, SRpath ±0.023), Glasgow pairs (±0.046, ±0.051, ±0.043, ±0.043, ±0.045, ±0.039, ±0.041); Osaka points (±0.032, ±0.034, ±0.034, ±0.039, ±0.033, ±0.031, ±0.030), Osaka pairs (±0.057, ±0.055, ±0.056, ±0.061, ±0.055, ±0.055, ±0.053); Toronto points (±0.021, ±0.022, ±0.020, ±0.023, ±0.022, ±0.019, ±0.020), Toronto pairs (±0.034, ±0.035, ±0.033, ±0.036, ±0.036, ±0.033, ±0.034).\n\nCities: ONLY Glasgow, Osaka, Toronto are reported. Edinburgh and Melbourne are NOT in this paper.\n\nMetric mapping: F1 column = \"F1 score on points\" (point/set F1, Chen et al. CIKM 2016 / IJCAI-style, ignores order). pairs_F1 column = \"F1 score on pairs\" (order-aware pairs-F1, proposed in [12] = Chen 2016). Table 2 also reports a third metric block, Kendall's tau (rank correlation), which I did NOT capture in the F1/pairs_F1 fields. Kendall's tau values (for completeness): Glasgow Random 0.703, Popularity 0.748, PoiRank 0.830, SP 0.790, SPpath 0.868(best), SR 0.868, SRpath 0.853; Osaka Random 0.685, Popularity 0.768, PoiRank 0.787, SP 0.749, SPpath 0.791, SR 0.777, SRpath 0.803; Toronto Random 0.652, Popularity 0.719, PoiRank 0.784, SP 0.697, SPpath 0.719, SR 0.802, SRpath 0.797.\n\nBest (bold) per the paper: F1-points best = SR(Glasgow 0.883), SRpath(Osaka 0.823), SR(Toronto 0.828). F1-pairs best = SR(Glasgow 0.770), SRpath(Osaka 0.671), SR(Toronto 0.660).\n\nProposed-method naming: paper writes the families as SP, SR, SP-PATH, SR-PATH (PATH small-caps). SP/SR are this paper's structured-prediction and structured-recommendation SSVM variants; SPpath/SRpath add path (no-loop) constraints. PoiRank [12], Popularity, and Random are baselines (not proposed).\n\nDataset sizes from Table 1 (page 7): Glasgow #Traj 351, #POIs 25, #Users 219, #Queries 64; Osaka #Traj 186, #POIs 26, #Users 130, #Queries 47; Toronto #Traj 977, #POIs 27, #Users 454, #Queries 99. The #Traj count is the total number of trajectories (not a length>=3 subset). Table 1 also gives length profile: #shortTraj (length < 5) = 336/178/918 and #longTraj (length > 5) = 15/8/59 for Glasgow/Osaka/Toronto respectively; and ground-truth multiplicity counts #GT=1 (23/17/30), #GT in [2,5] (22/22/33), #GT>5 (19/8/36). Data from Flickr YFCC100M photo trajectories; code at bitbucket.org/d-chen/tour-cikm16."
+  },
+  "DeepTrip2019": {
+    "paper": "DeepTrip2019",
+    "reports_flickr_metrics": true,
+    "proposed_methods": [
+      "DeepTrip"
+    ],
+    "protocol_notes": "Datasets: \"The trips in Edinburgh, Glasgow and Osaka are extracted from Flickr photos and videos used in [12]. Following [1], we adopt leave-one-out cross validation to evaluate all methods.\" (Section 3.1 Settings, page 2). Query definition (Section 2.1): \"A tourist provides a query q that consists of the desired start point l_s and start time t_s, the length of trip N (i.e., the number of POIs) and the end point l_e at time t_e.\" -> so the first and last POI (start and end) are given as part of the query, consistent with the Chen 2016 [1] orienteering protocol. No explicit statement of a length>=3 filter is given in the paper. Metrics (Section 3.1): F1 score = harmonic mean of Precision and Recall of POIs in a trip (Eq. 7); pairs-F1 = order-aware metric proposed in [1] (Chen 2016) considering both POI correctness and sequential order of every pair of POIs (Eq. 8). \"The values of both pairs-F1 and F1 are between 0 and 1.\" Best results in boldface; DeepTrip is the proposed method.",
+    "dataset_sizes": [
+      {
+        "city": "Edinburgh",
+        "n_trajectories": 5028,
+        "n_pois": null,
+        "n_users": 1454
+      },
+      {
+        "city": "Glasgow",
+        "n_trajectories": 2227,
+        "n_pois": null,
+        "n_users": 601
+      },
+      {
+        "city": "Osaka",
+        "n_trajectories": 1115,
+        "n_pois": null,
+        "n_users": 450
+      }
+    ],
+    "results": [
+      {
+        "method": "Popularity",
+        "city": "Edinburgh",
+        "F1": 0.701,
+        "pairs_F1": 0.436,
+        "is_proposed": false
+      },
+      {
+        "method": "Popularity",
+        "city": "Glasgow",
+        "F1": 0.745,
+        "pairs_F1": 0.507,
+        "is_proposed": false
+      },
+      {
+        "method": "Popularity",
+        "city": "Osaka",
+        "F1": 0.663,
+        "pairs_F1": 0.365,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov",
+        "city": "Edinburgh",
+        "F1": 0.645,
+        "pairs_F1": 0.417,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov",
+        "city": "Glasgow",
+        "F1": 0.725,
+        "pairs_F1": 0.495,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov",
+        "city": "Osaka",
+        "F1": 0.697,
+        "pairs_F1": 0.445,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov-Rank",
+        "city": "Edinburgh",
+        "F1": 0.659,
+        "pairs_F1": 0.444,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov-Rank",
+        "city": "Glasgow",
+        "F1": 0.754,
+        "pairs_F1": 0.545,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov-Rank",
+        "city": "Osaka",
+        "F1": 0.715,
+        "pairs_F1": 0.486,
+        "is_proposed": false
+      },
+      {
+        "method": "PersQueue",
+        "city": "Edinburgh",
+        "F1": 0.47,
+        "pairs_F1": 0.32,
+        "is_proposed": false
+      },
+      {
+        "method": "PersQueue",
+        "city": "Glasgow",
+        "F1": 0.586,
+        "pairs_F1": 0.384,
+        "is_proposed": false
+      },
+      {
+        "method": "PersQueue",
+        "city": "Osaka",
+        "F1": 0.507,
+        "pairs_F1": 0.363,
+        "is_proposed": false
+      },
+      {
+        "method": "DeepTrip",
+        "city": "Edinburgh",
+        "F1": 0.765,
+        "pairs_F1": 0.66,
+        "is_proposed": true
+      },
+      {
+        "method": "DeepTrip",
+        "city": "Glasgow",
+        "F1": 0.831,
+        "pairs_F1": 0.782,
+        "is_proposed": true
+      },
+      {
+        "method": "DeepTrip",
+        "city": "Osaka",
+        "F1": 0.834,
+        "pairs_F1": 0.755,
+        "is_proposed": true
+      }
+    ],
+    "confidence": "high",
+    "notes": "Source: Table 2 \"Comparisons Among Different Algorithms\" on page 4 of the PDF. ALL values are on the 0-1 scale (the paper explicitly states \"The values of both pairs-F1 and F1 are between 0 and 1\"). Each cell in the table is printed as mean +/- std; I recorded only the MEAN (point estimate). The full std values are: F1 -- Popularity: Edin 0.701+/-0.160, Glas 0.745+/-0.166, Osaka 0.663+/-0.125; Markov: 0.645+/-0.169, 0.725+/-0.167, 0.697+/-0.150; Markov-Rank: 0.659+/-0.174, 0.754+/-0.173, 0.715+/-0.164; PersQueue: 0.470+/-0.196, 0.586+/-0.231, 0.507+/-0.186; DeepTrip: 0.765+/-0.148, 0.831+/-0.172, 0.834+/-0.166. Pairs-F1 -- Popularity: 0.436+/-0.259, 0.507+/-0.298, 0.365+/-0.190; Markov: 0.417+/-0.248, 0.495+/-0.296, 0.445+/-0.266; Markov-Rank: 0.444+/-0.263, 0.545+/-0.306, 0.486+/-0.288; PersQueue: 0.320+/-0.243, 0.384+/-0.224, 0.363+/-0.283; DeepTrip: 0.660+/-0.246, 0.782+/-0.257, 0.755+/-0.265. IMPORTANT scope notes: (1) Only THREE cities are reported -- Edinburgh, Glasgow, Osaka. There is NO Toronto and NO Melbourne in this paper (the hint's mention of Toronto/Melbourne is NOT borne out). (2) Baselines are exactly four: POIPopularity (labeled \"Popularity\"), Markov, Markov-Rank (Markov and Markov-Rank both come from Chen 2016 [1]), and PersQueue (the PersQ queuing-time method [11]). The hint's \"SP, SR\" baselines are NOT present in this paper. (3) Dataset sizes from Table 1 \"The Statistics of the Datasets\": columns are Phi(Visits), Phi(Trajectory), Phi(User). I mapped Phi(Trajectory)->n_trajectories and Phi(User)->n_users. The paper does NOT report a #POIs count, so n_pois is null for all cities. The Phi(Visits) (total check-ins) values, not in schema, are Edinburgh 33,944 / Glasgow 11,434 / Osaka 7,747. Note Phi(Trajectory) is the total trajectory count, NOT specifically the length>=3 subset; the paper does not break out a length>=3 count. DeepTrip outperforms all baselines on all three datasets with stated average improvements of 11.99% (F1) and 49.16% (pairs-F1) over the best baseline."
+  },
+  "SelfTrip2022": {
+    "paper": "SelfTrip2022",
+    "reports_flickr_metrics": true,
+    "proposed_methods": [
+      "SelfTrip"
+    ],
+    "protocol_notes": "Leave-one-out cross validation; trajectories with <3 POIs filtered out; query supplies source POI (=first POI l1) and destination POI (=last POI lN). Quotes: \"To improve the quality of data, we do some regular data prepossessing, including filtering out short trajectories which contain less than three POIs, normalizing the timestamp into hour-level (i.e., mapping each timestamp into 24 intervals). Following (Chen, Ong, and Xie 2016; He, Qi, and Ramamohanarao 2019; Gao et al. 2021), we also adopt leave-one-out cross validation to evaluate all methods.\" And query/endpoints: \"a query q is a quintuple <ls,ts,ld,td,N> that consists of the source POI ls... the destination POI ld... the trip recommendation system can return a trip T=(l1,l2,...,lN)... where ls=l1 and ld=lN.\" Metrics: \"(i) F1 score to measure the quality of a recommended sequence ... harmonic mean of Precision and Recall of elements in a sequence; (ii) pairs-F1 score (Chen, Ong, and Xie 2016; Gao et al. 2021), considers both POI correctness and sequential order by calculating the F1 score of every pair of POIs ... the values of both pairs-F1 and F1 are between 0 and 1.\"",
+    "dataset_sizes": [
+      {
+        "city": "Edinburgh",
+        "n_trajectories": 5028,
+        "n_pois": null,
+        "n_users": 1454
+      },
+      {
+        "city": "Glasgow",
+        "n_trajectories": 2227,
+        "n_pois": null,
+        "n_users": 601
+      },
+      {
+        "city": "Osaka",
+        "n_trajectories": 1115,
+        "n_pois": null,
+        "n_users": 450
+      },
+      {
+        "city": "Toronto",
+        "n_trajectories": 6057,
+        "n_pois": null,
+        "n_users": 1395
+      }
+    ],
+    "results": [
+      {
+        "method": "Markov",
+        "city": "Edinburgh",
+        "F1": 0.645,
+        "pairs_F1": 0.417,
+        "is_proposed": false
+      },
+      {
+        "method": "POIRank",
+        "city": "Edinburgh",
+        "F1": 0.7,
+        "pairs_F1": 0.432,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov-Rank",
+        "city": "Edinburgh",
+        "F1": 0.659,
+        "pairs_F1": 0.444,
+        "is_proposed": false
+      },
+      {
+        "method": "CATHI",
+        "city": "Edinburgh",
+        "F1": 0.752,
+        "pairs_F1": 0.731,
+        "is_proposed": false
+      },
+      {
+        "method": "C-ILP",
+        "city": "Edinburgh",
+        "F1": 0.76,
+        "pairs_F1": 0.535,
+        "is_proposed": false
+      },
+      {
+        "method": "DeepTrip",
+        "city": "Edinburgh",
+        "F1": 0.765,
+        "pairs_F1": 0.66,
+        "is_proposed": false
+      },
+      {
+        "method": "NASR+",
+        "city": "Edinburgh",
+        "F1": 0.755,
+        "pairs_F1": 0.734,
+        "is_proposed": false
+      },
+      {
+        "method": "SelfTrip",
+        "city": "Edinburgh",
+        "F1": 0.783,
+        "pairs_F1": 0.779,
+        "is_proposed": true
+      },
+      {
+        "method": "Markov",
+        "city": "Glasgow",
+        "F1": 0.725,
+        "pairs_F1": 0.495,
+        "is_proposed": false
+      },
+      {
+        "method": "POIRank",
+        "city": "Glasgow",
+        "F1": 0.768,
+        "pairs_F1": 0.548,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov-Rank",
+        "city": "Glasgow",
+        "F1": 0.754,
+        "pairs_F1": 0.545,
+        "is_proposed": false
+      },
+      {
+        "method": "CATHI",
+        "city": "Glasgow",
+        "F1": 0.71,
+        "pairs_F1": 0.659,
+        "is_proposed": false
+      },
+      {
+        "method": "C-ILP",
+        "city": "Glasgow",
+        "F1": 0.852,
+        "pairs_F1": 0.709,
+        "is_proposed": false
+      },
+      {
+        "method": "DeepTrip",
+        "city": "Glasgow",
+        "F1": 0.831,
+        "pairs_F1": 0.782,
+        "is_proposed": false
+      },
+      {
+        "method": "NASR+",
+        "city": "Glasgow",
+        "F1": 0.849,
+        "pairs_F1": 0.756,
+        "is_proposed": false
+      },
+      {
+        "method": "SelfTrip",
+        "city": "Glasgow",
+        "F1": 0.855,
+        "pairs_F1": 0.818,
+        "is_proposed": true
+      },
+      {
+        "method": "Markov",
+        "city": "Osaka",
+        "F1": 0.697,
+        "pairs_F1": 0.445,
+        "is_proposed": false
+      },
+      {
+        "method": "POIRank",
+        "city": "Osaka",
+        "F1": 0.745,
+        "pairs_F1": 0.511,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov-Rank",
+        "city": "Osaka",
+        "F1": 0.715,
+        "pairs_F1": 0.486,
+        "is_proposed": false
+      },
+      {
+        "method": "CATHI",
+        "city": "Osaka",
+        "F1": 0.756,
+        "pairs_F1": 0.701,
+        "is_proposed": false
+      },
+      {
+        "method": "C-ILP",
+        "city": "Osaka",
+        "F1": 0.8,
+        "pairs_F1": 0.611,
+        "is_proposed": false
+      },
+      {
+        "method": "DeepTrip",
+        "city": "Osaka",
+        "F1": 0.834,
+        "pairs_F1": 0.755,
+        "is_proposed": false
+      },
+      {
+        "method": "NASR+",
+        "city": "Osaka",
+        "F1": 0.811,
+        "pairs_F1": 0.738,
+        "is_proposed": false
+      },
+      {
+        "method": "SelfTrip",
+        "city": "Osaka",
+        "F1": 0.857,
+        "pairs_F1": 0.851,
+        "is_proposed": true
+      },
+      {
+        "method": "Markov",
+        "city": "Toronto",
+        "F1": 0.669,
+        "pairs_F1": 0.407,
+        "is_proposed": false
+      },
+      {
+        "method": "POIRank",
+        "city": "Toronto",
+        "F1": 0.754,
+        "pairs_F1": 0.518,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov-Rank",
+        "city": "Toronto",
+        "F1": 0.723,
+        "pairs_F1": 0.512,
+        "is_proposed": false
+      },
+      {
+        "method": "CATHI",
+        "city": "Toronto",
+        "F1": 0.82,
+        "pairs_F1": 0.782,
+        "is_proposed": false
+      },
+      {
+        "method": "C-ILP",
+        "city": "Toronto",
+        "F1": 0.811,
+        "pairs_F1": 0.623,
+        "is_proposed": false
+      },
+      {
+        "method": "DeepTrip",
+        "city": "Toronto",
+        "F1": 0.808,
+        "pairs_F1": 0.748,
+        "is_proposed": false
+      },
+      {
+        "method": "NASR+",
+        "city": "Toronto",
+        "F1": 0.829,
+        "pairs_F1": 0.803,
+        "is_proposed": false
+      },
+      {
+        "method": "SelfTrip",
+        "city": "Toronto",
+        "F1": 0.851,
+        "pairs_F1": 0.835,
+        "is_proposed": true
+      }
+    ],
+    "confidence": "high",
+    "notes": "PRIMARY SOURCE: Table 2 \"Overall performance comparison\" (page 6). Values extracted via PyMuPDF text layer (not OCR), so digits are exact. Scale: 0-1 (paper states \"the values of both pairs-F1 and F1 are between 0 and 1\"). SelfTrip is the paper's own proposed method and is the bold/best in every cell.\n\nThis is the arXiv preprint version (arXiv:2109.00968v2, \"Self-supervised Representation Learning for Trip Recommendation\", Gao/Wang/Zhang/Yang/Miao); the task labels it as the 2022 KBS version. Title page filename says KBS but the PDF content is the arXiv preprint. Only 4 Flickr cities reported: Edinburgh, Glasgow, Osaka, Toronto. MELBOURNE IS NOT INCLUDED in this paper (despite the hint's \"+maybe Melbourne\"). Baselines: Markov, POIRank, Markov-Rank, CATHI, C-ILP, DeepTrip, NASR+ (7 baselines). Note: the hint mentioned CTLTR/SP/SR baselines — those do NOT appear in this paper's Table 2; the actual baselines are as listed.\n\nDATASET SIZES (Table 1, page 5): columns are Φ(Visits), Φ(Trajectory), Φ(User). I mapped Φ(Trajectory) -> n_trajectories (these are the post-preprocessing trajectories, i.e. after filtering <3-POI trips, so they represent the length>=3 count used in eval) and Φ(User) -> n_users. Φ(Visits) values (Edinburgh 33,944; Glasgow 11,434; Osaka 7,747; Toronto 39,419) are total check-in visits, not #POIs, so n_pois is left null (the paper does not state a #POIs count per city). \n\nSECONDARY TABLE (NOT included in results above): Table 3 \"Performance comparison\" (page 7) is a DIFFERENT protocol — a re-split into 80% train / 20% test where test queries do NOT appear in training, used only to evaluate the query-augmentation ablation. It compares \"SelfTrip-\" (without augmented queries) vs \"SelfTrip\". Those numbers (e.g. SelfTrip Edinburgh F1 0.613 / pairs-F1 0.408, Glasgow 0.755/0.552, Osaka 0.694/0.567, Toronto 0.677/0.426) are LOWER than Table 2 and should NOT be confused with the main leave-one-out results. The canonical citable numbers are Table 2.\n\nFig. 3 (ablation on Glasgow only) reports F1/pairs-F1 as bar charts for POI-embedding variants (Random/Deepwalk/GAE/VGAE/SelfTrip) and trip variants (SelfTrip-Base/-CL/-WL/-Q), but exact numeric values are not printed, so not extracted."
+  },
+  "ARTrip2024": {
+    "paper": "ARTrip2024 — Shu et al., \"Analyzing and Mitigating Repetitions in Trip Recommendation\" (AR-Trip), SIGIR '24",
+    "reports_flickr_metrics": true,
+    "proposed_methods": [
+      "AR-Trip"
+    ],
+    "protocol_notes": "The paper gives only a brief protocol. Datasets section: \"We utilize Flickr [16] datasets from four cities: Edinburgh, Glasgow, Osaka, and Toronto, following previous works [28]. In this dataset, check-ins are obtained from geo-tagged YFCC100M Flickr photos. To ensure fairness, we conduct five repeated experiments for all baselines.\" Query definition (Sec 2.1): \"The query Q : {ps, ts, pe, te, n} includes start and end points with timestamps and the desired length n of the trajectory\" — i.e. the first and last POI are given as the query (endpoint-conditioned), consistent with the Chen 2016 protocol. Metrics (Sec 4.1): \"We compare AR-Trip with other baselines using F1 and PairsF1 (both the values range between 0 and 1), following prior studies [2, 10, 16].\" The paper does NOT explicitly state leave-one-out CV or a length>=3 filter in the provided text. No per-city trajectory/POI/user counts are reported.",
+    "dataset_sizes": [
+      {
+        "city": "Edinburgh",
+        "n_trajectories": null,
+        "n_pois": null,
+        "n_users": null
+      },
+      {
+        "city": "Glasgow",
+        "n_trajectories": null,
+        "n_pois": null,
+        "n_users": null
+      },
+      {
+        "city": "Osaka",
+        "n_trajectories": null,
+        "n_pois": null,
+        "n_users": null
+      },
+      {
+        "city": "Toronto",
+        "n_trajectories": null,
+        "n_pois": null,
+        "n_users": null
+      }
+    ],
+    "results": [
+      {
+        "method": "Popularity",
+        "city": "Edinburgh",
+        "F1": 0.701,
+        "pairs_F1": 0.436,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour",
+        "city": "Edinburgh",
+        "F1": 0.656,
+        "pairs_F1": 0.417,
+        "is_proposed": false
+      },
+      {
+        "method": "POIRank",
+        "city": "Edinburgh",
+        "F1": 0.7,
+        "pairs_F1": 0.431,
+        "is_proposed": false
+      },
+      {
+        "method": "C-ILP",
+        "city": "Edinburgh",
+        "F1": 0.743,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov",
+        "city": "Edinburgh",
+        "F1": 0.645,
+        "pairs_F1": 0.417,
+        "is_proposed": false
+      },
+      {
+        "method": "RankMarkov",
+        "city": "Edinburgh",
+        "F1": 0.662,
+        "pairs_F1": 0.448,
+        "is_proposed": false
+      },
+      {
+        "method": "DeepTrip",
+        "city": "Edinburgh",
+        "F1": 0.638,
+        "pairs_F1": 0.528,
+        "is_proposed": false
+      },
+      {
+        "method": "CTLTR",
+        "city": "Edinburgh",
+        "F1": 0.728,
+        "pairs_F1": 0.681,
+        "is_proposed": false
+      },
+      {
+        "method": "SelfTrip",
+        "city": "Edinburgh",
+        "F1": 0.728,
+        "pairs_F1": 0.688,
+        "is_proposed": false
+      },
+      {
+        "method": "Bert-Trip",
+        "city": "Edinburgh",
+        "F1": 0.814,
+        "pairs_F1": 0.672,
+        "is_proposed": false
+      },
+      {
+        "method": "AR-Trip",
+        "city": "Edinburgh",
+        "F1": 0.868,
+        "pairs_F1": 0.808,
+        "is_proposed": true
+      },
+      {
+        "method": "Popularity",
+        "city": "Glasgow",
+        "F1": 0.744,
+        "pairs_F1": 0.505,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour",
+        "city": "Glasgow",
+        "F1": 0.801,
+        "pairs_F1": 0.643,
+        "is_proposed": false
+      },
+      {
+        "method": "POIRank",
+        "city": "Glasgow",
+        "F1": 0.769,
+        "pairs_F1": 0.55,
+        "is_proposed": false
+      },
+      {
+        "method": "C-ILP",
+        "city": "Glasgow",
+        "F1": 0.835,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov",
+        "city": "Glasgow",
+        "F1": 0.725,
+        "pairs_F1": 0.493,
+        "is_proposed": false
+      },
+      {
+        "method": "RankMarkov",
+        "city": "Glasgow",
+        "F1": 0.753,
+        "pairs_F1": 0.545,
+        "is_proposed": false
+      },
+      {
+        "method": "DeepTrip",
+        "city": "Glasgow",
+        "F1": 0.714,
+        "pairs_F1": 0.597,
+        "is_proposed": false
+      },
+      {
+        "method": "CTLTR",
+        "city": "Glasgow",
+        "F1": 0.838,
+        "pairs_F1": 0.763,
+        "is_proposed": false
+      },
+      {
+        "method": "SelfTrip",
+        "city": "Glasgow",
+        "F1": 0.834,
+        "pairs_F1": 0.773,
+        "is_proposed": false
+      },
+      {
+        "method": "Bert-Trip",
+        "city": "Glasgow",
+        "F1": 0.849,
+        "pairs_F1": 0.74,
+        "is_proposed": false
+      },
+      {
+        "method": "AR-Trip",
+        "city": "Glasgow",
+        "F1": 0.881,
+        "pairs_F1": 0.82,
+        "is_proposed": true
+      },
+      {
+        "method": "Popularity",
+        "city": "Osaka",
+        "F1": 0.663,
+        "pairs_F1": 0.365,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour",
+        "city": "Osaka",
+        "F1": 0.686,
+        "pairs_F1": 0.468,
+        "is_proposed": false
+      },
+      {
+        "method": "POIRank",
+        "city": "Osaka",
+        "F1": 0.745,
+        "pairs_F1": 0.511,
+        "is_proposed": false
+      },
+      {
+        "method": "C-ILP",
+        "city": "Osaka",
+        "F1": 0.752,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov",
+        "city": "Osaka",
+        "F1": 0.697,
+        "pairs_F1": 0.445,
+        "is_proposed": false
+      },
+      {
+        "method": "RankMarkov",
+        "city": "Osaka",
+        "F1": 0.715,
+        "pairs_F1": 0.486,
+        "is_proposed": false
+      },
+      {
+        "method": "DeepTrip",
+        "city": "Osaka",
+        "F1": 0.746,
+        "pairs_F1": 0.634,
+        "is_proposed": false
+      },
+      {
+        "method": "CTLTR",
+        "city": "Osaka",
+        "F1": 0.802,
+        "pairs_F1": 0.719,
+        "is_proposed": false
+      },
+      {
+        "method": "SelfTrip",
+        "city": "Osaka",
+        "F1": 0.84,
+        "pairs_F1": 0.774,
+        "is_proposed": false
+      },
+      {
+        "method": "Bert-Trip",
+        "city": "Osaka",
+        "F1": 0.854,
+        "pairs_F1": 0.74,
+        "is_proposed": false
+      },
+      {
+        "method": "AR-Trip",
+        "city": "Osaka",
+        "F1": 0.871,
+        "pairs_F1": 0.828,
+        "is_proposed": true
+      },
+      {
+        "method": "Popularity",
+        "city": "Toronto",
+        "F1": 0.678,
+        "pairs_F1": 0.384,
+        "is_proposed": false
+      },
+      {
+        "method": "PersTour",
+        "city": "Toronto",
+        "F1": 0.72,
+        "pairs_F1": 0.504,
+        "is_proposed": false
+      },
+      {
+        "method": "POIRank",
+        "city": "Toronto",
+        "F1": 0.753,
+        "pairs_F1": 0.517,
+        "is_proposed": false
+      },
+      {
+        "method": "C-ILP",
+        "city": "Toronto",
+        "F1": 0.81,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Markov",
+        "city": "Toronto",
+        "F1": 0.669,
+        "pairs_F1": 0.407,
+        "is_proposed": false
+      },
+      {
+        "method": "RankMarkov",
+        "city": "Toronto",
+        "F1": 0.722,
+        "pairs_F1": 0.511,
+        "is_proposed": false
+      },
+      {
+        "method": "DeepTrip",
+        "city": "Toronto",
+        "F1": 0.68,
+        "pairs_F1": 0.558,
+        "is_proposed": false
+      },
+      {
+        "method": "CTLTR",
+        "city": "Toronto",
+        "F1": 0.806,
+        "pairs_F1": 0.748,
+        "is_proposed": false
+      },
+      {
+        "method": "SelfTrip",
+        "city": "Toronto",
+        "F1": 0.79,
+        "pairs_F1": 0.751,
+        "is_proposed": false
+      },
+      {
+        "method": "Bert-Trip",
+        "city": "Toronto",
+        "F1": 0.859,
+        "pairs_F1": 0.733,
+        "is_proposed": false
+      },
+      {
+        "method": "AR-Trip",
+        "city": "Toronto",
+        "F1": 0.892,
+        "pairs_F1": 0.839,
+        "is_proposed": true
+      }
+    ],
+    "confidence": "high",
+    "notes": "SOURCE: Table 1 (\"Evaluation of four datasets\"), on page 4 of the 5-page SIGIR '24 short paper. It is the ONLY results table reporting F1/PairsF1 (Table 2 and Figure 3 are ablation/versatility studies on Glasgow and Osaka/Glasgow respectively and do not add new method-vs-city F1 rows).\n\nSCALE: All F1 and PairsF1 values are on the 0–1 scale (the paper explicitly states \"F1 and PairsF1 (both the values range between 0 and 1)\"). I report them exactly as printed.\n\nCITIES: The paper uses ONLY four Flickr cities — Edinburgh, Glasgow, Osaka, Toronto. There is NO Melbourne in this paper (the hint listing Melbourne is not applicable here). The schema's pairs_F1 \"order-aware\" column corresponds exactly to the table's \"PairsF1\" column.\n\nPAIRS-F1 NULLS / C-ILP: Per the table caption, \"C-ILP has the potential to generate longer trips, resulting in a higher F1 value, distinguished by an asterisk (*). In this case, the PairsF1 cannot be calculated and is represented by a cross (X).\" So every C-ILP PairsF1 is printed as \"X\" — I set pairs_F1=null for all four C-ILP rows. C-ILP F1 values are starred in the table (Edinburgh 0.743*, Glasgow 0.835*, Osaka 0.752*, Toronto 0.810*); I recorded the numeric value and dropped the asterisk.\n\nPOIRANK EDINBURGH: printed as \"0.700\"/\"0.431\" (the table shows \"0.700\" — I rendered as 0.700, which I report as 0.700; some renderings show \"0.700\" vs \"0.70\" but the printed digits are 0.700 F1 / 0.431 PairsF1).\n\nTHIRD METRIC: The table also reports REP (a repetition metric the paper introduces, higher=better, ranges with F1/PairsF1) per city, but the schema has no field for it, so REP is omitted. For reference, AR-Trip REP values: Edinburgh 0.049, Glasgow 0.027, Osaka 0.016, Toronto 0.024. Some baselines (Popularity, PersTour, POIRank, C-ILP) have REP shown as \"—\" because they are statistical methods that prevent repetition by construction.\n\nBEST/SECOND-BEST: In the original table, best values are bold and second-best underlined; AR-Trip achieves the best F1 and PairsF1 in every city. I did not encode bold/underline.\n\nDATASET SIZES: The paper does NOT report per-city #trajectories, #POIs, or #users (no statistics table is included in this short paper), so all dataset-size fields are null.\n\nPROTOCOL: No explicit \"leave-one-out cross-validation\" or \"length>=3\" statement appears in the provided text. The query Q = {ps, ts, pe, te, n} gives the start and end POI plus desired length, i.e. endpoint-conditioned generation, following Chen 2016 / [28] (DeepTrip lineage). Five repeated runs were performed for fairness."
+  },
+  "POIBERT2022": {
+    "paper": "POIBERT2022",
+    "reports_flickr_metrics": true,
+    "proposed_methods": [
+      "POIBERT",
+      "POILSTM"
+    ],
+    "protocol_notes": "Train/test split is chronological (not leave-one-out CV): \"the first 80% of Trajectories (based on their photos) are set aside as Training Data. The remaining data is used as the Testing Data.\" Source and destination POIs ARE given as the query: \"we treat the first (and last) respective POI as the source (and destination respectively) POI and try to predict the intermediate POIs of the trajectory, given in a time boxed event of history-list.\" Length>=3 filter applied: \"We regard all users' trajectories (with at least 3 POIs) in the training set as sequences of POI (corpus).\" Metrics defined as set-based recall/precision/F1 over predicted vs actual POI sequences: Tr(Sh,Sp)=|Sh∩Sp|/|Sp|, Tp(Sh,Sp)=|Sh∩Sp|/|Sh|, F1_score=2·Tr·Tp/(Tr+Tp). NO order-aware pairs-F1 is reported in this paper.",
+    "dataset_sizes": [
+      {
+        "city": "Osaka",
+        "n_trajectories": 1115,
+        "n_pois": 28,
+        "n_users": 450
+      },
+      {
+        "city": "Glasgow",
+        "n_trajectories": 2227,
+        "n_pois": 29,
+        "n_users": 601
+      },
+      {
+        "city": "Edinburgh",
+        "n_trajectories": 5028,
+        "n_pois": 29,
+        "n_users": 1454
+      },
+      {
+        "city": "Toronto",
+        "n_trajectories": 605,
+        "n_pois": 30,
+        "n_users": 1395
+      },
+      {
+        "city": "Other",
+        "n_trajectories": 2361,
+        "n_pois": 39,
+        "n_users": null
+      }
+    ],
+    "results": [
+      {
+        "method": "CPT",
+        "city": "Edinburgh",
+        "F1": 44.732,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CPT",
+        "city": "Glasgow",
+        "F1": 51.234,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CPT",
+        "city": "Osaka",
+        "F1": 45.238,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CPT",
+        "city": "Toronto",
+        "F1": 46.816,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CPT+",
+        "city": "Edinburgh",
+        "F1": 44.543,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CPT+",
+        "city": "Glasgow",
+        "F1": 48.701,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CPT+",
+        "city": "Osaka",
+        "F1": 37.719,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CPT+",
+        "city": "Toronto",
+        "F1": 37.719,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DG",
+        "city": "Edinburgh",
+        "F1": 44.867,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DG",
+        "city": "Glasgow",
+        "F1": 50.579,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DG",
+        "city": "Osaka",
+        "F1": 43.333,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DG",
+        "city": "Toronto",
+        "F1": 43.333,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "LZ78",
+        "city": "Edinburgh",
+        "F1": 44.105,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "LZ78",
+        "city": "Glasgow",
+        "F1": 45.438,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "LZ78",
+        "city": "Osaka",
+        "F1": 40,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "LZ78",
+        "city": "Toronto",
+        "F1": 40,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PPM",
+        "city": "Edinburgh",
+        "F1": 44.848,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PPM",
+        "city": "Glasgow",
+        "F1": 50.579,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PPM",
+        "city": "Osaka",
+        "F1": 45.556,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PPM",
+        "city": "Toronto",
+        "F1": 45.556,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "TFAG",
+        "city": "Edinburgh",
+        "F1": 43.105,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "TFAG",
+        "city": "Glasgow",
+        "F1": 48.237,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "TFAG",
+        "city": "Osaka",
+        "F1": 45.556,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "TFAG",
+        "city": "Toronto",
+        "F1": 45.555,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "BWT-SubSeq",
+        "city": "Edinburgh",
+        "F1": 39.082,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "BWT-SubSeq",
+        "city": "Glasgow",
+        "F1": 48.322,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "BWT-SubSeq",
+        "city": "Osaka",
+        "F1": 36.32,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "BWT-SubSeq",
+        "city": "Toronto",
+        "F1": 33.145,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Seq2Seq",
+        "city": "Edinburgh",
+        "F1": 52.768,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Seq2Seq",
+        "city": "Glasgow",
+        "F1": 62.132,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Seq2Seq",
+        "city": "Osaka",
+        "F1": 57.937,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Seq2Seq",
+        "city": "Toronto",
+        "F1": 52.87,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "POILSTM",
+        "city": "Edinburgh",
+        "F1": 41.282,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "POILSTM",
+        "city": "Glasgow",
+        "F1": 61.147,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "POILSTM",
+        "city": "Osaka",
+        "F1": 60.35,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "POILSTM",
+        "city": "Toronto",
+        "F1": 50.759,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "POIBERT",
+        "city": "Edinburgh",
+        "F1": 54.471,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "POIBERT",
+        "city": "Glasgow",
+        "F1": 62.771,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "POIBERT",
+        "city": "Osaka",
+        "F1": 71.753,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "POIBERT",
+        "city": "Toronto",
+        "F1": 55.929,
+        "pairs_F1": null,
+        "is_proposed": true
+      }
+    ],
+    "confidence": "high",
+    "notes": "SCALE: All F1 values are PERCENTAGES (e.g. 71.753 means 71.753%), per Table IV caption \"Average F1 scores for different Sequence Prediction Algorithms (%)\".\n\nNO pairs-F1 / order-aware metric is reported anywhere in this paper. The only F1 is the set-based (point) F1 defined in Section IV-B (Tr=recall, Tp=precision, F1=2·Tr·Tp/(Tr+Tp) over intersection of predicted vs actual POI sets). So pairs_F1 is null for every row.\n\nMAIN COMPARISON TABLE = Table IV (page 8), \"Average F1 scores for different Sequence Prediction Algorithms (%)\". It gives one F1 per (algorithm, city). All 10 methods extracted above come from Table IV: 8 baselines (CPT, CPT+, DG, LZ78, PPM, TFAG, BWT-SubSeq, Seq2Seq) + 2 proposed (POILSTM*, POIBERT*, both marked with an asterisk denoting the paper's own methods). Underlined cells in Table IV (e.g. Edinburgh Seq2Seq 52.768, Glasgow Seq2Seq 62.132, Osaka POILSTM 60.350, Toronto Seq2Seq 52.870) appear to mark second-best; bold marks best. I recorded the printed values regardless of formatting.\n\nTARGET CITIES: This paper covers 7 cities: Budapest, Delhi, Edinburgh, Glasgow, Osaka, Perth, Toronto. Of the 5 requested Flickr cities, it has Osaka, Glasgow, Edinburgh, Toronto. It does NOT include Melbourne. (Perth, Budapest, Delhi are extra cities not in the requested set, so I omitted their per-method F1 rows from results; they are available in Table IV if needed.)\n\nPOIBERT F1 in Table IV (e.g. Osaka 71.753, Toronto 55.929, Edinburgh 54.471, Glasgow 62.771) corresponds to the BEST-epoch row from Table III for that city: Osaka 71.753 = epoch 10, Toronto 55.929 = epoch 1/3, Edinburgh 54.471 = epoch 1/3, Glasgow 62.771 (Table III shows Glasgow F1 best ~60.752 at epoch 5 and 59.417 at epoch 1; the 62.771 in Table IV is what is reported as the final comparison value). Table III (Average F1/Recall/Precision of POIBERT, %) gives per-epoch Recall/F1/Precision; I used Table IV for the consolidated F1 comparison since it is the head-to-head table.\n\nDATASET SIZES (Table II, \"Description of Data-sets\"): #POIs / #Users / #Trajectories per city. I reported total No. of Trajectories. Note Table II also gives \"..for evaluation\" trajectory counts (the held-out test trajectories): Edinburgh 67, Glasgow 7, Osaka 3, Toronto 74 (Budapest 70, Delhi 4, Perth 7) and \"..for training\": Edinburgh 267, Glasgow 28, Osaka 12, Toronto 95. These small eval counts are the trajectories actually used to evaluate F1. The \"Other\" dataset_sizes entry holds Budapest (39 POIs, 935 'sample' users, 2361 trajectories) as an example of the extra cities; Delhi (26/279/489) and Perth (25/159/716) are also in Table II. n_users for Budapest is listed as \"935 sample\". Overall dataset: ~120K photos/check-ins, 5,654 users (4701 in seven cities) — slight internal inconsistency in the paper's user counts (abstract/Fig.1 says 5,654; Section IV says 4701)."
+  },
+  "TourEmbedding2021": {
+    "paper": "TourEmbedding2021 — Ho & Lim 2021, \"User Preferential Tour Recommendation Based on POI-Embedding Methods\", IUI '21 Companion",
+    "reports_flickr_metrics": true,
+    "proposed_methods": [
+      "POI-Embedding tour recommendation (word2vec CBOW)",
+      "POI-Embedding tour recommendation (word2vec Skip-gram)"
+    ],
+    "protocol_notes": "The paper does NOT use the standard Chen-2016 leave-one-out / pairs-F1 protocol and does NOT report pairs-F1. Quote (Sec 4.2): \"We evaluate the effectiveness of our prediction algorithm in terms of precision (TP), recall (TR) and F1-scores of our predicted POIs again[st] the actual POIs in the actual travel sequences. Let Sp be the predicted sequence of POIs from the algorithm and Su be the actual sequence from the users, we evaluate our algorithms based on: TR(Su,Sp)=|Su∩Sp|/|Sp|, TP(Su,Sp)=|Su∩Sp|/|Su|, and F1_score=2*TR*TP/(TR+TP).\" (Note: their TR/TP labels appear swapped vs. the usual recall=∩/|Su|, precision=∩/|Sp| convention, but F1 is symmetric.) Query/endpoint setup (Sec 3, Algorithm 2): the prediction starts from a single given starting location POI_1/POI_0 (\"with some initial starting location (POI_1)\"; \"Our prediction algorithm reliably uncover user preference in a tour by using one POI of users' preference\"); only the FIRST POI is given, not first+last. Trajectory construction (Sec 4.1): \"we used daily itineraries from users; by considering the start of a day tour that is at least 8 hours from the last photo posted.\" No explicit length>=3 filter is stated. Results are averaged over users/configs with ± standard deviation reported (Fig. 2 caption: \"Average F1/Recall/Precision-scores of embedding methods (with different hyper-parameters) and baseline algorithm in 4 cities\").",
+    "dataset_sizes": [
+      {
+        "city": "Toronto",
+        "n_trajectories": null,
+        "n_pois": 30,
+        "n_users": null
+      },
+      {
+        "city": "Osaka",
+        "n_trajectories": null,
+        "n_pois": 28,
+        "n_users": null
+      },
+      {
+        "city": "Perth",
+        "n_trajectories": null,
+        "n_pois": 25,
+        "n_users": null
+      },
+      {
+        "city": "Budapest",
+        "n_trajectories": null,
+        "n_pois": 39,
+        "n_users": null
+      }
+    ],
+    "results": [
+      {
+        "method": "Popularity baseline",
+        "city": "Toronto",
+        "F1": 30.25,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Popularity baseline",
+        "city": "Osaka",
+        "F1": 30.22,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Popularity baseline",
+        "city": "Other",
+        "F1": 47.69,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Popularity baseline",
+        "city": "Other",
+        "F1": 33.42,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CBOW (Win=3/Dim=1e7, epoch=5)",
+        "city": "Toronto",
+        "F1": 41.57,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=3/Dim=1e7, epoch=5)",
+        "city": "Osaka",
+        "F1": 35.25,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=3/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 59.2,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=3/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 35.72,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=3/Dim=1e7, epoch=5)",
+        "city": "Toronto",
+        "F1": 39.56,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=3/Dim=1e7, epoch=5)",
+        "city": "Osaka",
+        "F1": 34.64,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=3/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 51.76,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=3/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 33.06,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=3/Dim=1e7, epoch=100)",
+        "city": "Toronto",
+        "F1": 29.01,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=3/Dim=1e7, epoch=100)",
+        "city": "Osaka",
+        "F1": 25.16,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=3/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 25.16,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=3/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 42.88,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=3/Dim=1e7, epoch=100)",
+        "city": "Toronto",
+        "F1": 32.09,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=3/Dim=1e7, epoch=100)",
+        "city": "Osaka",
+        "F1": 22.78,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=3/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 22.78,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=3/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 42.7,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=5/Dim=1e7, epoch=5)",
+        "city": "Toronto",
+        "F1": 41.6,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=5/Dim=1e7, epoch=5)",
+        "city": "Osaka",
+        "F1": 39.34,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=5/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 44.36,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=5/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 35.24,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=5/Dim=1e7, epoch=5)",
+        "city": "Toronto",
+        "F1": 38.97,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=5/Dim=1e7, epoch=5)",
+        "city": "Osaka",
+        "F1": 35.28,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=5/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 56.71,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=5/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 33.78,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=5/Dim=1e7, epoch=100)",
+        "city": "Toronto",
+        "F1": 23.68,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=5/Dim=1e7, epoch=100)",
+        "city": "Osaka",
+        "F1": 24.48,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=5/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 43.59,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=5/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 48.37,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=5/Dim=1e7, epoch=100)",
+        "city": "Toronto",
+        "F1": 25.13,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=5/Dim=1e7, epoch=100)",
+        "city": "Osaka",
+        "F1": 25.47,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=5/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 43.39,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=5/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 46.97,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=9/Dim=1e7, epoch=5)",
+        "city": "Toronto",
+        "F1": 42.08,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=9/Dim=1e7, epoch=5)",
+        "city": "Osaka",
+        "F1": 38.01,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=9/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 52.96,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=9/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 36.88,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=9/Dim=1e7, epoch=5)",
+        "city": "Toronto",
+        "F1": 38.1,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=9/Dim=1e7, epoch=5)",
+        "city": "Osaka",
+        "F1": 38.5,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=9/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 52.95,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=9/Dim=1e7, epoch=5)",
+        "city": "Other",
+        "F1": 36.98,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=9/Dim=1e7, epoch=100)",
+        "city": "Toronto",
+        "F1": 24.78,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=9/Dim=1e7, epoch=100)",
+        "city": "Osaka",
+        "F1": 24.62,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=9/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 46.89,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CBOW (Win=9/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 23.08,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=9/Dim=1e7, epoch=100)",
+        "city": "Toronto",
+        "F1": 25.93,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=9/Dim=1e7, epoch=100)",
+        "city": "Osaka",
+        "F1": 35.27,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=9/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 53.01,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "Skip-gram (Win=9/Dim=1e7, epoch=100)",
+        "city": "Other",
+        "F1": 26.09,
+        "pairs_F1": null,
+        "is_proposed": true
+      }
+    ],
+    "confidence": "high",
+    "notes": "SCALE: all numbers are PERCENTAGES (e.g., 41.57 = 41.57%), each printed with a ± standard deviation (std dev values omitted here). Source: Figure 2 (a table, page 4 of 5), caption \"Average F1/Recall/Precision-scores of embedding methods (with different hyper-parameters) and baseline algorithm in 4 cities (Win: window size of word2vec in sentence. Dim: maximum dimensionality of the word2vec vector).\"\\n\\nIMPORTANT — NO pairs-F1: This paper reports ONLY point/set F1 (plus Recall and Precision); there is NO order-aware \"pairs-F1\" (Chen 2016) column anywhere. All pairs_F1 fields are null. Only F1 was extracted (Recall/Precision columns also exist in the table but were not requested).\\n\\nCITIES: The paper's 4 cities are Toronto (30 POIs), Perth (25 POIs), Budapest (39 POIs), Osaka (28 POIs). Of the schema's target cities, only Toronto and Osaka are present (mapped to their enum values). Perth and Budapest are mapped to \"Other\" — to disambiguate, the four \"Other\" rows in each method group are, in table column order: Perth then Budapest (i.e., for each method the two Other rows are Perth-F1 first, Budapest-F1 second). Glasgow, Edinburgh, and Melbourne are NOT in this paper despite the hint mentioning Melbourne — the hint was inaccurate for this specific paper.\\n\\nDATASET: From Sec 4.1 — \"the dataset from [9] comprising the travel histories of 5,654 users from Flickr in 4 different cities\" (5,654 is the TOTAL across all cities, not per-city; per-city user/trajectory counts are not given). Per-city POI counts come from the Fig. 2 column headers. The intro states \"our algorithm can achieve F1-scores of up to 59.2%\" (matches the Perth CBOW Win=3 epoch=5 value of 59.20).\\n\\nMETHOD NAMING: Each proposed-method row is labeled with its hyper-parameter config (Win/Dim, epoch, CBOW vs Skip-gram). The paper also mentions evaluating FastText, but Fig. 2 only tabulates CBOW and Skip-gram (no separate FastText rows). All non-baseline rows are the authors' own proposed POI-embedding approach (is_proposed=true). The single baseline is a greedy POI-popularity heuristic (\"Popularity baseline\", from ref [10]).\\n\\nVALUE-READING CAVEAT: values were read from a rendered table image; a few digits are at the limit of legibility (e.g., Budapest Skip-gram Win=3 epoch=100 read as 42.70; Osaka/Perth epoch=100 rows where some F1 values repeat across columns). Confidence high overall for Toronto/Osaka F1 columns."
+  },
+  "DLIR2025": {
+    "paper": "DLIR2025 - Halder et al., \"Deep Learning of Dynamic POI Generation and Optimisation for Itinerary Recommendation\" (TORS / submitted to ACM TORS)",
+    "reports_flickr_metrics": true,
+    "proposed_methods": [
+      "DLIR"
+    ],
+    "protocol_notes": "Evaluation uses Flickr geo-tagged photo datasets. Filtering: \"We filter out the POIs and users who have less than 3 checks in records for all the other datasets\" (Section 5.2, p.17) - i.e. POIs/users with >=3 check-ins kept. Sequences: \"If two consecutive POI visit times difference is greater than 8 hours, then we construct a new sequence\" (p.17). CV protocol: \"Each model was executed five times using five-fold cross-validation, and the metric values were averaged across the runs\" (p.16); \"we divide our datasets into three parts: training, validation and testing. We applied five-fold-cross validation methods to make 20% testing data and 80% training and validation data. Among the 80% data, we select first (previous) 70% check-ins... as training data and the remaining last (recent) 10% as validation data\" (p.17). Itinerary F1 is point/set-based: Precision = |P_real ∩ P_rec|/|P_rec| (Eq.27), Recall = |P_real ∩ P_rec|/|P_real| (Eq.28), F1 = 2*Precision*Recall/(Precision+Recall) (Eq.29), tour precision/recall over the SET of POIs in real vs recommended itinerary. NOTE: This paper does NOT report an order-aware pairs-F1 (Chen 2016). The reported \"F1-Score\" in Table 4 is the set/point F1 only. The paper does NOT use a leave-one-out protocol with first+last POI given as the query for the itinerary task; it constructs the full itinerary from a StartPOI within a budget time (Algorithm 2). Significance: \"we use paired t-test method and it shows that DLIR outperforms at least 96.0% confidence, where p <= 0.04\" (p.19).",
+    "dataset_sizes": [
+      {
+        "city": "Edinburgh",
+        "n_trajectories": 33944,
+        "n_pois": 29,
+        "n_users": 1454
+      },
+      {
+        "city": "Budapest",
+        "n_trajectories": 18513,
+        "n_pois": 39,
+        "n_users": 935
+      },
+      {
+        "city": "Toronto",
+        "n_trajectories": 39419,
+        "n_pois": 30,
+        "n_users": 1395
+      },
+      {
+        "city": "Melbourne",
+        "n_trajectories": 5871,
+        "n_pois": 242,
+        "n_users": 911
+      }
+    ],
+    "results": [
+      {
+        "method": "IHA",
+        "city": "Toronto",
+        "F1": 0.237,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GPop",
+        "city": "Toronto",
+        "F1": 0.178,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GNear",
+        "city": "Toronto",
+        "F1": 0.312,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DCC-PersIRE",
+        "city": "Toronto",
+        "F1": 0.369,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PersQ",
+        "city": "Toronto",
+        "F1": 0.338,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "EffiTourRec",
+        "city": "Toronto",
+        "F1": 0.39,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "BERT-Trip",
+        "city": "Toronto",
+        "F1": 0.161,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DLIR",
+        "city": "Toronto",
+        "F1": 0.485,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "IHA",
+        "city": "Edinburgh",
+        "F1": 0.121,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GPop",
+        "city": "Edinburgh",
+        "F1": 0.134,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GNear",
+        "city": "Edinburgh",
+        "F1": 0.269,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DCC-PersIRE",
+        "city": "Edinburgh",
+        "F1": 0.358,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PersQ",
+        "city": "Edinburgh",
+        "F1": 0.285,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "EffiTourRec",
+        "city": "Edinburgh",
+        "F1": 0.359,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "BERT-Trip",
+        "city": "Edinburgh",
+        "F1": 0.116,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DLIR",
+        "city": "Edinburgh",
+        "F1": 0.487,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "IHA",
+        "city": "Melbourne",
+        "F1": 0.285,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GPop",
+        "city": "Melbourne",
+        "F1": 0.226,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GNear",
+        "city": "Melbourne",
+        "F1": 0.123,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DCC-PersIRE",
+        "city": "Melbourne",
+        "F1": 0.326,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PersQ",
+        "city": "Melbourne",
+        "F1": 0.157,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "EffiTourRec",
+        "city": "Melbourne",
+        "F1": 0.335,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "BERT-Trip",
+        "city": "Melbourne",
+        "F1": 0.154,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DLIR",
+        "city": "Melbourne",
+        "F1": 0.393,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "IHA",
+        "city": "Other",
+        "F1": 0.261,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GPop",
+        "city": "Other",
+        "F1": 0.323,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GNear",
+        "city": "Other",
+        "F1": 0.307,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DCC-PersIRE",
+        "city": "Other",
+        "F1": 0.357,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PersQ",
+        "city": "Other",
+        "F1": 0.317,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "EffiTourRec",
+        "city": "Other",
+        "F1": 0.377,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "BERT-Trip",
+        "city": "Other",
+        "F1": 0.173,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DLIR",
+        "city": "Other",
+        "F1": 0.464,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "distDLIR (distance-based GCN ablation)",
+        "city": "Toronto",
+        "F1": 0.476,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "distDLIR (distance-based GCN ablation)",
+        "city": "Edinburgh",
+        "F1": 0.456,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "distDLIR (distance-based GCN ablation)",
+        "city": "Melbourne",
+        "F1": 0.364,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "distDLIR (distance-based GCN ablation)",
+        "city": "Other",
+        "F1": 0.415,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DLIR_MCTS (MCTS itinerary construction ablation)",
+        "city": "Toronto",
+        "F1": 0.438,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DLIR_MCTS (MCTS itinerary construction ablation)",
+        "city": "Edinburgh",
+        "F1": 0.382,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DLIR_MCTS (MCTS itinerary construction ablation)",
+        "city": "Melbourne",
+        "F1": 0.278,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "DLIR_MCTS (MCTS itinerary construction ablation)",
+        "city": "Other",
+        "F1": 0.369,
+        "pairs_F1": null,
+        "is_proposed": false
+      }
+    ],
+    "confidence": "high",
+    "notes": "SCALE: All values are on the 0-1 scale exactly as printed (e.g. DLIR Edinburgh F1 = 0.487). Improvement percentages quoted in prose (e.g. \"26.28% on Edinburgh\") are relative gains, not the metric scale.\n\nCITY SCOPE: This paper does NOT use Osaka or Glasgow. Its Flickr CITY datasets are Edinburgh, Budapest, Toronto, Melbourne (the other 4 datasets - DisHolly, Epcot, MagicK, CaliAdv - are theme parks, not cities, and are excluded here). Of the requested target cities, only Edinburgh, Toronto, Melbourne match the enum. BUDAPEST is mapped to city=\"Other\" (it is a city dataset but not in the requested enum) - all Budapest rows use city=\"Other\".\n\nNO PAIRS-F1: This paper reports ONLY set/point-based itinerary Precision, Recall, and F1-Score (Eqs. 27-29, p.19). It does NOT report an order-aware pairs-F1 (Chen et al. 2016). Therefore pairs_F1 = null for every row, and F1 = the set/point F1-Score column.\n\nSOURCE TABLES: Main itinerary results are in TABLE 4 (p.22), \"Performance comparison of DLIR and baselines\"; bold = best, underline = second-best (I recorded the printed values, not the formatting). distDLIR rows are from TABLE 5 (p.25), \"popularity-based co-visiting GCN model (DLIR) vs distance-based co-visiting GCN model (distDLIR)\" - DLIR's own F1 in Table 5 matches Table 4 exactly (cross-check passed: Edin 0.487, Toro 0.485, Melb 0.393, Buda 0.464). DLIR_MCTS rows are from TABLE 6 (p.25), \"greedy (DLIR) vs MCTS-based itinerary construction\" - Table 6 lists Edinburgh as \"Edingburgh\" (typo in paper) and its DLIR column also matches Table 4. To avoid duplicate DLIR rows I report DLIR once (from Table 4); Table 5/Table 6 DLIR values are identical.\n\nBASELINES NOT IN ITINERARY TABLE: The top-k POI recommendation baselines (ST-RNN, STACP, APOIR, ATST-LSTM, TLR, TLR-M) appear ONLY in bar-chart figures (Fig.6 Precision/Recall/F1@5, Fig.7 @5/@10) for the candidate-set/POI task - exact numeric values are NOT given in any table for those, so they are not extractable and are omitted. The ablation variants DLIR_wGCN, DLIR_wPeriodic, DLIR_wPersonalised likewise appear only in Fig.8 bar charts (no numeric table), so they are omitted.\n\nDATASET SIZES (Table 3, p.17): columns are Photos, Visits, Users, POIs. I mapped n_trajectories <- \"Visits\" (the visit-sequence count used after >=3-check filtering); n_users <- Users; n_pois <- POIs. Edinburgh: 82,060 photos / 33,944 visits / 1,454 users / 29 POIs. Budapest: 36,000 / 18,513 / 935 / 39. Toronto: 157,505 / 39,419 / 1,395 / 30. Melbourne: 17,087 / 5,871 / 911 / 242. (Note: \"Visits\" may be total visit records, not the length>=3 trajectory count specifically - the paper does not give a separate length>=3 trajectory count.)\n\nCONFIDENCE: high for the extracted numbers (clear, well-rendered tables). The only caveats are (a) absence of pairs-F1 in this paper, and (b) Budapest mapped to \"Other\"."
+  },
+  "PersTour2018": {
+    "paper": "PersTour2018",
+    "reports_flickr_metrics": true,
+    "proposed_methods": [
+      "PersTour (PT-0)",
+      "PersTour (PT-.5F)",
+      "PersTour (PT-.5T)",
+      "PersTour (PT-.5U)",
+      "PersTour (PT-1F)",
+      "PersTour (PT-1T)",
+      "PersTour (PT-1U)",
+      "PersTour (PT-AS)",
+      "PersTour (PT-AC)"
+    ],
+    "protocol_notes": "Leave-one-out cross-validation. Quote (Sec 5.3, p.14): \"We evaluate PersTour and the baselines using leave-one-out cross-validation (Kohavi, 1995), i.e., when evaluating a specific travel sequence of a user, we use this user's other travel sequences for training our algorithms. Specifically, we consider all real-life travel sequences with >=3 POI visits and evaluate the algorithms using the starting POIs and destination POIs of these travel sequences.\" So: length>=3 filter YES; first (starting) and last (destination) POI given as the query YES. Tour F1-score is the harmonic mean of Tour Recall and Tour Precision computed on POI SETS (P_r = set of POIs in recommended itinerary, P_v = set of POIs visited in real life): T_R = |P_r ∩ P_v|/|P_v|, T_P = |P_r ∩ P_v|/|P_r|, T_F1 = 2*T_P*T_R/(T_P+T_R). This is a point/set F1, NOT order-aware. The paper does NOT report pairs-F1 (Chen 2016) anywhere; therefore pairs_F1 is null for every cell. Values reported as mean +/- std (the std is omitted here). Also note: a separate \"Tau\" / Kendall-tau ordering metric is NOT used here either; the order-aware metric in this paper is absent.",
+    "dataset_sizes": [
+      {
+        "city": "Toronto",
+        "n_trajectories": 6057,
+        "n_pois": null,
+        "n_users": 1395
+      },
+      {
+        "city": "Osaka",
+        "n_trajectories": 1115,
+        "n_pois": null,
+        "n_users": 450
+      },
+      {
+        "city": "Glasgow",
+        "n_trajectories": 2227,
+        "n_pois": null,
+        "n_users": 601
+      },
+      {
+        "city": "Edinburgh",
+        "n_trajectories": 5028,
+        "n_pois": null,
+        "n_users": 1454
+      }
+    ],
+    "results": [
+      {
+        "method": "PT-.5F",
+        "city": "Toronto",
+        "F1": 0.708,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-.5T",
+        "city": "Toronto",
+        "F1": 0.732,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-.5U",
+        "city": "Toronto",
+        "F1": 0.726,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1F",
+        "city": "Toronto",
+        "F1": 0.698,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1T",
+        "city": "Toronto",
+        "F1": 0.718,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1U",
+        "city": "Toronto",
+        "F1": 0.718,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CF-Pho",
+        "city": "Toronto",
+        "F1": 0.605,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CF-Bin",
+        "city": "Toronto",
+        "F1": 0.619,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GNear",
+        "city": "Toronto",
+        "F1": 0.487,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GPop",
+        "city": "Toronto",
+        "F1": 0.504,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Rand",
+        "city": "Toronto",
+        "F1": 0.391,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PT-.5F",
+        "city": "Osaka",
+        "F1": 0.687,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-.5T",
+        "city": "Osaka",
+        "F1": 0.699,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-.5U",
+        "city": "Osaka",
+        "F1": 0.699,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1F",
+        "city": "Osaka",
+        "F1": 0.616,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1T",
+        "city": "Osaka",
+        "F1": 0.641,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1U",
+        "city": "Osaka",
+        "F1": 0.641,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CF-Pho",
+        "city": "Osaka",
+        "F1": 0.635,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CF-Bin",
+        "city": "Osaka",
+        "F1": 0.652,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GNear",
+        "city": "Osaka",
+        "F1": 0.441,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GPop",
+        "city": "Osaka",
+        "F1": 0.517,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Rand",
+        "city": "Osaka",
+        "F1": 0.406,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PT-.5F",
+        "city": "Glasgow",
+        "F1": 0.78,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-.5T",
+        "city": "Glasgow",
+        "F1": 0.798,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-.5U",
+        "city": "Glasgow",
+        "F1": 0.8,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1F",
+        "city": "Glasgow",
+        "F1": 0.726,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1T",
+        "city": "Glasgow",
+        "F1": 0.728,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1U",
+        "city": "Glasgow",
+        "F1": 0.73,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CF-Pho",
+        "city": "Glasgow",
+        "F1": 0.631,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CF-Bin",
+        "city": "Glasgow",
+        "F1": 0.627,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GNear",
+        "city": "Glasgow",
+        "F1": 0.49,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GPop",
+        "city": "Glasgow",
+        "F1": 0.48,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Rand",
+        "city": "Glasgow",
+        "F1": 0.386,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PT-.5F",
+        "city": "Edinburgh",
+        "F1": 0.654,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-.5T",
+        "city": "Edinburgh",
+        "F1": 0.671,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-.5U",
+        "city": "Edinburgh",
+        "F1": 0.674,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1F",
+        "city": "Edinburgh",
+        "F1": 0.605,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1T",
+        "city": "Edinburgh",
+        "F1": 0.618,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-1U",
+        "city": "Edinburgh",
+        "F1": 0.621,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "CF-Pho",
+        "city": "Edinburgh",
+        "F1": 0.581,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "CF-Bin",
+        "city": "Edinburgh",
+        "F1": 0.58,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GNear",
+        "city": "Edinburgh",
+        "F1": 0.427,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "GPop",
+        "city": "Edinburgh",
+        "F1": 0.539,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "Rand",
+        "city": "Edinburgh",
+        "F1": 0.384,
+        "pairs_F1": null,
+        "is_proposed": false
+      },
+      {
+        "method": "PT-AS (adaptive)",
+        "city": "Toronto",
+        "F1": 0.715,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-AC (adaptive)",
+        "city": "Toronto",
+        "F1": 0.723,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-AS (adaptive)",
+        "city": "Osaka",
+        "F1": 0.702,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-AC (adaptive)",
+        "city": "Osaka",
+        "F1": 0.684,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-AS (adaptive)",
+        "city": "Glasgow",
+        "F1": 0.789,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-AC (adaptive)",
+        "city": "Glasgow",
+        "F1": 0.796,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-AS (adaptive)",
+        "city": "Edinburgh",
+        "F1": 0.646,
+        "pairs_F1": null,
+        "is_proposed": true
+      },
+      {
+        "method": "PT-AC (adaptive)",
+        "city": "Edinburgh",
+        "F1": 0.64,
+        "pairs_F1": null,
+        "is_proposed": true
+      }
+    ],
+    "confidence": "high",
+    "notes": "SCALE: All F1 values are on the 0-1 scale (printed as e.g. .708 = 0.708), NOT percentages. I report the decimal value; leading-zero added. Each cell in the paper is \"mean +/- std\" (e.g. .708±.012); I recorded only the mean.\n\nMELBOURNE NOT PRESENT: This dataset has TEN cities (Table 1, p.13): Toronto, Osaka, Glasgow, Budapest, Perth, Vienna, Delhi, Edinburgh, Tokyo, London. There is NO Melbourne. Of the five target Flickr cities requested (Osaka, Glasgow, Edinburgh, Toronto, Melbourne), four are present and Melbourne is absent (no row emitted for it).\n\nPAIRS-F1 NOT REPORTED: The paper reports only a point/set F1 (Tour F1-score = harmonic mean of POI-set recall and precision; metric defs on p.14). It does NOT report the order-aware pairs-F1 of Chen et al. 2016, nor a Kendall-Tau ordering metric. Every pairs_F1 is therefore null. (The earlier IJCAI'15 short version that this extends likewise did not use pairs-F1.)\n\nSOURCE TABLES:\n- Primary F1 numbers above come from TABLE 2 (p.17, \"Comparison between Time-based User Interest ... in terms of Recall, Precision and F1-score\") covering Toronto/Osaka/Glasgow/Edinburgh (plus Budapest/Perth which I omit as out-of-scope). Table 2 lists 11 method rows per city: PT-.5F, PT-.5T, PT-.5U, PT-1F, PT-1T, PT-1U (PersTour variants) and CF-Pho, CF-Bin, GNear, GPop, Rand (baselines). Note Table 2 does NOT include a PT-0 row or PT-AS/PT-AC rows.\n- TABLE 3 (p.18) is the analogous table for Tokyo/Vienna/Delhi/London (out of scope).\n- TABLE 8 (p.25, \"PersTour with Weighted Updates vs PersTour with Adaptive Weightings\") reports Recall/Precision/F1 for PT-.5U, PT-1U, PT-AS, PT-AC across all ten cities. I sourced the PT-AS and PT-AC adaptive-weight F1 values from Table 8 for the four in-scope cities. NOTE a discrepancy worth flagging: PT-.5U / PT-1U F1 differs slightly between Table 2 and Table 8 for the SAME city (e.g. Edinburgh PT-.5U = .674 in Table 2 but PT-.5U = .634 in Table 8; Toronto PT-.5U = .726 in Table 2 but .728 in Table 8). Table 8 is computed on a different user subset (top and bottom 15% of users by POI-visit count, per Sec 6.4), so its PT-.5U/PT-1U numbers are NOT directly comparable to Table 2's full-population numbers. For PT-AS/PT-AC I used Table 8 values as printed; for the standard variants I used Table 2 (full-population).\n\nPROPOSED vs BASELINE: All PT-* variants are this paper's own proposed method (PersTour), so is_proposed=true. Baselines (is_proposed=false): CF-Pho, CF-Bin (Collaborative Filtering), GNear (Greedy Nearest), GPop (Greedy Most Popular), Rand (Random Selection).\n\nDATASET SIZES (Table 1, p.13): columns are No. of Photos, No. of Users, # POI Visits, # Travel Sequences. I mapped n_users = No. of Users, n_trajectories = # Travel Sequences (the TOTAL travel-sequence count, NOT specifically the length>=3 subset used in eval — the paper does not separately report the >=3 count). n_pois is left null because Table 1 reports only \"# POI Visits\" (count of visit events: Toronto 39,419; Osaka 7,747; Glasgow 11,434; Edinburgh 33,944), which is NOT the number of distinct POIs. The distinct-POI count per city is not stated in this paper. Other cities' sizes (for reference, not emitted): Budapest 935 users/2,361 seq; Perth 159/716; Vienna 1,155/3,193; Delhi 279/489; Tokyo 979/3,798; London 2,963/8,373.\n\nBold/italic in the original marks best-performing values; I did not encode formatting."
+  }
+}
