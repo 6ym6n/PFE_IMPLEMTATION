@@ -1227,6 +1227,59 @@ def build_story():
         "adaptive adjacency) instead of unweighted."
     ))
 
+    # ----- 9. Phase 2 — itinerary recommendation -----
+    s.append(section("9. Phase 2 — itinerary recommendation", 1))
+    s.append(body(
+        "A second phase extends the next-POI baseline to <b>itinerary "
+        "recommendation</b>: given a query (start POI, fixed end POI, and a "
+        "length budget K), produce an <b>ordered route</b> of K POIs. Quality "
+        "is measured by <b>pairs-F1</b> (Chen 2016) — F1 over correctly-ordered "
+        "POI pairs — on the length≥3 test subset (n=2,880), where ordering "
+        "actually matters (length-2 sessions are trivially perfect)."
+    ))
+    s.append(section("9.1 Two strategies", 2))
+    s.append(bullet(
+        "<b>Strategy A — frozen rollout.</b> Decode the <i>frozen</i> next-POI "
+        "model as an itinerary generator: iterate it from the start, mask "
+        "visited POIs (loop-free), reserve the fixed end for the last hop. No "
+        "retraining."
+    ))
+    s.append(bullet(
+        "<b>Strategy B — pointer network (trained).</b> Reuse the GCN + user "
+        "encoder; replace the MLP head with an inner-product pointer; train "
+        "end-to-end on whole trajectories (teacher forcing), early-stop on val "
+        "pairs-F1. B-v1 omits Δd/Δt context; <b>B-v2</b> adds it back into the "
+        "decoder input."
+    ))
+    s.append(section("9.2 Results (NYC, length≥3 test, n=2,880)", 2))
+    itin_data = [
+        ["Method", "pairs-F1", "set-F1", "exact", "vs floor"],
+        ["A — frozen rollout (greedy)", "0.2887", "0.609", "0.054", "— (floor)"],
+        ["A — frozen rollout (beam 3)", "0.2902", "0.610", "0.057", "+0.0015"],
+        ["B-v1 — pointer, no context", "0.2585", "0.578", "0.043", "−0.0302"],
+        ["B-v2 — pointer + context", "(run on Colab)", "—", "—", "—"],
+    ]
+    t = make_table(itin_data, col_widths=[6.2 * cm, 2.6 * cm, 2.2 * cm, 2.0 * cm, 3.0 * cm])
+    s.append(t)
+    s.append(Spacer(1, 0.2 * cm))
+    s.append(body(
+        "<b>Reading the result.</b> Beam barely beats greedy in Strategy A "
+        "(+0.5%) — the next-POI scorer is myopic, so better <i>decoding</i> "
+        "cannot fix it. More importantly, the from-scratch trained pointer "
+        "(B-v1) <b>under-performs the frozen baseline by 0.030 pairs-F1 "
+        "(−10.5%)</b>. This is a genuine negative result (B-v1 trained cleanly: "
+        "loss 8.01→3.41, val pairs-F1 peaking at 0.271)."
+    ))
+    s.append(body(
+        "<b>Why the frozen model wins.</b> Its next-POI engine was trained on "
+        "~75,000 prefix→next examples (every prefix, all lengths), whereas B-v1 "
+        "saw only 10,281 whole-trajectory examples and used leaner per-step "
+        "inputs (no Δd/Δt context). The honest lesson: <i>naively training a "
+        "dedicated itinerary model does not automatically beat cleverly decoding "
+        "a strong next-POI model.</i> B-v2 (context-aware pointer) is the "
+        "implemented next test of whether the missing Δd/Δt features close the gap."
+    ))
+
     # ----- Appendix: implementation summary -----
     s.append(section("Appendix A — Implementation summary", 1))
     s.append(body(

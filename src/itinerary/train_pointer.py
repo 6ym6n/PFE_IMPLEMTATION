@@ -21,6 +21,7 @@ from tqdm.auto import tqdm
 from src.itinerary.eval_itinerary import fmt_itinerary_metrics
 from src.itinerary.pointer_model import PointerItineraryModel, evaluate_pointer
 from src.itinerary.query import build_eval_queries
+from src.itinerary.run_itinerary import estimate_assumed_dt_hours
 from src.itinerary.seq_dataset import ItinerarySeqDataset, seq_collate_fn
 
 
@@ -30,23 +31,28 @@ def make_seq_loaders(
     batch_size: int = 64,
     min_len: int = 3,
     num_workers: int = 2,
-) -> Tuple[DataLoader, List, List, torch.Tensor, Dict[str, Any]]:
+) -> Tuple[DataLoader, List, List, torch.Tensor, Dict[str, Any], np.ndarray, float]:
     """Build the pointer training loader + val/test eval queries + graph + meta.
 
     Args:
-        processed_dir: dir with train/val/test parquet, edge_index.pt, meta.json.
+        processed_dir: dir with train/val/test parquet, edge_index.pt,
+            poi_coords.npy, meta.json.
         device: device for edge_index.
         batch_size: training batch size.
         min_len: minimum session length kept (default 3).
         num_workers: DataLoader workers.
 
     Returns:
-        ``(train_loader, val_queries, test_queries, edge_index, meta)``.
+        ``(train_loader, val_queries, test_queries, edge_index, meta, poi_coords,
+        assumed_dt_hours)``. ``poi_coords`` and ``assumed_dt_hours`` are only used
+        by the context-aware (B-v2) decoder.
     """
     train_df = pd.read_parquet(os.path.join(processed_dir, "train.parquet"))
     val_df = pd.read_parquet(os.path.join(processed_dir, "val.parquet"))
     test_df = pd.read_parquet(os.path.join(processed_dir, "test.parquet"))
     edge_index = torch.load(os.path.join(processed_dir, "edge_index.pt")).to(device)
+    poi_coords = np.load(os.path.join(processed_dir, "poi_coords.npy"))
+    assumed_dt = estimate_assumed_dt_hours(train_df)
     with open(os.path.join(processed_dir, "meta.json")) as f:
         meta = json.load(f)
 
@@ -61,7 +67,7 @@ def make_seq_loaders(
         train_ds, batch_size=batch_size, shuffle=True,
         collate_fn=seq_collate_fn, num_workers=num_workers,
     )
-    return train_loader, val_queries, test_queries, edge_index, meta
+    return train_loader, val_queries, test_queries, edge_index, meta, poi_coords, assumed_dt
 
 
 def train_one_epoch_pointer(
@@ -94,8 +100,12 @@ def train_one_epoch_pointer(
         poi_seq = batch["poi_seq"].to(device)
         lengths = batch["lengths"].to(device)
         user_ids = batch["user_ids"].to(device)
+        delta_d = batch["delta_d"].to(device)
+        delta_t = batch["delta_t"].to(device)
 
-        logits, targets, mask = model(poi_seq, lengths, user_ids, edge_index)
+        logits, targets, mask = model(
+            poi_seq, lengths, user_ids, edge_index, delta_d=delta_d, delta_t=delta_t
+        )
         # cross-entropy over valid steps only
         loss = F.cross_entropy(logits[mask], targets[mask])
 
@@ -119,17 +129,20 @@ def train_pointer_model(
     patience: int = 8,
     min_len: int = 3,
     beam: int = 3,
+    use_context: bool = False,
     d_p: int = 128,
     d_u: int = 64,
     d_h: int = 128,
+    d_c: int = 32,
     dropout: float = 0.2,
     num_workers: int = 2,
 ) -> Tuple[PointerItineraryModel, Dict[str, float], List[Dict[str, Any]]]:
     """Train the pointer itinerary model with early stopping on val pairs-F1.
 
     Reads ``{project_root}/data/processed/{name}/``; writes checkpoints to
-    ``{project_root}/checkpoints/{name}_pointer/`` and results to
-    ``{project_root}/results/{name}_pointer_test.json``.
+    ``{project_root}/checkpoints/{name}_pointer{suffix}/`` and results to
+    ``{project_root}/results/{name}_pointer{suffix}_test.json``, where ``suffix``
+    is ``"_ctx"`` when ``use_context`` (B-v2) else ``""`` (B-v1).
 
     Args:
         name: city name (e.g. ``"NYC"``).
@@ -138,25 +151,33 @@ def train_pointer_model(
         epochs, batch_size, lr, weight_decay, patience: training schedule.
         min_len: minimum session length for training + eval (default 3).
         beam: beam width used for the final test decode.
-        d_p, d_u, d_h, dropout: model dims.
+        use_context: B-v2 — feed Δd/Δt context into the decoder.
+        d_p, d_u, d_h, d_c, dropout: model dims.
         num_workers: DataLoader workers.
 
     Returns:
         ``(model, test_metrics, history)`` — model has the best (val pairs-F1) weights.
     """
-    print(f"\n{'='*60}\nStrategy-B pointer training on {name}\n{'='*60}")
+    suffix = "_ctx" if use_context else ""
+    tag = f"pointer{suffix}"
+    print(f"\n{'='*60}\nStrategy-B {tag} training on {name} (use_context={use_context})\n{'='*60}")
     proc = os.path.join(project_root, "data/processed", name)
-    train_loader, val_q, test_q, edge_index, meta = make_seq_loaders(
+    train_loader, val_q, test_q, edge_index, meta, coords, adt = make_seq_loaders(
         proc, device=device, batch_size=batch_size, min_len=min_len, num_workers=num_workers,
     )
     model = PointerItineraryModel(
         n_pois=meta["n_pois"], n_users=meta["n_users"],
-        d_p=d_p, d_u=d_u, d_h=d_h, dropout=dropout,
+        d_p=d_p, d_u=d_u, d_h=d_h, d_c=d_c, use_context=use_context, dropout=dropout,
     ).to(device)
-    print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
+    print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}"
+          + (f" | assumed_dt_hours={adt:.3f}" if use_context else ""))
 
+    ev = lambda q, dec, bw=beam: evaluate_pointer(
+        model, q, edge_index, device, decoder=dec, beam=bw, min_len=min_len,
+        poi_coords=coords, assumed_dt_hours=adt,
+    )
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    ckpt_dir = os.path.join(project_root, "checkpoints", f"{name}_pointer")
+    ckpt_dir = os.path.join(project_root, "checkpoints", f"{name}_{tag}")
     results_dir = os.path.join(project_root, "results")
     os.makedirs(ckpt_dir, exist_ok=True)
     os.makedirs(results_dir, exist_ok=True)
@@ -165,7 +186,7 @@ def train_pointer_model(
     history: List[Dict[str, Any]] = []
     for epoch in range(1, epochs + 1):
         loss = train_one_epoch_pointer(model, train_loader, opt, edge_index, device)
-        val_m = evaluate_pointer(model, val_q, edge_index, device, decoder="greedy", min_len=min_len)
+        val_m = ev(val_q, "greedy")
         history.append({"epoch": epoch, "train_loss": loss, **{f"val_{k}": v for k, v in val_m.items()}})
         print(f"[{name}] epoch {epoch:02d} | loss={loss:.4f} | val: {fmt_itinerary_metrics(val_m)}")
 
@@ -182,14 +203,14 @@ def train_pointer_model(
             break
 
     model.load_state_dict(torch.load(os.path.join(ckpt_dir, "best.pt"), map_location=device))
-    test_greedy = evaluate_pointer(model, test_q, edge_index, device, decoder="greedy", min_len=min_len)
-    test_beam = evaluate_pointer(model, test_q, edge_index, device, decoder="beam", beam=beam, min_len=min_len)
+    test_greedy = ev(test_q, "greedy")
+    test_beam = ev(test_q, "beam")
     print(f"\n[{name}] TEST greedy (best ep {best_epoch}): {fmt_itinerary_metrics(test_greedy)}")
     print(f"[{name}] TEST beam{beam}: {fmt_itinerary_metrics(test_beam)}")
 
-    pd.DataFrame(history).to_csv(os.path.join(results_dir, f"{name}_pointer_history.csv"), index=False)
-    with open(os.path.join(results_dir, f"{name}_pointer_test.json"), "w") as f:
-        json.dump({"best_epoch": best_epoch, "min_len": min_len,
+    pd.DataFrame(history).to_csv(os.path.join(results_dir, f"{name}_{tag}_history.csv"), index=False)
+    with open(os.path.join(results_dir, f"{name}_{tag}_test.json"), "w") as f:
+        json.dump({"best_epoch": best_epoch, "min_len": min_len, "use_context": use_context,
                    "greedy": test_greedy, f"beam{beam}": test_beam}, f, indent=2)
 
     return model, test_greedy, history

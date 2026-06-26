@@ -283,7 +283,43 @@ model, test_greedy, history = train_pointer_model(
 Writes `checkpoints/NYC_pointer/{best,latest}.pt` and `results/NYC_pointer_test.json`
 (test pairs-F1 greedy + beam, length≥3). Compare its pairs-F1 against the Strategy-A floor above.
 
-**Honest risk (measured by Strategy A first):** training examples shrink to one per length≥3 session —
-**2,880 on NYC**. That is a small set for a sequence model, so watch for overfitting (the val-pairs-F1
-early stop guards it). If B does not clearly beat the 0.29 floor, that thinness is the likely reason and
-is itself a reportable finding.
+**Data sizes (measured, NYC):** one whole-trajectory example per length≥3 session →
+**10,281 train / 1,093 val / 2,880 test** sessions. (An earlier draft of this doc wrongly said the
+training set was "2,880" — that 2,880 is the *test* count; training is ~5× larger.)
+
+---
+
+## 12. Measured results — A vs B (NYC, length≥3 test, n=2,880)
+
+| Method | pairs-F1 | set-F1 | exact | vs floor |
+|---|---|---|---|---|
+| **Strategy A** — frozen next-POI rollout (greedy) | **0.2887** | 0.6089 | 0.054 | — (floor) |
+| Strategy A — beam(3) | 0.2902 | 0.6101 | 0.057 | +0.0015 |
+| **Strategy B-v1** — pointer, no context (greedy/beam3) | **0.2585** | 0.578 | 0.043 | **−0.0302** |
+
+**The trained B-v1 pointer LOST to the frozen baseline by 0.030 pairs-F1 (−10.5%).** It trained cleanly
+(loss 8.01→3.41 over 36 epochs; val pairs-F1 0.16→peak 0.271 at epoch 28; early-stop ep 36) — this is a
+genuine negative result, not a bug.
+
+**Why A beats a purpose-trained B-v1 (the lesson):**
+1. **Supervision density.** A's engine (the next-POI model) was trained on ~75k prefix→next examples
+   (every prefix, all lengths). B-v1 saw 10,281 whole trajectories — far fewer, sparser updates.
+2. **Leaner inputs.** B-v1's decoder input is *only* the previous POI's GCN feature; it never sees the
+   Δd/Δt context that the next-POI model consumes at every step.
+3. **From-scratch vs. converged.** A reuses a fully-trained model; B-v1 trains GCN+GRU+pointer from random init.
+
+Takeaway for the thesis: *naively training a dedicated itinerary model does not automatically beat
+cleverly decoding a strong next-POI model* — the next-POI model is a hard baseline because of its much
+denser supervision.
+
+### Strategy B-v2 — context-aware pointer (implemented; closes capability gap #2)
+
+`PointerItineraryModel(use_context=True)` adds the Δd/Δt context (the Phase-1 `ContextEncoder`) to the
+decoder input at every step — the spatial/temporal signal B-v1 lacked. At decode time the context of the
+current position is Δd from `poi_coords` (real geometry) + an assumed constant Δt (same convention as
+Strategy A). Trains via `train_pointer_model(..., use_context=True)` → writes
+`checkpoints/NYC_pointer_ctx/` and `results/NYC_pointer_ctx_test.json`. **Run it and compare to both the
+floor and B-v1** to test whether the context features close the −0.03 gap.
+
+Further levers if B-v2 still trails (ranked): warm-start B's GCN from the trained next-POI GCN; emit
+prefix sub-trajectories to match A's data density; try an MLP-to-|V| head instead of pure inner product.

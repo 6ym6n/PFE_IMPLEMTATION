@@ -28,15 +28,26 @@ class ItinerarySeqDataset(Dataset):
 
     def __init__(self, df: pd.DataFrame, min_len: int = 3, max_seq_len: int = 100) -> None:
         self.examples: List[Dict[str, Any]] = []
+        has_ctx = "delta_d" in df.columns and "delta_t" in df.columns
         for _sid, g in df.groupby("session_id"):
-            seq = g.sort_values("timestamp")["poi_idx"].astype(int).tolist()
+            g = g.sort_values("timestamp")
+            seq = g["poi_idx"].astype(int).tolist()
             if len(seq) < min_len:
                 continue
+            if has_ctx:
+                dd = g["delta_d"].to_numpy(dtype=np.float32)
+                dt = g["delta_t"].to_numpy(dtype=np.float32)
+            else:  # fall back to zeros (context-free training still works)
+                dd = np.zeros(len(seq), dtype=np.float32)
+                dt = np.zeros(len(seq), dtype=np.float32)
             if len(seq) > max_seq_len:
-                seq = seq[-max_seq_len:]
-            self.examples.append(
-                {"user": int(g["user_idx"].iloc[0]), "poi_seq": np.asarray(seq, dtype=np.int64)}
-            )
+                seq, dd, dt = seq[-max_seq_len:], dd[-max_seq_len:], dt[-max_seq_len:]
+            self.examples.append({
+                "user": int(g["user_idx"].iloc[0]),
+                "poi_seq": np.asarray(seq, dtype=np.int64),
+                "delta_d": dd,
+                "delta_t": dt,
+            })
 
     def __len__(self) -> int:
         return len(self.examples)
@@ -57,6 +68,8 @@ def seq_collate_fn(batch: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
     Returns:
         dict with tensors:
             - ``poi_seq``  (B, T_max) long  — padded ordered sequences
+            - ``delta_d``  (B, T_max) float — per-step haversine gap (km), padded 0
+            - ``delta_t``  (B, T_max) float — per-step time gap (h), padded 0
             - ``lengths``  (B,)       long  — true session lengths (all ≥ min_len)
             - ``user_ids`` (B,)       long
     """
@@ -64,11 +77,17 @@ def seq_collate_fn(batch: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
     max_len = int(lengths.max().item())
     B = len(batch)
     poi_seq = torch.zeros(B, max_len, dtype=torch.long)
+    delta_d = torch.zeros(B, max_len, dtype=torch.float)
+    delta_t = torch.zeros(B, max_len, dtype=torch.float)
     for i, b in enumerate(batch):
         L = len(b["poi_seq"])
         poi_seq[i, :L] = torch.from_numpy(b["poi_seq"])
+        delta_d[i, :L] = torch.from_numpy(b["delta_d"])
+        delta_t[i, :L] = torch.from_numpy(b["delta_t"])
     return {
         "poi_seq": poi_seq,
+        "delta_d": delta_d,
+        "delta_t": delta_t,
         "lengths": lengths,
         "user_ids": torch.tensor([b["user"] for b in batch], dtype=torch.long),
     }

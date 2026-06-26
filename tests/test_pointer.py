@@ -33,6 +33,8 @@ def _sessions_df():
     for sid, u, seq in specs:
         for i, p in enumerate(seq):
             rows.append({"session_id": sid, "user_idx": u, "poi_idx": p,
+                         "delta_d": 0.0 if i == 0 else 0.5 * i,
+                         "delta_t": 0.0 if i == 0 else 0.3 * i,
                          "timestamp": pd.Timestamp("2023-01-01") + pd.Timedelta(hours=sid, minutes=10 * i)})
     return pd.DataFrame(rows)
 
@@ -48,9 +50,13 @@ def test_seq_collate_pads_and_lengths():
     ds = ItinerarySeqDataset(_sessions_df(), min_len=3)
     batch = seq_collate_fn([ds[0], ds[1]])    # lengths 4 and 3
     assert batch["poi_seq"].shape == (2, 4)
+    assert batch["delta_d"].shape == (2, 4)
+    assert batch["delta_t"].shape == (2, 4)
     assert batch["lengths"].tolist() == [4, 3]
     assert batch["poi_seq"][1, 3].item() == 0  # padding
+    assert batch["delta_d"][1, 3].item() == 0.0  # padded delta
     assert batch["poi_seq"].dtype == torch.long
+    assert batch["delta_d"].dtype == torch.float
 
 
 # --------------------------------------------------------------------------
@@ -123,6 +129,60 @@ def test_evaluate_pointer_keys(tiny):
     m = evaluate_pointer(model, qs, edge_index, DEVICE, decoder="greedy")
     for k in ("pairs-F1", "set-F1", "exact-match", "feasibility", "n"):
         assert k in m
+    assert m["n"] == 2.0 and m["feasibility"] == 1.0
+
+
+@pytest.fixture(scope="module")
+def tiny_ctx():
+    torch.manual_seed(0)
+    n_pois, n_users = 30, 4
+    model = PointerItineraryModel(n_pois, n_users, d_p=32, d_u=16, d_h=32, d_c=16,
+                                  use_context=True).to(DEVICE).eval()
+    src = list(range(n_pois)) + list(range(n_pois - 1))
+    dst = list(range(n_pois)) + list(range(1, n_pois))
+    edge_index = torch.tensor([src + dst, dst + src], dtype=torch.long, device=DEVICE)
+    rng = np.random.default_rng(0)
+    coords = rng.uniform(low=[40.0, -74.1], high=[41.0, -73.7], size=(n_pois, 2))
+    return model, edge_index, coords, n_pois
+
+
+def test_context_forward_requires_deltas(tiny_ctx):
+    model, edge_index, _, _ = tiny_ctx
+    poi_seq = torch.tensor([[0, 1, 2, 3]], device=DEVICE)
+    lengths = torch.tensor([4], device=DEVICE)
+    users = torch.tensor([0], device=DEVICE)
+    with pytest.raises(ValueError):
+        model(poi_seq, lengths, users, edge_index)  # no deltas -> should raise
+
+
+def test_context_forward_and_backward(tiny_ctx):
+    model, edge_index, _, n_pois = tiny_ctx
+    model.train()
+    poi_seq = torch.tensor([[0, 1, 2, 3], [4, 5, 6, 0]], device=DEVICE)
+    lengths = torch.tensor([4, 3], device=DEVICE)
+    users = torch.tensor([0, 1], device=DEVICE)
+    dd = torch.rand(2, 4, device=DEVICE); dt = torch.rand(2, 4, device=DEVICE)
+    logits, targets, mask = model(poi_seq, lengths, users, edge_index, delta_d=dd, delta_t=dt)
+    assert logits.shape == (2, 3, n_pois)
+    loss = torch.nn.functional.cross_entropy(logits[mask], targets[mask])
+    loss.backward()
+    assert model.context.mlp_d[0].weight.grad is not None   # context MLP got gradient
+    model.eval()
+
+
+def test_context_decode_invariants(tiny_ctx):
+    model, edge_index, coords, _ = tiny_ctx
+    q = _q(3, 7, 6)
+    for r in (pointer_rollout_greedy(model, q, edge_index, DEVICE, poi_coords=coords),
+              pointer_rollout_beam(model, q, edge_index, DEVICE, beam=3, poi_coords=coords)):
+        assert len(r) == 6 and len(set(r)) == 6
+        assert r[0] == 3 and r[-1] == 7 and 7 not in r[:-1]
+
+
+def test_context_evaluate_runs(tiny_ctx):
+    model, edge_index, coords, _ = tiny_ctx
+    qs = [_q(3, 7, 5), _q(2, 9, 4, gt=[2, 0, 1, 9])]
+    m = evaluate_pointer(model, qs, edge_index, DEVICE, decoder="greedy", poi_coords=coords)
     assert m["n"] == 2.0 and m["feasibility"] == 1.0
 
 
