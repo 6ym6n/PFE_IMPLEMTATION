@@ -98,11 +98,28 @@ reports pairs-F1 ≈ 0.6–0.8 on Flickr cities of ~25–90 POIs). The gap is a
 dataset/vocabulary artifact (5,135 POIs vs ~30), not model quality. They are valid only
 as an **internal A-vs-B study** on identical data.
 
-**To get literature-comparable itinerary numbers → Strategy D:** run on the Flickr
-datasets with Chen-2016 protocol (see `itinerary_plan.md` §11–12; data linked in
-`articles/README.md` §9). Alternatively, to compare to a *Foursquare* itinerary paper,
-replicate that one paper's exact POI-filtering + trajectory protocol (e.g. ESWA 2024
-"interaction-based augmented data") — there is no shared Foursquare itinerary benchmark.
+**Phase 2b — itinerary on Flickr (Strategy D, DONE — literature-comparable).** Implemented
+in `src/flickr/` and `itinerary_plan.md` §13; run via `colab_flickr.ipynb` or
+`py -3.11 -m src.flickr.run_flickr`. Canonical `traj-*/poi-*.csv` (Chen 2016's own files),
+exact protocol (leave-one-trajectory-out, first+last POI given, length≥3 loop-free, set-F1 +
+pairs-F1, 0–1). Faithfulness check passes — **Random reproduces Chen 2016 within noise** per
+rule 4. Measured pairs-F1 (length≥3):
+
+| pairs-F1 | Toronto | Osaka | Glasgow | Edinburgh | Melbourne |
+|---|---|---|---|---|---|
+| Random (ours / Chen) | 0.30 / 0.31 | 0.30 / 0.30 | 0.30 / 0.32 | 0.27 / 0.26 | 0.23 / 0.25 |
+| PoiPopularity (ours) | 0.44 | 0.41 | 0.51 | 0.44 | 0.32 |
+| Markov / MarkovPath (ours) | 0.51 / 0.53 | 0.42 / 0.40 | 0.59 / 0.54 | 0.45 / 0.46 | 0.33 / 0.35 |
+| Pointer (learned, 60ep Colab) | 0.43 | 0.40 | 0.49 | 0.41 | 0.31 |
+| published SOTA (DeepTrip/SelfTrip/AR-Trip) | ~0.84 | ~0.85 | ~0.82 | ~0.81 | — |
+
+✅ On the literature's 0.3–0.85 scale (vs 0.26–0.29 on NYC). Honest finding: the light
+learned pointer reaches the scale but its ordering trails the Markov baseline and the neural
+SOTA (mirrors the Strategy-B/NYC lesson); opt-in levers (Markov prior, user emb, early stop)
+are implemented to close the gap. Full literature comparison in `src/flickr/published.py`.
+
+(Alternatively, to compare to a *Foursquare* itinerary paper, replicate that one paper's exact
+POI-filtering + trajectory protocol — there is no shared Foursquare itinerary benchmark.)
 
 ---
 
