@@ -55,6 +55,8 @@ user_ids ──► nn.Embedding(d_u) ──► e_u (B, d_u) ──► concat ─
 PFE_IMPLEMTATION/
 ├── implementation_guide.md     # master spec
 ├── roadmap.md                  # week-by-week plan + reference values
+├── evaluation_methodology.md   # READ FIRST before changing datasets/metrics/tables
+├── itinerary_plan.md           # Phase-2 itinerary design + measured A/B results
 ├── train_poi.ipynb             # Colab notebook, sections 2–9
 ├── requirements.txt            # pinned deps
 ├── README.md                   # you are here
