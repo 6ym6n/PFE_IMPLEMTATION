@@ -11,6 +11,7 @@ Deliverables for the Flickr itinerary-recommendation work (Strategy D).
 | **`strategy_d_slides.pptx`** | The Strategy-D talk — 17 widescreen slides, editable in PowerPoint/Google Slides. Native shapes for the diagrams; the three analytical charts are images. |
 | **`thesis_defense_slides.pptx`** | The **full-thesis** defence deck (18 slides) — the whole arc (motivation → Phase-1 engine → Strategy A/B/D → Halder/DLIR positioning → results → future work). Editable, native diagrams. |
 | **`thesis_explained.pdf`** | The **full-thesis** companion document (9 pages) — the whole project explained in plain language with diagrams and worked examples (page 2 is a one-page "whole idea" summary). |
+| **`model_slides.pptx`** | The **model-centric** deck (14 slides) — leads with the next-POI engine as "the model" and Strategy A as the itinerary method; B/D appear only as supporting experiment/validation. The recommended deck to present to the jury. |
 
 The thesis 1-page positioning statement lives at repo root: **`../../thesis_positioning.md`**
 (title → research questions → how A/B/D map → how it engages Halder/DLIR). Drop it into the thesis intro.
