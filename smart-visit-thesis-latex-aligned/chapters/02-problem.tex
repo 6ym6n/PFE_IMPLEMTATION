@@ -174,49 +174,19 @@ L \le L_{\max}.
 \]
 Even when $L_{\max}$ is not explicitly given, it can be derived from budget considerations (e.g., typical visit durations).
 
-\paragraph{C4: Opening hours and time windows (optional).}
-If opening hour data is available, each POI $v$ can be associated with an admissible visit interval $[a(v), b(v)]$.
-A scheduled itinerary $(\mathbf{s},\mathbf{t})$ is feasible if each visit starts within its time window:
-\[
-t_\ell \in [a(s_\ell), b(s_\ell)] \quad \forall \ell,
-\]
-and travel and visit times are consistent:
-\[
-t_{\ell+1} \ge t_\ell + \delta(s_\ell) + \tau(s_\ell, s_{\ell+1}).
-\]
-Because opening hours are not always present in Foursquare-style datasets, this constraint is treated as optional in this thesis; however, the framework is designed such that it can be incorporated when such metadata is available.
-
 \subsection{Soft objectives for itinerary quality}
-Among feasible itineraries, the system must choose those that best satisfy user-centric quality objectives. We treat these objectives as \emph{soft} constraints: they guide optimization but can be traded off against each other.
+Among feasible itineraries, the system should prefer those that best match the user. We treat these as \emph{soft} objectives that guide selection but can be traded off.
 
 \paragraph{O1: Preference alignment (personalization).}
-An itinerary should maximize alignment with the user's preference representation $\mathbf{p}_u$. This alignment can be expressed through a per-POI relevance score $r(u, v, c)$ learned from data or derived from semantic similarity.
+An itinerary should maximize alignment with the user's preference representation $\mathbf{p}_u$, expressed through a per-POI relevance score $r(u, v, c)$ learned from data.
 
 \paragraph{O2: Context alignment.}
-The itinerary should be suitable for the observed context (time-of-day and weather). In practice, this can be captured by context-conditioned scoring (e.g., different relevance for the same POI under different $c$) \citep{adomavicius2005tois, adomavicius2022cars}.
+The itinerary should be suitable for the observed spatial/temporal context, captured by context-conditioned scoring---a different relevance for the same POI under different $c$ \citep{adomavicius2005tois, adomavicius2022cars}.
 
-\paragraph{O3: Geographic coherence and travel-effort minimization.}
-Even when the budget constraint is satisfied, itineraries can differ significantly in travel effort. A coherent itinerary should avoid unnecessary long legs and excessive backtracking. This objective can be expressed through penalties based on travel costs, for example minimizing:
-\[
-\mathrm{Travel}(\mathbf{s}) = \sum_{\ell=1}^{L-1}\tau(s_\ell, s_{\ell+1}).
-\]
+\paragraph{Further quality objectives (scoped as future work).}
+Geographic coherence (minimizing travel effort) and category diversity are also desirable and can be added as travel-cost penalties and diversity rewards in the decoding objective; opening-hour/time-window feasibility can likewise be enforced when such metadata is available. Because the realized system enforces only the budget and uniqueness constraints (Section~\ref{sec:sol-decoding}), these terms are treated as extensions rather than part of the evaluated method (Chapter~\ref{ch:conclusion}).
 
-\paragraph{O4: Diversity and experience balance.}
-To avoid redundant experiences, itineraries should cover diverse categories or semantic themes. Diversity can be measured using category entropy or pairwise dissimilarity between POIs, and then treated as a reward.
-
-\subsection{A practical multi-objective view}
-Combining these components, a useful conceptual objective is to select an itinerary that maximizes a composite score of the form:
-\[
-\max_{\mathbf{s}} \;\;
-\underbrace{\sum_{\ell=1}^{L} r(u, s_\ell, c_\ell)}_{\text{personal relevance + context}}
-\;-\;
-\lambda_{\mathrm{tr}} \underbrace{\sum_{\ell=1}^{L-1}\tau(s_\ell, s_{\ell+1})}_{\text{travel effort}}
-\;+\;
-\lambda_{\mathrm{div}} \underbrace{\mathrm{Div}(\mathbf{s})}_{\text{diversity}}
-\]
-subject to the hard feasibility constraints above.
-
-This formulation makes two important points explicit. First, itinerary generation is inherently \textbf{multi-objective}: the best itinerary is not simply the one with the top-ranked individual POIs, but the one that jointly optimizes relevance, coherence, and diversity under constraints. Second, feasibility is not a post-processing detail: the set of valid itineraries is restricted by budget and operational constraints, which requires algorithms capable of reasoning over \emph{sequences} rather than independent POIs.
+Two points follow. First, itinerary generation is inherently \textbf{multi-objective}: the best itinerary is not simply the set of top-ranked individual POIs. Second, feasibility is a generation-time concern rather than a post-processing detail, which requires algorithms that reason over \emph{sequences} rather than independent POIs.
 
 In the next section, we discuss why this problem remains challenging in practice, focusing on dataset bias, cold-start, and the limitations of greedy next-step recommendation.
 
@@ -252,13 +222,7 @@ Collaborative filtering methods are known to degrade in sparse regimes \citep{ko
 Tourism decisions are highly context-dependent, yet context signals can introduce additional sparsity. Time-of-day and weather create multiple contextual states; if these states are treated as separate cases (e.g., via filtering), the amount of training data per state decreases. CARS research emphasizes this trade-off and motivates contextual modeling with shared representations to avoid the curse of dimensionality \citep{adomavicius2005tois, adomavicius2022cars, villegas2018cars}. In itinerary generation, context also affects feasibility and travel behavior, making it important not only for scoring POIs but also for shaping the overall sequence.
 
 \subsection{The greedy trap: local next-POI accuracy vs.\ itinerary quality (\textbf{RQ3})}
-Sequential POI recommenders are often trained for next-POI prediction and deployed with greedy decoding, selecting the most likely next POI at each step. This introduces a mismatch between the training objective and the desired output:
-\begin{itemize}[leftmargin=*]
-    \item \textbf{Myopic decisions:} a locally optimal next POI can lead to globally poor outcomes (e.g., traveling far early reduces remaining budget and forces infeasible endings).
-    \item \textbf{Zigzag routes:} step-wise selection can oscillate between distant areas of the city, harming geographic coherence even if each step is plausible.
-    \item \textbf{Constraint violations:} time budgets and (optional) time windows can be violated if feasibility is not enforced during generation.
-\end{itemize}
-As noted in route-like generation work, producing coherent sequences often requires inference-time strategies that consider multiple future steps rather than only the next prediction \citep{wu2025tlmr}. This motivates \textbf{RQ3}, which focuses on constrained decoding as a mechanism to generate feasible and coherent itineraries.
+Sequential POI recommenders are trained for next-POI prediction but, when deployed with greedy decoding, can produce globally poor routes despite locally plausible steps: myopic choices that exhaust the budget early, zigzag routes that harm geographic coherence, and budget violations when feasibility is not enforced during generation. We call this the \emph{greedy trap} (illustrated in Chapter~\ref{ch:introduction}, Figure~\ref{fig:greedy-trap}); producing coherent sequences requires inference-time strategies that look beyond the next step \citep{wu2025tlmr}, which motivates \textbf{RQ3}.
 
 \subsection{Interdependence of the challenges}
 Importantly, these challenges are not independent. Dataset bias can worsen cold-start (if residents dominate training signals), context modeling can amplify sparsity (if not embedded properly), and greedy decoding can magnify any small scoring errors into globally infeasible itineraries. Therefore, the problem requires a solution that jointly addresses (i) data alignment to tourism intent, (ii) robust preference modeling under sparsity, (iii) explicit context conditioning, and (iv) constraint-aware sequence generation.

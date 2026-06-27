@@ -12,7 +12,7 @@ This chapter provides a comprehensive review of the state of the art organized a
 
 \input{figures/fig-taxonomy}
 
-The remainder of this chapter is organized as follows. Section~\ref{sec:sota-data} reviews the data sources and collection methods that underpin tourism recommendation research, including their biases and limitations. Section~\ref{sec:sota-nonpers} covers non-personalized approaches rooted in operations research and general POI recommendation. Section~\ref{sec:sota-pers} surveys personalized methods, from collaborative filtering to hybrid cold-start strategies. Section~\ref{sec:sota-cars} examines context-aware recommendation, focusing on temporal, environmental, and multimodal context integration. Section~\ref{sec:sota-dl} provides an in-depth review of deep learning models---the technical core of the chapter---spanning recurrent networks, Transformers, graph neural networks, reinforcement learning, self-supervised learning, and large language models. Section~\ref{sec:sota-decoding} discusses constraint handling and decoding strategies for itinerary generation. Section~\ref{sec:sota-fairness} reviews fairness and multi-stakeholder satisfaction. Finally, Section~\ref{sec:sota-synthesis} synthesizes the survey into a comparative analysis and identifies research gaps that motivate the proposed framework.
+The remainder of this chapter is organized as follows. Section~\ref{sec:sota-data} reviews the data sources and collection methods that underpin tourism recommendation research, including their biases and limitations. Section~\ref{sec:sota-nonpers} covers non-personalized approaches rooted in operations research and general POI recommendation. Section~\ref{sec:sota-pers} surveys personalized methods, from collaborative filtering to hybrid cold-start strategies. Section~\ref{sec:sota-cars} examines context-aware recommendation, focusing on temporal, environmental, and multimodal context integration. Section~\ref{sec:sota-dl} provides an in-depth review of deep learning models---the technical core of the chapter---spanning recurrent networks, Transformers, graph neural networks, reinforcement learning, self-supervised learning, and large language models. Section~\ref{sec:sota-decoding} discusses constraint handling and decoding strategies for itinerary generation. Finally, Section~\ref{sec:sota-synthesis} synthesizes the survey into a comparative analysis and identifies research gaps that motivate the proposed system.
 % ============================================================
 % SECTION 3.2 — Tourism Data Sources and Collection Methods
 % Paste after Section 3.1 in the final 03-state-of-art.tex
@@ -57,15 +57,7 @@ However, GPS mobility data introduces a distinct form of bias when applied to to
 \label{sec:sota-data-emerging}
 % -----------------------------------------------------------
 
-Recent work has expanded the range of data sources beyond the three traditional types described above.
-
-\textbf{User reviews and sentiment.} Platforms such as TripAdvisor and Google Reviews provide textual reviews that encode fine-grained opinion about specific aspects of a visit (e.g., ambiance, service quality, waiting time). Sentiment analysis and aspect extraction from reviews can enrich POI representations beyond simple category labels~\cite{lou2020spr}. Chen et al.~\cite{chen2019description} showed that POI description-based similarity outperforms category-only similarity for capturing user interest and handling cold-start POIs.
-
-\textbf{Social media and visual content.} Instagram and Twitter/X posts provide both textual and visual signals. Image features extracted from tourist photographs can capture aesthetic qualities of POIs that are difficult to represent through metadata alone~\cite{wang2018vpoi}. Multi-modal approaches that combine visual, textual, and geographic features have shown improvements in POI recommendation accuracy~\cite{chang2019deeppim}.
-
-\textbf{Real-time contextual feeds.} Weather APIs, event calendars, and crowd-sensing platforms offer dynamic contextual information that can be integrated at recommendation time. While these sources are essential for context-aware systems (Section~\ref{sec:sota-cars}), their integration into POI and itinerary recommendation remains limited in the academic literature, partly due to the difficulty of retrospectively associating real-time conditions with historical check-in data.
-
-\textbf{Knowledge graphs and ontologies.} Structured knowledge representations linking POIs, categories, geographic regions, and tourism concepts through semantic relationships have been explored as a way to provide richer contextual reasoning~\cite{guo2022kgsurvey}. Ontology-based approaches using GeoSPARQL have recently been combined with deep neural networks to enable geospatial reasoning in tourism recommendation~\cite{contextonto2025}.
+Recent work has expanded the range of data sources beyond the three traditional types above. User reviews and sentiment (TripAdvisor, Google Reviews) encode fine-grained opinion that enriches POI representations beyond category labels; description-based similarity outperforms category-only similarity and helps with cold-start POIs~\cite{chen2019description}. Social-media and visual content (Instagram, Twitter/X) add aesthetic and multimodal signals~\cite{wang2018vpoi}. Real-time feeds (weather APIs, event calendars, crowd sensing) offer dynamic context but are difficult to associate retrospectively with historical check-ins, and structured knowledge graphs and ontologies have been explored for richer semantic reasoning. These sources remain comparatively under-exploited in academic itinerary recommendation.
 
 % -----------------------------------------------------------
 \subsection{Discussion: Data Biases and Implications}
@@ -291,20 +283,14 @@ The application of CARS principles to tourism POI and itinerary recommendation h
 
 \textbf{Real-time and dynamic context adaptation.} An emerging direction moves beyond static context snapshots toward systems that adapt recommendations as context evolves during a trip. Bowen et al.~\cite{bowen2020crowdedness} developed a crowdedness-aware route recommendation algorithm to predict visitor volumes at specific locations over time, adjusting itinerary suggestions to avoid congestion. The integration of real-time data streams (weather updates, event changes, crowd levels) into recommendation pipelines is technically feasible through API integrations but remains rare in academic evaluation settings, where historical datasets lack the associated real-time signals.
 
-\textbf{Post-COVID context considerations.} The COVID-19 pandemic introduced new contextual factors into tourism planning: venue capacity limits, social distancing requirements, health risk awareness, and reduced operating hours~\cite{halder2022thesis}. While many of these restrictions have been relaxed, they highlighted the importance of treating capacity and crowd density as first-class contextual variables in recommendation systems---a perspective that connects to the fairness and capacity-aware literature discussed in Section~\ref{sec:sota-fairness}.
+\textbf{Post-COVID context considerations.} The COVID-19 pandemic introduced new contextual factors into tourism planning: venue capacity limits, social distancing requirements, health risk awareness, and reduced operating hours~\cite{halder2022thesis}. While many of these restrictions have been relaxed, they highlighted the importance of treating capacity and crowd density as first-class contextual variables in recommendation systems.
 
 % -----------------------------------------------------------
 \subsection{Multimodal and Heterogeneous Context Integration}
 \label{sec:sota-cars-multimodal}
 % -----------------------------------------------------------
 
-Recent advances have expanded the definition of context beyond single-variable signals (time, weather) toward multimodal and heterogeneous data integration.
-
-\textbf{Heterogeneous data for POI recommendation.} A recent survey by Jorro-Aragoneses et al.~\cite{jorro2025heterogeneous} systematically reviewed how heterogeneous data sources---trajectories, social media, reviews, images, and geographic metadata---are combined to enrich POI recommendation. The survey identifies a trend away from explicit similarity-based methods toward learned embeddings from deep neural networks and graph structures that implicitly capture multi-source relationships. However, the survey also notes that effective integration of heterogeneous data remains challenging due to differences in data formats, temporal granularity, and noise characteristics across sources.
-
-\textbf{Knowledge graphs for contextual reasoning.} Knowledge graph-based recommender systems represent users, POIs, categories, and contextual factors as entities in a structured graph, enabling reasoning over semantic relationships~\cite{guo2022kgsurvey}. In tourism, ontology-based approaches enhanced with geospatial reasoning (e.g., GeoSPARQL) have been combined with deep neural networks to provide context-aware recommendations that account for spatial proximity, category hierarchies, and environmental conditions simultaneously~\cite{contextonto2025}.
-
-\textbf{RAG-augmented contextual grounding.} With the emergence of large language models (Section~\ref{sec:sota-dl}), Retrieval-Augmented Generation (RAG) has been applied to tourism recommendation to ground LLM-generated suggestions with up-to-date contextual data. Qi et al.~\cite{qi2024tibetanrag} developed a RAG-based tourism assistant that retrieves current event and venue information to reduce hallucination and improve the contextual accuracy of recommendations. Kozhipuram et al.~\cite{kozhipuram2025contextrag} evaluated seven LLMs for context-aware tourism recommendation using RAG with semantic re-ranking, finding that model performance varies significantly depending on the quality of context integration. These approaches represent a promising but still maturing direction for real-time contextual adaptation.
+Recent work has expanded context beyond single variables (time, weather) toward multimodal and heterogeneous integration---fusing trajectories, reviews, images, and knowledge graphs, and, more recently, grounding LLM-generated suggestions with retrieval-augmented generation (RAG). These directions enrich POI representations but add considerable system complexity, and effective fusion across sources with differing formats, temporal granularity, and noise characteristics remains an open challenge.
 
 \medskip
 
@@ -362,15 +348,7 @@ Graph Neural Networks (GNNs) have attracted significant attention for POI recomm
 
 \textbf{Graph attention and heterogeneous graphs.} Graph Attention Networks (GAT) extended GCN by learning attention-weighted aggregation of neighbor information, enabling the model to assign different importance to different POI connections~\cite{velivckovic2018gat}. Heterogeneous graph approaches model multiple types of nodes (users, POIs, categories) and edges (visits, spatial proximity, social connections) within a unified framework, capturing richer interaction semantics~\cite{gnnpoi2024survey}.
 
-\textbf{Hypergraph neural networks.} Standard graphs represent pairwise relationships, but tourism interactions often involve higher-order dependencies (e.g., a user visiting a group of POIs together, or a category pattern spanning multiple venues). Hypergraph neural networks address this limitation by allowing hyperedges that connect multiple nodes simultaneously, modeling collective user-POI-context interactions~\cite{xia2021hypergraph}. Recent work has demonstrated that hypergraph representations outperform standard graph models for POI recommendation by capturing group-level visitation patterns.
-
-\textbf{Multi-graph fusion and contrastive learning on graphs.} A major development since 2023 is the combination of multiple graph views with contrastive learning objectives. The MGMCL model~\cite{chen2025mgmcl} constructs both a geospatial relation graph and a trajectory transition graph from check-in data, then applies gated graph neural networks with multi-granularity contrastive learning to capture complementary spatial and behavioral patterns. DisenPOI~\cite{qin2023disenpoi} disentangles sequential and geographical influence for POI recommendation using separate graph encodings. At SIGIR 2024, CLLP~\cite{wang2024cllp} applied contrastive learning with location prompts for next-POI prediction, while adaptive graph contrastive learning approaches~\cite{rao2025agcl} demonstrated state-of-the-art results on standard benchmarks.
-
-\textbf{Social graph integration.} The TraFriendFormer model~\cite{liu2025trafriend} combines trajectory flow graphs (processed with GCN) with social friendship graphs (processed with GraphSAGE~\cite{hamilton2017graphsage}) and a Transformer prediction head, achieving improvements by jointly modeling mobility patterns and social influence for next-POI recommendation.
-
-\textbf{Disentangled representations.} At IJCAI 2025, the DPRL model~\cite{dprl2025ijcai} proposed disentangled and personalized representation learning that separates intrinsic user interests from contextual transition patterns, addressing the entanglement problem where a user's check-in at a restaurant near their office is conflated with genuine dining preference.
-
-\textbf{Group POI recommendation.} The APRRGM model~\cite{aprrgm2025} addressed POI recommendation for random groups using improved GNNs combined with a multi-negotiation model to reconcile diverse preferences within a group---a scenario common in tourism where families or friends travel together.
+\textbf{Beyond pairwise graphs.} A large body of recent work extends these ideas---hypergraphs for higher-order (group) interactions, multi-graph fusion combined with contrastive learning, social-graph integration of mobility and friendship signals, and disentangled representations that separate intrinsic interest from contextual transition patterns---typically reporting incremental state-of-the-art gains on standard next-POI benchmarks. These confirm the value of graph structure but, being designed for ranking, share the limitation below.
 
 \textbf{Strengths and limitations.} GNNs excel at capturing spatial topology, social influence, and high-order POI relationships that sequential models miss. The combination with contrastive learning effectively addresses data sparsity. However, GNN-based models typically output POI scores or rankings rather than complete itineraries, and they do not natively enforce route-level constraints such as time budgets and geographic coherence.
 
@@ -396,15 +374,7 @@ Reinforcement learning (RL) formulates recommendation as a sequential decision-m
 \label{sec:sota-dl-ssl}
 % -----------------------------------------------------------
 
-Self-supervised learning (SSL) has emerged as a powerful paradigm for POI recommendation since 2023, addressing the fundamental challenge of data sparsity by creating auxiliary training signals from unlabeled data. This subsection reviews SSL approaches that are largely absent from pre-2022 surveys.
-
-\textbf{Contrastive SSL for POI recommendation.} Contrastive learning methods construct positive and negative pairs from check-in data and train representations by pulling similar pairs closer while pushing dissimilar pairs apart in the embedding space. CLSPRec~\cite{duan2023clsprec} applies contrastive learning to capture both long-term and short-term user preferences for next-POI recommendation. The SCL model~\cite{scl2025} uses supervised contrastive learning with trajectory data to learn robust POI representations that transfer across sparse datasets.
-
-\textbf{Graph-augmented contrastive learning.} Combining graph structures with contrastive objectives has proven particularly effective. At SIGIR 2024, disentangled contrastive hypergraph learning~\cite{wang2024cllp} demonstrated that contrasting different views of the user-POI interaction graph (e.g., spatial view vs.\ behavioral view) produces more generalizable representations than single-view training. Rao et al.~\cite{rao2025agcl} proposed adaptive graph contrastive learning for next-POI recommendation, dynamically adjusting the contrastive augmentation strategy during training.
-
-\textbf{Diffusion models for POI recommendation.} Generative approaches using diffusion models have recently been explored. Diff-POI~\cite{qin2023diffpoi} applies diffusion processes to model the distribution of next-POI visits, generating diverse and calibrated predictions. DSDRec~\cite{dsdrec2024} combines diffusion with sequential modeling for POI recommendation, demonstrating improvements in diversity and cold-start scenarios compared to discriminative baselines.
-
-\textbf{Strengths and limitations.} SSL methods are particularly valuable for tourism data because they extract useful training signal from the abundant unlabeled check-in data, mitigating the sparsity that plagues supervised approaches. Contrastive learning on graphs effectively handles cold-start for both new users and new POIs. However, SSL methods add computational overhead during pretraining, and the design of effective pretext tasks and augmentation strategies requires careful engineering. Most SSL work focuses on individual POI recommendation rather than full itinerary generation.
+Self-supervised learning (SSL) has become a powerful paradigm for POI and trip recommendation since 2023, addressing data sparsity by creating auxiliary training signals from unlabelled trajectories---for example contrastive methods that pull positive check-in pairs together~\cite{duan2023clsprec} and generative diffusion models of the next-POI distribution~\cite{qin2023diffpoi}. This family is directly relevant to this thesis: the strongest published trip-recommendation results (notably SelfTrip, discussed with the itinerary literature) are built on self-supervised contrastive pre-training and trajectory augmentation---machinery our light pointer omits, and a likely reason it trails the neural state of the art. The trade-offs are added pre-training cost and pretext-task/augmentation engineering, and most SSL work still targets individual POI recommendation rather than full itinerary generation.
 
 % -----------------------------------------------------------
 \subsection{Large Language Models for Travel Planning}
@@ -413,9 +383,9 @@ Self-supervised learning (SSL) has emerged as a powerful paradigm for POI recomm
 
 The emergence of large language models (LLMs) such as GPT-4, Claude, Gemini, and open-source alternatives has introduced a fundamentally new paradigm for travel recommendation. Unlike the specialized models reviewed above, LLMs can understand natural language preference descriptions, reason about spatial and temporal constraints, and generate human-readable itinerary suggestions through conversational interaction~\cite{kozhipuram2025contextrag}.
 
-\textbf{LLMs as zero-shot recommenders.} Hou et al.~\cite{hou2024llmranker} demonstrated that LLMs can serve as zero-shot rankers for recommender systems, achieving competitive performance without task-specific training by leveraging their world knowledge about items and user preferences. In the POI domain, LLMmove~\cite{feng2024llmmove} applies LLMs directly to POI recommendation by formulating check-in prediction as a text completion task. Li et al.~\cite{li2024llmpoi} explored LLM-based POI recommendation with spatial awareness at SIGIR 2024.
+\textbf{LLMs as zero-shot recommenders.} LLMs can serve as zero-shot rankers for recommender systems by leveraging their world knowledge without task-specific training, and have been applied directly to next-POI recommendation by formulating check-in prediction as a text-completion task with spatial awareness~\cite{li2024llm4poi}.
 
-\textbf{Hybrid LLM + optimization pipelines.} A key insight from recent research is that LLMs excel at understanding user intent and generating plausible initial plans, but struggle with quantitative constraint satisfaction. To address this, hybrid architectures combine LLMs with external optimization components. Google Research~\cite{google2024tripplanning} developed a system where an LLM suggests an initial itinerary that is then grounded with real-world data (opening hours, travel times) and refined by a scheduling optimization algorithm. The MIT TravelAgent framework~\cite{fan2024travelagent} uses LLMs as translators that convert natural language travel requests into formal constraint satisfaction problems solved by SMT (Satisfiability Modulo Theories) solvers, achieving substantially higher plan validity than LLMs alone.
+\textbf{Hybrid LLM + optimization pipelines.} A key insight from recent research is that LLMs excel at understanding user intent and generating plausible initial plans, but struggle with quantitative constraint satisfaction. To address this, hybrid architectures combine LLMs with external optimization components: for example, the TravelAgent framework~\cite{fan2024travelagent} uses LLMs as translators that convert natural-language travel requests into formal constraint-satisfaction problems solved by SMT (Satisfiability Modulo Theories) solvers, achieving substantially higher plan validity than LLMs alone.
 
 \textbf{LLM-Modulo framework.} Kambhampati et al.~\cite{kambhampati2024llmmodulo} proposed the LLM-Modulo framework, in which LLM-generated plans are iteratively verified by external critic modules (budget checker, room type validator, transportation feasibility checker). Applied to the TravelPlanning benchmark, this approach achieved a 4.6$\times$ improvement in plan validity for GPT-4-Turbo over unassisted LLM generation.
 
@@ -492,66 +462,14 @@ Given a trained sequential model that assigns scores to candidate next POIs, the
 
 Despite the critical importance of decoding for itinerary quality, the majority of learning-based POI and itinerary recommendation systems default to greedy decoding or do not explicitly discuss their generation strategy. This creates a persistent gap between next-POI prediction accuracy (which can be high) and itinerary-level quality (which may be poor due to zigzag routes, budget violations, or lack of diversity). Constrained beam search offers a principled middle ground---more expressive than greedy decoding, less computationally demanding than MCTS, and more flexible than two-stage pipelines---but remains underexplored in the tourism recommendation literature. This gap is directly relevant to the framework proposed in this thesis.
 % ============================================================
-% SECTION 3.8 — Fairness and Multi-Stakeholder Satisfaction
-% Paste after Section 3.7 in the final 03-state-of-art.tex
-% ============================================================
-
-\section{Fairness and Multi-Stakeholder Satisfaction}
-\label{sec:sota-fairness}
-
-The vast majority of POI and itinerary recommendation research focuses exclusively on maximizing user satisfaction. However, tourism recommendation operates in a multi-stakeholder ecosystem: beyond the tourist (user), POI providers (businesses, attractions, cultural sites) depend on sufficient visitor flow to sustain their operations, and platform operators seek balanced, sustainable tourism ecosystems. Optimizing solely for user preferences can lead to severe concentration of visitors at a few popular POIs, starving less-known but high-quality venues of exposure and contributing to over-tourism at popular sites~\cite{halder2022thesis}. This section reviews emerging work on fairness in POI and itinerary recommendation.
-
-% -----------------------------------------------------------
-\subsection{Provider-Side Fairness}
-\label{sec:sota-fair-provider}
-% -----------------------------------------------------------
-
-Provider-side fairness addresses the concern that recommendation systems may distribute visitor exposure unevenly across POIs, creating a rich-get-richer dynamic where popular venues receive disproportionate recommendation frequency while less-visited venues are systematically overlooked.
-
-\textbf{POI exposure inequality.} In standard recommendation, ranking by predicted user preference naturally favors popular POIs that have more interaction data and higher average scores. This popularity bias means that new or niche POIs---even those of high quality---may rarely appear in recommendations, limiting their ability to attract visitors~\cite{abdollahpouri2020popularity}. In the tourism context, this effect can threaten the economic viability of smaller attractions and reduce the overall diversity of the tourism ecosystem.
-
-\textbf{Capacity-aware recommendation.} Halder et al.~\cite{halder2022ftpr} proposed the Fair Top-$K$ POI Recommendation (FTPR) model, which explicitly incorporates POI capacity constraints into the recommendation process. FTPR combines a learned recommendation model with an allocation algorithm that enforces capacity-based envy-free allocation: when a POI is over-demanded (more users want to visit than its capacity allows), an over-demand cut policy redistributes some users to alternative POIs; when a POI is under-demanded, an under-demand add policy increases its exposure. The model optimizes a joint objective that balances user satisfaction with provider-side exposure fairness, evaluated using metrics including Capacity-based Envy-Free Allocation (CEFA), Capacity-based Fairness of Satisfied POIs (CFSP), and Capacity-based Inequality in POI Exposures (CIPE).
-
-\textbf{Sustainable tourism distribution.} Related to provider fairness is the broader goal of distributing tourist flows to reduce over-tourism at congested sites. Dalla Vecchia et al.~\cite{dallavecchia2024sustainable} applied deep reinforcement learning to recommend itineraries that balance user satisfaction with environmental sustainability, explicitly penalizing recommendations that concentrate visitors at already-crowded locations. This connects provider fairness to urban planning and sustainability objectives.
-
-% -----------------------------------------------------------
-\subsection{User-Side Fairness}
-\label{sec:sota-fair-user}
-% -----------------------------------------------------------
-
-User-side fairness ensures that the recommendation system does not systematically disadvantage certain users or user groups.
-
-\textbf{Group fairness.} In group tourism settings, recommendations must balance the diverse preferences of multiple travelers. Serbos et al.~\cite{serbos2017groupfair} proposed methods for achieving individual fairness in group tour recommendations on travel booking platforms, ensuring that no group member's preferences are systematically ignored. The APRRGM model~\cite{aprrgm2025} addresses POI recommendation for random groups using personality-aware GNNs with a multi-negotiation mechanism to reconcile conflicting preferences.
-
-\textbf{Individual fairness.} The principle that similar users should receive similar recommendations has been explored through fairness-aware re-ranking and constrained optimization. In the POI context, individual fairness is particularly relevant for ensuring that tourists with comparable interest profiles receive comparable itinerary quality regardless of their interaction history density or demographic characteristics.
-
-\textbf{Envy-free allocation.} Borrowed from fair division theory in economics, envy-freeness requires that no user would prefer another user's recommendation over their own. Patro et al.~\cite{patro2020fairrec} proposed FairRec, which maps product recommendation as a fair allocation problem, ensuring envy-free distributions across users while maintaining recommendation quality. Halder's FTPR model~\cite{halder2022ftpr} extends this concept to POI recommendation with capacity constraints, combining envy-freeness with provider-side fairness.
-
-% -----------------------------------------------------------
-\subsection{Multi-Stakeholder Balancing}
-\label{sec:sota-fair-multi}
-% -----------------------------------------------------------
-
-The most comprehensive approaches consider fairness as a multi-stakeholder optimization problem, jointly addressing user satisfaction, provider exposure, and platform-level objectives.
-
-\textbf{Two-sided fairness.} Suhr et al.~\cite{suhr2019twosided} and Chakraborty et al.~\cite{chakraborty2019twosided} introduced frameworks for combining user-side and provider-side fairness in a single recommendation model. These approaches formalize the inherent tension between maximizing user utility (which favors popular, high-quality items) and ensuring equitable exposure (which requires recommending less-popular items to some users).
-
-\textbf{GNN-based fairness enforcement.} Recent work has explored using graph neural networks to enforce fairness constraints directly in the learned POI representations, ensuring that the embedding space itself does not encode biases that lead to unfair recommendations~\cite{chen2023gnnfair}. This approach integrates fairness as a structural property of the model rather than a post-hoc correction.
-
-\textbf{Multi-stakeholder recommendation systems (MSRS).} The MSRS framework explicitly models the utility functions of multiple stakeholders (users, providers, platform) and seeks Pareto-optimal solutions that balance competing objectives~\cite{burke2017msrs}. In tourism, this translates to systems that recommend itineraries benefiting tourists while ensuring sustainable business for POI providers and balanced visitor distribution for city planners.
-
-\medskip
-
-While fairness is not the primary focus of this thesis, the literature reviewed in this section highlights an important dimension of itinerary recommendation that complements the personalization and feasibility concerns addressed in Chapters~\ref{ch:introduction} and~\ref{ch:problem}. The capacity-aware perspective is particularly relevant: even without explicitly optimizing for fairness, an itinerary recommendation system that distributes visitors more evenly (e.g., through diversity objectives) contributes to a more sustainable tourism ecosystem.
-% ============================================================
-% SECTION 3.9 — Comparative Synthesis and Research Gaps
+% SECTION 3.8 — Comparative Synthesis and Research Gaps
 % Paste after Section 3.8 in the final 03-state-of-art.tex
 % ============================================================
 
 \section{Comparative Synthesis and Research Gaps}
 \label{sec:sota-synthesis}
 
-The preceding sections surveyed the state of the art across data sources, non-personalized and personalized methods, context-aware recommendation, deep learning architectures, constraint handling strategies, and fairness considerations. This section synthesizes these threads into (i)~a structured comparison of method families, (ii)~a gap analysis that identifies open challenges, and (iii)~a positioning of the proposed system relative to existing work.
+The preceding sections surveyed the state of the art across data sources, non-personalized and personalized methods, context-aware recommendation, deep learning architectures, and constraint handling strategies. This section synthesizes these threads into (i)~a structured comparison of method families, (ii)~a gap analysis that identifies open challenges, and (iii)~a positioning of the proposed system relative to existing work.
 
 % -----------------------------------------------------------
 \subsection{Comparison Across Method Families}
@@ -640,6 +558,6 @@ The resulting position is a \emph{learning-based} system (unlike pure optimizati
 \label{sec:sota-summary}
 % -----------------------------------------------------------
 
-This chapter provided a comprehensive review of the state of the art in tourist itinerary and POI recommendation, organized as a field taxonomy extending Halder~\cite{halder2022thesis} to incorporate developments through 2026. We surveyed tourism data sources and their biases (Section~\ref{sec:sota-data}), non-personalized optimization approaches (Section~\ref{sec:sota-nonpers}), personalized recommendation methods from collaborative filtering to hybrid cold-start strategies (Section~\ref{sec:sota-pers}), context-aware recommendation with temporal, environmental, and multimodal signals (Section~\ref{sec:sota-cars}), deep learning models spanning six architectural families including the emerging paradigms of self-supervised learning and LLM-based travel planning (Section~\ref{sec:sota-dl}), constraint handling and decoding strategies (Section~\ref{sec:sota-decoding}), and fairness and multi-stakeholder satisfaction (Section~\ref{sec:sota-fairness}).
+This chapter provided a comprehensive review of the state of the art in tourist itinerary and POI recommendation, organized as a field taxonomy extending Halder~\cite{halder2022thesis} to incorporate developments through 2026. We surveyed tourism data sources and their biases (Section~\ref{sec:sota-data}), non-personalized optimization approaches (Section~\ref{sec:sota-nonpers}), personalized recommendation methods from collaborative filtering to hybrid cold-start strategies (Section~\ref{sec:sota-pers}), context-aware recommendation with temporal, environmental, and multimodal signals (Section~\ref{sec:sota-cars}), deep learning models spanning several architectural families including the emerging paradigms of self-supervised learning and LLM-based travel planning (Section~\ref{sec:sota-dl}), and constraint handling and decoding strategies (Section~\ref{sec:sota-decoding}).
 
 The comparative synthesis identified five research gaps---cold-start itinerary personalization, limited environmental context integration, the disconnect between next-POI training and itinerary quality, LLM constraint satisfaction limitations, and fragmented evaluation---that collectively motivate the system presented in the next chapter.
