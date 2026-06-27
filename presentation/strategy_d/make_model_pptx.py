@@ -177,7 +177,7 @@ def s_title():
          [[("A next-POI engine — GCN + GRU + user embedding + context", 18, RGBColor(0x9F, 0xC0, 0xC0), False, True)]],
          align=PP_ALIGN.CENTER)
     text(s, 1.0, 4.6, SW - 2, 0.9,
-         [[("…decoded into full tourist itineraries (Strategy A)", 18, WHITE, False, False)]],
+         [[("…decoded into full tourist itineraries (Frozen Rollout)", 18, WHITE, False, False)]],
          align=PP_ALIGN.CENTER)
     text(s, 1.0, 6.4, SW - 2, 0.5,
          [[("Master's thesis · [Your name] · [date]", 13, RGBColor(0xBF, 0xC7, 0xD9), False, False)]],
@@ -208,7 +208,7 @@ def s_overview(n):
          ("GCN + GRU + user + context", 11, GREY, False)], BG_G, INDIGO)
     arrow(s, 4.7, 3.55, 5.5, 3.55)
     box(s, 5.5, 2.7, 3.6, 1.7,
-        [("Strategy A", 13, ORANGE, True), ("roll it out", 16, ORANGE, True),
+        [("Frozen Rollout", 13, ORANGE, True), ("roll it out", 16, ORANGE, True),
          ("(decode the engine)", 11, GREY, False)], BG_H, ORANGE)
     arrow(s, 9.1, 3.55, 9.9, 3.55)
     box(s, 9.9, 2.7, 2.7, 1.7,
@@ -309,7 +309,7 @@ def s_engine_results(n):
 
 def s_strategyA(n):
     s = slide()
-    header(s, "Strategy A — turning the engine into an itinerary", "my itinerary method")
+    header(s, "Frozen Rollout — turning the engine into an itinerary", "my itinerary method")
     text(s, 0.55, 1.35, 12.2, 0.5,
          [[("Roll the engine out: build the route one POI at a time.", 16, GREY, False, False)]])
     steps = [("route = [start]", BG_U, INDIGO), ("engine scores\nall POIs", BG_G, INDIGO),
@@ -335,7 +335,7 @@ def s_strategyA(n):
 
 def s_example(n):
     s = slide()
-    header(s, "Strategy A — worked example (Edinburgh)", "how it builds a route")
+    header(s, "Frozen Rollout — worked example (Edinburgh)", "how it builds a route")
     box(s, 0.7, 1.55, 4.2, 1.2, [("QUERY", 14, INDIGO, True), ("start 15 · end 16 · K = 4", 14, GREY, False)],
         BG_U, INDIGO)
     seqs = [
@@ -357,15 +357,18 @@ def s_example(n):
 
 def s_A_results(n):
     s = slide()
-    header(s, "Strategy A — results, and why it's the headline", "my result")
+    header(s, "Frozen Rollout — results, and why it's the headline", "my result")
     rows = [["Method (NYC, len≥3)", "pairs-F1", "kind"]]
-    for m in ["A — frozen rollout (greedy)", "A — frozen rollout (beam 3)",
-              "B-v1 — pointer (no context)", "B-v2 — pointer (+ context)"]:
+    _relabel = {"A — frozen rollout (greedy)": "Frozen Rollout (greedy)",
+                "A — frozen rollout (beam 3)": "Frozen Rollout (beam 3)",
+                "B-v1 — pointer (no context)": "Trained Pointer (no context)",
+                "B-v2 — pointer (+ context)": "Trained Pointer (+ context)"}
+    for m in _relabel:
         pf1, _s, _e, kind = AVSB_NYC[m]
-        rows.append([m, f"{pf1:.3f}", kind])
+        rows.append([_relabel[m], f"{pf1:.3f}", kind])
     table(s, rows, 0.7, 1.55, 8.0, 2.3, font=13, highlight_row=1)
     box(s, 9.0, 1.55, 3.6, 2.3,
-        [("Strategy A wins", 16, TEAL, True), ("decoding the strong", 13, GREY, False),
+        [("Frozen Rollout wins", 16, TEAL, True), ("decoding the strong", 13, GREY, False),
          ("engine beats training", 13, GREY, False), ("a separate model.", 13, GREY, False)], BG_S, TEAL)
     bullets(s, 0.7, 4.2, 12.0, 2.2, [
         [("Best of my itinerary methods", NAVY, True), (" on NYC (~0.29 pairs-F1).", GREY, False)],
@@ -386,7 +389,7 @@ def s_validation(n):
         [("Honest:", RED, True), (" a simple Markov baseline is strong on tiny data.", GREY, False)],
     ], size=14, gap=12)
     text(s, 0.6, 6.5, 12.0, 0.6,
-         [[("Strategy D re-runs everything on the standard Flickr benchmark — validating, not replacing, the "
+         [[("The Flickr Benchmark re-runs everything on the standard Flickr datasets — validating, not replacing, the "
             "headline model.", 14, GREY, False, True)]])
     footer(s, n)
 
@@ -396,7 +399,7 @@ def s_beyond(n):
     header(s, "What else I tested (and found)", "scientific rigor")
     bullets(s, 0.7, 1.6, 12.0, 4.4, [
         [("Does an integrated model beat decoupling?", NAVY, True),
-         (" I trained a dedicated pointer (Strategy B) end-to-end. It did NOT beat Strategy A — because the "
+         (" I trained a dedicated pointer (the Trained Pointer) end-to-end. It did NOT beat the Frozen Rollout — because the "
           "engine has far denser training signal. (Tests Halder/DLIR's integration claim.)", GREY, False)],
         [("Is the neural model better than simple baselines?", NAVY, True),
          (" On the small Flickr data, a Markov transition baseline is the strongest of my methods — an honest "
@@ -452,7 +455,7 @@ def s_conclusion(n):
     box(s, 1.2, 2.6, SW - 2.4, 1.9,
         [("A personalized, context-aware next-POI engine", 22, WHITE, True),
          ("(GCN + GRU + user + context), decoded into tourist", 22, WHITE, True),
-         ("itineraries by rolling it out (Strategy A).", 22, WHITE, True)], NAVY, TEAL)
+         ("itineraries by rolling it out (the Frozen Rollout).", 22, WHITE, True)], NAVY, TEAL)
     tb = s.shapes.add_textbox(Inches(0.8), Inches(4.9), Inches(SW - 1.6), Inches(1.8))
     tf = tb.text_frame; tf.word_wrap = True
     for i, t in enumerate([
