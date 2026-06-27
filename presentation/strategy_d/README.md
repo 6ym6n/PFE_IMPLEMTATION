@@ -8,7 +8,11 @@ Deliverables for the Flickr itinerary-recommendation work (Strategy D).
 |---|---|
 | **`strategy_d_primer.pdf`** | **Read first.** A plain-English primer (5 pages) — the few ideas you need before the detailed doc (POIs/trips, the task, precision/recall/F1, pairs-F1, leave-one-out, the "same exam" idea) with everyday analogies, worked examples and a mini-glossary. |
 | **`strategy_d_explained.pdf`** | The detailed companion document (9 pages) — data, task, metric, protocol, methods, validation, results, honest limitations, with worked examples and the full published comparison. |
-| **`strategy_d_slides.pptx`** | The talk — 17 widescreen slides, editable in PowerPoint/Google Slides. Native shapes for the diagrams; the three analytical charts are images. |
+| **`strategy_d_slides.pptx`** | The Strategy-D talk — 17 widescreen slides, editable in PowerPoint/Google Slides. Native shapes for the diagrams; the three analytical charts are images. |
+| **`thesis_defense_slides.pptx`** | The **full-thesis** defence deck (18 slides) — the whole arc (motivation → Phase-1 engine → Strategy A/B/D → Halder/DLIR positioning → results → future work). Editable, native diagrams. |
+
+The thesis 1-page positioning statement lives at repo root: **`../../thesis_positioning.md`**
+(title → research questions → how A/B/D map → how it engages Halder/DLIR). Drop it into the thesis intro.
 
 All are generated from one source of truth, so they never disagree.
 
@@ -19,6 +23,7 @@ pip install python-pptx matplotlib reportlab        # build-only deps
 py -3.11 presentation/strategy_d/make_primer.py      # -> strategy_d_primer.pdf
 py -3.11 presentation/strategy_d/make_pdf.py         # -> strategy_d_explained.pdf
 py -3.11 presentation/strategy_d/make_pptx.py        # -> strategy_d_slides.pptx
+py -3.11 presentation/strategy_d/make_thesis_pptx.py # -> thesis_defense_slides.pptx
 ```
 
 `make_pdf.py` reuses the thesis report's styling (`report/make_report.py`); `make_pptx.py`

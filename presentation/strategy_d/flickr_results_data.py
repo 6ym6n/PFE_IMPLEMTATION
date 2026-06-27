@@ -82,3 +82,30 @@ PUBLISHED_RANGE = (0.26, 0.85)
 
 #: One concrete (illustrative) Edinburgh-style trajectory for the running example.
 EXAMPLE_TRAJECTORY = ["Castle", "Royal Mile", "Holyrood Palace", "Arthur's Seat", "National Museum"]
+
+
+# ===========================================================================
+# Thesis-wide numbers (Phase 1 + Phase 2 NYC A-vs-B), for the full-thesis deck.
+# ===========================================================================
+#: Phase 1 — next-POI (the personalized, context-aware engine) on Foursquare NYC, full vocab.
+PHASE1_METRICS = {
+    "HR@1": 0.1874, "HR@5": 0.4760, "HR@10": 0.5879,
+    "NDCG@5": 0.3386, "NDCG@10": 0.3751, "MRR": 0.3163,
+}
+
+#: HR@1 tier from the LLM4POI benchmark table (ours bolded in the deck).
+PHASE1_TIER = [
+    ("LSTM", 0.130), ("STGCN", 0.180), ("Ours (GCN+GRU+user)", 0.187),
+    ("STAN", 0.220), ("GETNext", 0.240), ("STHGCN", 0.270), ("LLM4POI", 0.340),
+]
+
+#: Phase 2 NYC itinerary — the integration experiment (length>=3 test, n=2,880).
+#: Strategy A = decoupled decoding of the next-POI engine; Strategy B = integrated pointer.
+AVSB_NYC = {
+    # method:                          pairs-F1, set-F1, exact, kind
+    "A — frozen rollout (greedy)":     (0.2887, 0.609, 0.054, "decoupled"),
+    "A — frozen rollout (beam 3)":     (0.2902, 0.610, 0.057, "decoupled"),
+    "B-v1 — pointer (no context)":     (0.2585, 0.578, 0.043, "integrated"),
+    "B-v2 — pointer (+ context)":      (0.2610, 0.000, 0.000, "integrated"),  # beam3; set-F1/exact not re-logged
+}
+AVSB_N = 2880
