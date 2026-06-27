@@ -11,7 +11,8 @@ Deliverables for the Flickr itinerary-recommendation work (Strategy D).
 | **`strategy_d_slides.pptx`** | The Strategy-D talk — 17 widescreen slides, editable in PowerPoint/Google Slides. Native shapes for the diagrams; the three analytical charts are images. |
 | **`thesis_defense_slides.pptx`** | The **full-thesis** defence deck (18 slides) — the whole arc (motivation → Phase-1 engine → Strategy A/B/D → Halder/DLIR positioning → results → future work). Editable, native diagrams. |
 | **`thesis_explained.pdf`** | The **full-thesis** companion document (9 pages) — the whole project explained in plain language with diagrams and worked examples (page 2 is a one-page "whole idea" summary). |
-| **`model_slides.pptx`** | The **model-centric** deck (15 slides) — leads with the next-POI engine as "the model" and Strategy A as the itinerary method; B/D + the personalization ablation appear as supporting rigor. **The recommended deck to present to the jury.** |
+| **`model_slides.pptx`** | The **model-centric** deck (15 slides) — leads with the next-POI engine as "the model" and the Frozen Rollout as the itinerary method; the Trained Pointer / Flickr Benchmark + the personalization ablation appear as supporting rigor. |
+| **`model_slides_lean.pptx`** | **Trimmed two-pillar variant** (14 slides) — Frozen Rollout (build) + Flickr Benchmark (validate) as the two pillars, with the Trained Pointer collapsed to one rigor slide. **The recommended deck to present to the jury.** |
 | **`model_explained.pdf`** | The detailed companion (7 pages) to the model-centric deck — every slide explained with diagrams, the worked Edinburgh example, and the measured personalization numbers. |
 
 The thesis 1-page positioning statement lives at repo root: **`../../thesis_positioning.md`**

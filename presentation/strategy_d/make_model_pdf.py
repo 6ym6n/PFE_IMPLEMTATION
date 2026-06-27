@@ -313,7 +313,7 @@ def build_story():
     s.append(callout(
         "<b>A personalized, context-aware next-POI engine (GCN + GRU + user + context), decoded into "
         "tourist itineraries by rolling it out (the Frozen Rollout) — the strongest, simplest, and most "
-        "honest of the methods I built; integration (B) and the Flickr benchmark (D) are experiments "
+        "honest of the methods I built; integration (the Trained Pointer) and the Flickr Benchmark are experiments "
         "that support it.</b>", fill=BG_C, stroke=TEAL))
     return s
 

@@ -461,7 +461,7 @@ def s_conclusion(n):
     for i, t in enumerate([
         "Strongest of my itinerary methods, and the simplest to explain.",
         "Built on a validated engine; benchmarked honestly against the literature.",
-        "Integration (B) and the Flickr benchmark (D) are experiments that support — not replace — it.",
+        "Integration (the Trained Pointer) and the Flickr Benchmark are experiments that support — not replace — it.",
     ]):
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         p.space_after = Pt(10)
