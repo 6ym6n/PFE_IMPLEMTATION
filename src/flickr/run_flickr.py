@@ -146,6 +146,68 @@ def run_neural(
     return results
 
 
+def run_personalization(
+    data_dir: str,
+    device,
+    cities: Optional[List[str]] = None,
+    *,
+    epochs: int = 30,
+    dim: int = 64,
+    seed: int = 0,
+    beam: int = 3,
+    min_len: int = 3,
+    train_pool: str = "ge3",
+    out_path: Optional[str] = None,
+) -> Dict[str, Dict[str, object]]:
+    """Personalization ablation: the pointer WITHOUT vs WITH the user embedding.
+
+    Runs leave-one-out twice per city — ``use_user=False`` then ``use_user=True``,
+    identical otherwise — and reports the pairs-F1 / F1 of each plus the delta.
+    Gives the comparable (Flickr) chapter a real "based on user preferences"
+    number. Whether the delta is positive depends on how often a test user recurs
+    in training (see the user-repeat statistics).
+
+    Args:
+        data_dir: directory with the CSVs.
+        device: torch device.
+        cities: cities to run (default all five).
+        epochs, dim, seed, beam: pointer hyperparameters (shared by both arms).
+        min_len: minimum trajectory length (default 3).
+        train_pool: ``"ge3"`` or ``"all"``.
+        out_path: if given, write the results JSON here.
+
+    Returns:
+        ``{city: {"no_user": metrics, "user": metrics, "delta_pairs_f1": float}}``.
+    """
+    from src.flickr.pointer import PointerConfig, pointer_factory
+
+    cities = cities or list(CITIES)
+    results: Dict[str, Dict[str, object]] = {}
+    for city in cities:
+        c = load_city(data_dir, city)
+        row: Dict[str, object] = {}
+        for tag, use_user in (("no_user", False), ("user", True)):
+            cfg = PointerConfig(dim=dim, epochs=epochs, beam=beam, seed=seed, use_user=use_user)
+            m = evaluate_loocv(
+                c, pointer_factory(device, cfg, min_len=min_len),
+                min_len=min_len, train_pool=train_pool,
+            )
+            row[tag] = {"pairs-F1": m["pairs-F1"], "F1": m["F1"], "n": m["n"]}
+        row["delta_pairs_f1"] = row["user"]["pairs-F1"] - row["no_user"]["pairs-F1"]  # type: ignore[index]
+        results[city] = row
+        print(
+            f"[{city:10s}] no_user pairs-F1={row['no_user']['pairs-F1']:.3f} | "  # type: ignore[index]
+            f"user pairs-F1={row['user']['pairs-F1']:.3f} | "  # type: ignore[index]
+            f"delta={row['delta_pairs_f1']:+.3f}"
+        )
+    if out_path:
+        _dump(results, out_path, {
+            "experiment": "personalization — pointer user embedding on/off",
+            "epochs": epochs, "dim": dim, "seed": seed, "train_pool": train_pool,
+        })
+    return results
+
+
 def _dump(results: dict, out_path: str, meta: dict) -> None:
     """Write ``{meta, results}`` to ``out_path`` as JSON (creating dirs)."""
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
