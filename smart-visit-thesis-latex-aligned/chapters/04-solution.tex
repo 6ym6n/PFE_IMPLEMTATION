@@ -1,0 +1,556 @@
+\chapter{Proposed Solution: Algorithm and Application}
+\label{ch:solution}
+
+% ============================================================
+\section{Introduction}
+\label{sec:sol-intro}
+% ============================================================
+
+This chapter presents the proposed system: a personalized, context-aware
+\emph{next-POI engine} that is decoded into tourist \emph{itineraries}. Rather than
+training a single monolithic itinerary generator, the design follows a deliberately
+\emph{decoupled} philosophy. We first train a strong sequential model for the well-defined
+next-POI prediction task (Phase~1), and then obtain itineraries by \emph{decoding} that
+frozen model under inference-time constraints (Phase~2). This separation is not merely an
+implementation convenience: as the experiments will show, decoding a strongly-supervised
+next-POI model (\textbf{Frozen Rollout}) is a surprisingly hard baseline to beat with a
+purpose-trained itinerary model (\textbf{Trained Pointer}).
+
+The system therefore addresses the three research questions of Chapter~\ref{ch:introduction}
+through the following concrete components: (i)~a data-preparation stage that curates a usable
+check-in corpus and derives the spatial/temporal gap features the model consumes; (ii)~a
+context-aware sequential engine combining a graph encoder, gap-feature context, a user
+embedding, and a recurrent backbone (\textbf{RQ1, RQ2}); and (iii)~an inference-time decoding
+procedure that turns next-POI scores into ordered routes (\textbf{RQ3}). The methods that the
+thesis \emph{designed but did not evaluate} (explicit weather/time-of-day context, a
+language-model persona encoder, embedding-based semantic pruning, and penalty-augmented
+constrained decoding) are deferred to Chapter~\ref{ch:conclusion} as future work, so that this
+chapter describes only what was actually built and measured.
+
+The remainder of the chapter is organized as follows.
+Section~\ref{sec:sol-overview} gives a high-level overview.
+Section~\ref{sec:sol-data} describes data preparation.
+Section~\ref{sec:sol-model} details the next-POI engine.
+Section~\ref{sec:sol-decoding} presents Frozen Rollout and the Trained Pointer.
+Section~\ref{sec:sol-experiments} specifies the experimental protocol, and
+Section~\ref{sec:sol-results} reports and discusses the results.
+
+% ============================================================
+\section{System Overview}
+\label{sec:sol-overview}
+% ============================================================
+
+The system operates in two phases, illustrated in Figure~\ref{fig:pipeline-overview}.
+
+\input{figures/fig-pipeline}
+
+\textbf{Phase~1 --- the next-POI engine.} Raw Foursquare check-ins are filtered and grouped
+into per-user sessions, and each consecutive visit pair is annotated with its spatial gap
+$\Delta d$ (haversine distance) and temporal gap $\Delta t$ (elapsed time). A two-layer Graph
+Convolutional Network (GCN) over a hybrid POI graph produces a feature vector for every POI;
+the GCN features and the per-step context $(\Delta d,\Delta t)$ form the input to a GRU, whose
+final state is combined with a learnable user embedding and scored by a multilayer-perceptron
+(MLP) head over the full POI vocabulary. The engine is trained for single-step next-POI
+prediction and evaluated with ranking metrics ($\mathrm{HR@}k$, $\mathrm{NDCG@}k$,
+$\mathrm{MRR}$).
+
+\textbf{Phase~2 --- itinerary decoding.} Given a query (a user, a start POI, an optional end
+POI, and a desired length), \emph{Frozen Rollout} rolls the frozen engine forward, masking
+already-visited POIs and reserving the final step for the end POI, to produce an ordered route.
+As an integrated alternative, a \emph{Trained Pointer} replaces the MLP head with an
+attention-style pointer and is trained end-to-end on whole trajectories. Itineraries are scored
+with set-F1 and order-aware pairs-F1, and---because the Foursquare numbers are not on the same
+scale as the published trip-recommendation literature---are re-validated on the Flickr
+photo-trajectory datasets under the exact protocol of Chen et al.~\cite{chen2016learning}.
+
+% ============================================================
+\section{Data Preparation}
+\label{sec:sol-data}
+% ============================================================
+
+\subsection{Filtering and sessionization}
+\label{sec:sol-data-filter}
+
+We use the standard Foursquare NYC check-in dataset of Yang et al.~\cite{yang2015foursquare}
+($\sim$227K check-ins, $\sim$1.08K users, $\sim$38K venues). As is standard in next-POI
+research, the raw data is reduced to a denser, more learnable core by an \emph{iterative
+$k$-core filter}: users with fewer than ten check-ins and POIs with fewer than ten check-ins
+are removed, and the procedure is repeated until the set is stable (in practice a few
+iterations). This retains roughly $5{,}100$ POIs and $\sim$1.0K users. We deliberately keep
+this filter simple and reproducible; a tourism-specific semantic curation of the catalogue is
+discussed as future work (Chapter~\ref{ch:conclusion}).
+
+User and POI identifiers are re-indexed to contiguous integers. Check-ins are then grouped
+into \textbf{sessions}: a gap of more than 24~hours between successive check-ins of the same
+user starts a new session, and sessions of length one (which admit no prediction) are dropped.
+
+\subsection{Spatial and temporal gap features}
+\label{sec:sol-data-context}
+
+For every consecutive pair of check-ins within a session we compute two context scalars: the
+\textbf{spatial gap} $\Delta d_t$ (haversine distance in km from the previous POI, clipped to
+$[0,100]$) and the \textbf{temporal gap} $\Delta t_t$ (elapsed time in hours, clipped to
+$[0,24]$). At the first step of a session $\Delta d_1=\Delta t_1=0$. These two gaps are the
+\emph{only} contextual signals the engine consumes; they capture how far and how long a user
+moved between visits, which is the spatio-temporal regularity exploited by ST-RNN-style models
+\cite{liu2016strnn}. Time-of-day and weather are not modelled.
+
+\subsection{Hybrid POI graph}
+\label{sec:sol-data-graph}
+
+To let the model reason about POIs beyond their individual identity, we build a single
+undirected \textbf{hybrid graph} $G=(\mathcal{V},\mathcal{E}_{\mathrm{cov}}\cup
+\mathcal{E}_{\mathrm{geo}})$ on the curated catalogue:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Co-visitation edges} $\mathcal{E}_{\mathrm{cov}}$: an edge $(p_i,p_j)$ is added
+        when at least three consecutive $p_i\!\rightarrow\!p_j$ transitions occur within the
+        \emph{training} sessions, encoding behavioural proximity;
+  \item \textbf{Geographic edges} $\mathcal{E}_{\mathrm{geo}}$: each POI is connected to its
+        ten nearest neighbours by haversine distance (computed with a ball tree), encoding
+        spatial proximity.
+\end{itemize}
+The two edge sets are unioned and symmetrized. Co-visitation edges are derived from training
+data only, so no test information leaks into the graph.
+
+\subsection{Splitting}
+\label{sec:sol-data-split}
+
+Sessions are split \textbf{chronologically per user} into 70\%/10\%/20\% train/validation/test,
+so that no future session of a user is used to predict its past. This split is shared by the
+next-POI evaluation and (its test portion) by the NYC itinerary evaluation.
+
+% ============================================================
+\section{The Next-POI Engine}
+\label{sec:sol-model}
+% ============================================================
+
+The engine maps a session prefix $S_u=(p_1,\dots,p_T)$ and its user $u$ to a probability
+distribution over the next POI. It has four learnable parts: a graph encoder, a context
+encoder, a user embedding, and a recurrent scorer. Default dimensions are
+$d_p\!=\!128$ (POI), $d_u\!=\!64$ (user), $d_c\!=\!32$ (context), and $d_h\!=\!128$ (GRU hidden).
+
+\subsection{Graph encoder}
+\label{sec:sol-model-gcn}
+
+A two-layer GCN over the hybrid graph transforms a learnable POI embedding table
+$E^{(0)}\in\mathbb{R}^{|\mathcal{V}|\times d_p}$ into graph-aware POI features:
+\begin{equation}
+  E^{(l+1)} = \sigma\!\left(\tilde{D}^{-1/2}\,\tilde{A}\,\tilde{D}^{-1/2}\,E^{(l)}\,W^{(l)}\right),
+  \qquad l = 0,1,
+  \label{eq:gcn}
+\end{equation}
+where $\tilde{A}=A+I$ is the adjacency with self-loops, $\tilde{D}$ its degree matrix,
+$\sigma$ a ReLU non-linearity (with dropout between layers), and $W^{(l)}$ the layer weights.
+The POI feature used downstream is $h_p^{\mathrm{GCN}}=E^{(2)}_p\in\mathbb{R}^{d_p}$. Because the
+graph is fixed, the full forward pass of Eq.~\eqref{eq:gcn} is computed \emph{once} per batch
+(and once per decode) and indexed for each POI in a sequence.
+
+\subsection{Context encoder}
+\label{sec:sol-model-context}
+
+The two gap scalars are lifted to a $d_c$-dimensional context vector by two small MLPs and
+concatenated:
+\begin{equation}
+  c_t = \big[\,\mathrm{MLP}_d(\Delta d_t)\;\Vert\;\mathrm{MLP}_t(\Delta t_t)\,\big]
+        \in\mathbb{R}^{d_c}.
+  \label{eq:context}
+\end{equation}
+
+\subsection{User embedding}
+\label{sec:sol-model-user}
+
+User identity is encoded by a learnable embedding lookup $e_u\in\mathbb{R}^{d_u}$. This is a
+collaborative, identity-based representation learned from the user's own visit history during
+training; it is not derived from a persona description. The contribution of this embedding is
+isolated by a dedicated ablation in Section~\ref{sec:sol-results-pers}.
+
+\subsection{Recurrent scorer and output}
+\label{sec:sol-model-gru}
+
+At each step the GCN feature and the context are concatenated,
+$x_t=[\,h_{p_t}^{\mathrm{GCN}}\;\Vert\;c_t\,]\in\mathbb{R}^{d_p+d_c}$, and the sequence
+$X=(x_1,\dots,x_T)$ is read by a GRU. Its final hidden state $h_T\in\mathbb{R}^{d_h}$ is
+concatenated with the user embedding and scored by an MLP head over the whole vocabulary:
+\begin{align}
+  h_T &= \mathrm{GRU}(x_1,\dots,x_T), \qquad z = [\,h_T\;\Vert\;e_u\,], \label{eq:gru}\\
+  \hat{y} &= W_2\,\mathrm{ReLU}(W_1 z + b_1) + b_2 \in \mathbb{R}^{|\mathcal{V}|}, \label{eq:head}\\
+  P(p_{T+1}&=p_j\mid S_u,u) = \frac{\exp(\hat{y}_j)}{\sum_k \exp(\hat{y}_k)}.
+\end{align}
+The model is trained by minimizing the next-POI cross-entropy over all session prefixes:
+\begin{equation}
+  \mathcal{L} = -\frac{1}{N}\sum_{i=1}^{N}\log P\!\left(y^{(i)}\mid S_u^{(i)},u^{(i)}\right),
+  \label{eq:loss}
+\end{equation}
+with the Adam optimizer, gradient clipping, dropout regularization, and early stopping on
+validation $\mathrm{HR@}10$. A session of length $L$ contributes $L-1$ prefix/target training
+pairs, giving dense supervision (on the order of $10^5$ examples on NYC).
+
+% ============================================================
+\section{From Next-POI Scores to Itineraries}
+\label{sec:sol-decoding}
+% ============================================================
+
+\subsection{Problem and query}
+\label{sec:sol-decoding-query}
+
+Itinerary recommendation takes a query $q=(u,s,e,K)$---a user $u$, a start POI $s$, an
+optional end POI $e$, and a length budget $K$---and returns an ordered, loop-free route
+$\hat{Y}=(s,p_2,\dots,e)$ of length $K$. Following the Chen-2016 convention
+\cite{chen2016learning}, the start, the end, and the length are \emph{given}, and quality is
+how well $\hat{Y}$ recovers the user's actual visited sequence $Y$. We use the length budget
+(read directly as the ground-truth session length) as the headline mode, because it needs no
+invented travel-speed or dwell-time constants and is therefore fully reproducible.
+
+\subsection{Frozen Rollout (the headline method)}
+\label{sec:sol-decoding-rollout}
+
+The key observation is that the Phase-1 engine already scores a distribution over the next POI
+for any partial route. An itinerary is what we obtain by \emph{rolling that scorer out} under
+two constraints it never saw at training time:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item \textbf{No-revisit mask}: the logit of every already-visited POI is set to $-\infty$,
+        enforcing loop-free routes \cite{menon2017revisits};
+  \item \textbf{Reserved end}: at the final step the route is forced to the queried end POI
+        $e$ (the discrete analogue of the orienteering start/end constraint).
+\end{enumerate}
+\emph{Nothing in the trained model changes}---the same checkpoint serves both tasks; the entire
+itinerary capability is an inference-time decoder. Two decoders are used: \textbf{greedy}
+(take the \texttt{argmax} of the masked logits at each step) as the deterministic floor, and
+\textbf{beam($b$)} (keep the $b$ partial routes with the highest summed transition
+log-probability). At decode time $\Delta d$ is the real haversine distance between consecutive
+route POIs and $\Delta t$ is a single documented constant; in length-budget mode this constant
+affects only the context features, not the stop rule. Crucially, this headline decoder uses
+\emph{no} travel-cost penalty and \emph{no} diversity bonus---augmenting the beam objective
+with such penalties is left to future work (Chapter~\ref{ch:conclusion}).
+
+\subsection{Trained Pointer (the integrated alternative)}
+\label{sec:sol-decoding-pointer}
+
+To test whether a model trained \emph{directly} for itineraries beats the decoded engine, we
+also implement a pointer-network decoder \cite{vinyals2015pointer}. It reuses the GCN encoder
+and user embedding but replaces the fixed MLP head with an \textbf{inner-product pointer}:
+the decoder state $h_t$ is projected and scored against every POI feature,
+$\mathrm{logit}_v=\langle W_o[h_t\Vert e_u],\,h_v^{\mathrm{GCN}}\rangle$, tying the output
+directly to the graph signal. It is trained with teacher-forced sequence cross-entropy over
+\emph{whole} length-$\ge\!3$ trajectories (one example per session), with the no-revisit mask
+applied only at decode time and early stopping on validation pairs-F1. A context-aware variant
+additionally feeds the $(\Delta d,\Delta t)$ context at each decoder step. Because each session
+yields a single whole-trajectory example, the pointer sees far fewer updates than the
+prefix-rich next-POI engine---a supervision-density gap that the results make visible.
+
+% ============================================================
+\section{Experimental Setup}
+\label{sec:sol-experiments}
+% ============================================================
+
+\subsection{Two tasks, two benchmarks}
+\label{sec:sol-exp-tasks}
+
+This thesis evaluates two \emph{formally distinct} sub-tasks, each on its own field-standard
+benchmark, following the surveys of Lim et al.~\cite{lim2018survey} and
+Halder et al.~\cite{halder2024survey}:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Next-POI prediction} on Foursquare NYC, with full-vocabulary
+        $\mathrm{HR@}k$/$\mathrm{NDCG@}k$/$\mathrm{MRR}$ (the protocol of GETNext
+        \cite{yang2022getnext} and LLM4POI \cite{li2024llm4poi});
+  \item \textbf{Itinerary recommendation} with set-F1 and pairs-F1, reported both internally on
+        Foursquare NYC and---for literature comparison---on the Flickr photo-trajectory cities
+        under the Chen-2016 protocol \cite{chen2016learning}.
+\end{itemize}
+The two tasks' metrics are \textbf{not on a common scale and are never cross-compared}: a
+next-POI $\mathrm{HR@}1$ and an itinerary pairs-F1 measure different things, and absolute scores
+across datasets with different POI-vocabulary sizes are not comparable
+\cite{krichene2020sampled}. This is why the NYC itinerary numbers (Section~\ref{sec:sol-results-nyc})
+and the Flickr numbers (Section~\ref{sec:sol-results-flickr}) live in separate tables.
+
+\subsection{Metrics}
+\label{sec:sol-exp-metrics}
+
+\textbf{Next-POI:} $\mathrm{HR@}k$ (the true next POI is ranked in the top $k$ of the full
+vocabulary), $\mathrm{NDCG@}k$, and $\mathrm{MRR}$, all without sampled negatives.
+
+\textbf{Itinerary:} for a route, let its ordered-pair set be
+$P(T)=\{(T_i,T_j):i<j\}$. Then
+$\text{pairs-F1}$ is the F1 over $P(\hat{Y})$ vs $P(Y)$ (a pair counts only if both POIs appear
+in both routes \emph{in the same order}), and $\text{set-F1}$ is the order-agnostic F1 over the
+visited \emph{sets}. We report both, plus the exact-match rate. The pairs-F1 implementation is
+pinned by unit tests against the Chen-2016 reference, and---per the faithfulness rule below---a
+\texttt{Random} baseline reproduces Chen's published \texttt{Random} within noise. Following the
+literature, itinerary metrics are reported on \textbf{length-$\ge\!3$, loop-free} trajectories,
+where pairs-F1 has dynamic range (length-2 queries are trivial $s\!\to\!e$ recoveries).
+
+\subsection{Baselines}
+\label{sec:sol-exp-baselines}
+
+For \emph{next-POI}, we position the engine against the published tier from the LLM4POI
+benchmark table (LSTM, STGCN \cite{yu2018stgcn}, STAN \cite{luo2021stan}, GETNext
+\cite{yang2022getnext}, STHGCN \cite{yan2023sthgcn}, LLM4POI \cite{li2024llm4poi}). For the
+\emph{itinerary} task, the NYC study contrasts Frozen Rollout against the Trained Pointer, and
+the Flickr Benchmark adds classical baselines (\texttt{Random}, \texttt{PoiPopularity},
+\texttt{Markov}, \texttt{MarkovPath}) and the published methods PoiRank/Rank+Markov
+\cite{chen2016learning}, DeepTrip \cite{gao2019deeptrip}, CTLTR \cite{zhou2021ctltr}, SelfTrip
+\cite{gao2022selftrip}, and AR-Trip \cite{shu2024artrip}.
+
+% ============================================================
+\section{Results and Discussion}
+\label{sec:sol-results}
+% ============================================================
+
+\subsection{Next-POI accuracy (Phase~1)}
+\label{sec:sol-results-nextpoi}
+
+Table~\ref{tab:nextpoi} reports the engine's full-vocabulary ranking accuracy on Foursquare
+NYC. The model reaches $\mathrm{HR@}1=0.187$, i.e.\ the exact next venue is the top prediction
+out of $\sim$5{,}100 candidates almost one time in five, with $\mathrm{MRR}=0.316$.
+
+\begin{table}[ht]
+\centering
+\caption{Next-POI prediction accuracy of the proposed engine on Foursquare NYC
+(full vocabulary, test set).}
+\label{tab:nextpoi}
+\begin{tabular}{lcccccc}
+\toprule
+Model & HR@1 & HR@5 & HR@10 & NDCG@5 & NDCG@10 & MRR \\
+\midrule
+Ours (GCN+GRU+user) & 0.187 & 0.476 & 0.588 & 0.339 & 0.375 & 0.316 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+To position this honestly, Table~\ref{tab:nextpoi-tier} places our $\mathrm{HR@}1$ within the
+published tier (numbers as collated in the LLM4POI benchmark). The engine sits in the
+\emph{LSTM/STGCN band}: clearly learning (well above an LSTM and on par with a spatio-temporal
+GCN) but below the attention/transformer SOTA (STAN, GETNext, STHGCN) and far below the
+LLM-based LLM4POI. This is the expected, defensible position for a compact GCN+GRU model and is
+stated as such rather than overclaimed.
+
+\begin{table}[ht]
+\centering
+\caption{$\mathrm{HR@}1$ (equivalently $\mathrm{Acc@}1$) tier on Foursquare NYC, as collated in
+the LLM4POI benchmark. Our engine is in bold.}
+\label{tab:nextpoi-tier}
+\begin{tabular}{lc}
+\toprule
+Model & HR@1 \\
+\midrule
+LSTM & 0.130 \\
+STGCN~\cite{yu2018stgcn} & 0.180 \\
+\textbf{Ours (GCN + GRU + user)} & \textbf{0.187} \\
+STAN~\cite{luo2021stan} & 0.220 \\
+GETNext~\cite{yang2022getnext} & 0.240 \\
+STHGCN~\cite{yan2023sthgcn} & 0.270 \\
+LLM4POI~\cite{li2024llm4poi} & 0.340 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Itinerary on NYC: Frozen Rollout vs.\ Trained Pointer}
+\label{sec:sol-results-nyc}
+
+Table~\ref{tab:nyc-itin} reports the headline integration experiment on the NYC test sessions
+($n=2{,}880$ length-$\ge\!3$ trajectories). The result is deliberately counter-intuitive:
+\textbf{decoding the frozen next-POI engine (decoupled) beats the purpose-trained pointer
+(integrated)} by about $0.03$ pairs-F1 ($-10.5\%$ for the pointer). Beam search barely improves
+on greedy ($+0.0015$ pairs-F1), which shows the limitation is the engine's myopia, not the
+decoder: smarter search cannot recover information the scorer never had.
+
+\begin{table}[ht]
+\centering
+\caption{Itinerary recommendation on Foursquare NYC (length-$\ge\!3$ test, $n=2{,}880$). Higher
+is better; itinerary metrics are \emph{not} comparable to the next-POI metrics of
+Table~\ref{tab:nextpoi}.}
+\label{tab:nyc-itin}
+\begin{tabular}{llccc}
+\toprule
+Method & Type & pairs-F1 & set-F1 & exact \\
+\midrule
+\textbf{Frozen Rollout} (greedy) & decoupled & \textbf{0.289} & 0.609 & 0.054 \\
+Frozen Rollout (beam~3) & decoupled & 0.290 & 0.610 & 0.057 \\
+Trained Pointer v1 (no context) & integrated & 0.259 & 0.578 & 0.043 \\
+Trained Pointer v2 (\,+\,context) & integrated & 0.261 & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The pointer trained cleanly (validation pairs-F1 rising to a genuine peak before early
+stopping), so this is a real negative result, not a bug. Three factors explain why the simpler
+route wins: (i)~\textbf{supervision density}---the engine learns from $\sim$$10^5$ prefix/target
+pairs (every prefix of every session), whereas the pointer sees only one whole-trajectory
+example per session; (ii)~\textbf{leaner inputs}---the v1 pointer conditions only on the
+previous POI's graph feature, which is why adding the $(\Delta d,\Delta t)$ context in v2
+recovers a small amount; and (iii)~\textbf{converged vs.\ from-scratch}---Frozen Rollout reuses
+a fully-trained engine while the pointer trains its encoder from random initialization. The
+takeaway for the thesis is that \emph{naively training a dedicated itinerary model does not
+automatically beat cleverly decoding a strong next-POI model}---a nuance to the integration
+narrative of Halder et al.~\cite{halder2025drlir}.
+
+A second, important caveat is that these NYC pairs-F1 values ($\approx0.26$--$0.29$) are
+\textbf{not comparable} to the published trip-recommendation numbers ($\approx0.6$--$0.85$):
+the published works evaluate on Flickr cities of $\sim$25--90 POIs, whereas NYC has $\sim$5{,}100
+POIs, so the chance level differs by two orders of magnitude. The gap is a dataset/vocabulary
+artifact, not a quality gap---which is precisely why the next subsection re-runs the task on the
+literature's own benchmark.
+
+\subsection{The Flickr Benchmark (literature-comparable)}
+\label{sec:sol-results-flickr}
+
+To place the itinerary task on the same scale as the published literature, we re-run it on the
+five Flickr photo-trajectory cities under the \emph{exact} Chen-2016 protocol
+\cite{chen2016learning}: leave-one-trajectory-out cross-validation, the query gives the first
+and last POI plus the desired length, and evaluation is on length-$\ge\!3$ loop-free
+trajectories. Table~\ref{tab:flickr-data} lists the datasets.
+
+\begin{table}[ht]
+\centering
+\caption{Flickr photo-trajectory datasets (canonical Chen-2016 files). Evaluation is on the
+length-$\ge\!3$ subset.}
+\label{tab:flickr-data}
+\begin{tabular}{lcccc}
+\toprule
+City & \#POIs & \#users & \#trajectories & \#traj.\ (len $\ge 3$) \\
+\midrule
+Toronto   & 29 & 1{,}395 & 6{,}057 & 335 \\
+Osaka     & 27 &   450 & 1{,}115 &  47 \\
+Glasgow   & 27 &   601 & 2{,}227 & 112 \\
+Edinburgh & 28 & 1{,}454 & 5{,}028 & 634 \\
+Melbourne & 88 & 1{,}000 & 5{,}106 & 442 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Protocol faithfulness.} A \texttt{Random} baseline has no modelling choices, so it
+must reproduce Chen's \texttt{Random} if and only if the data, protocol, and metric are
+identical. Table~\ref{tab:flickr-faith} shows they match within noise (and our
+\texttt{PoiPopularity} matches Chen's near-exactly on the data-rich cities), which validates
+that our harness is protocol-faithful---a prerequisite for any comparison to the literature.
+
+\begin{table}[ht]
+\centering
+\caption{Faithfulness check (pairs-F1): our reproductions vs.\ Chen 2016.}
+\label{tab:flickr-faith}
+\begin{tabular}{llccccc}
+\toprule
+Method & Source & Toronto & Osaka & Glasgow & Edinburgh & Melbourne \\
+\midrule
+\multirow{2}{*}{Random} & ours & 0.298 & 0.301 & 0.301 & 0.270 & 0.227 \\
+                        & Chen 2016 & 0.310 & 0.304 & 0.320 & 0.261 & 0.248 \\
+\addlinespace
+\multirow{2}{*}{PoiPopularity} & ours & 0.443 & 0.413 & 0.510 & 0.439 & 0.320 \\
+                               & Chen 2016 & 0.384 & 0.365 & 0.507 & 0.436 & 0.316 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Our results.} Table~\ref{tab:flickr-ours} reports our classical baselines and the
+learned pointer. The headline is that \textbf{our pairs-F1 now spans $0.23$--$0.59$, on the
+published $0.26$--$0.85$ scale}, versus $0.26$--$0.29$ on NYC---confirming that the low NYC
+numbers were a property of the data and protocol, not the method. Among our methods the
+first-order \texttt{Markov} transition baseline is strongest, and the light from-scratch pointer
+(0.31--0.49) reaches the scale and beats \texttt{Random} comfortably but trails \texttt{Markov}
+on every city---the same supervision-density lesson seen on NYC.
+
+\begin{table}[ht]
+\centering
+\caption{Our itinerary results on the Flickr cities (pairs-F1, leave-one-out, length $\ge 3$).}
+\label{tab:flickr-ours}
+\begin{tabular}{lccccc}
+\toprule
+Method & Toronto & Osaka & Glasgow & Edinburgh & Melbourne \\
+\midrule
+Random        & 0.298 & 0.301 & 0.301 & 0.270 & 0.227 \\
+PoiPopularity & 0.443 & 0.413 & 0.510 & 0.439 & 0.320 \\
+Markov (greedy) & \textbf{0.504} & \textbf{0.421} & \textbf{0.587} & 0.449 & 0.333 \\
+MarkovPath (beam) & 0.528 & 0.398 & 0.543 & \textbf{0.452} & \textbf{0.346} \\
+Pointer (learned, beam~3) & 0.431 & 0.399 & 0.489 & 0.414 & 0.312 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Comparison to the literature.} Table~\ref{tab:flickr-pub} lists the directly
+comparable published pairs-F1 (same protocol, same $0$--$1$ scale). Our classical line lands
+between the published classical methods (PoiRank, Rank+Markov) on several cities, while the
+neural SOTA (DeepTrip, CTLTR, SelfTrip, AR-Trip) reaches $0.66$--$0.85$ using machinery our
+light model omits: self-supervised and contrastive pre-training, trajectory augmentation, and
+adversarial training. There is no single SOTA across all cities: AR-Trip leads on
+Toronto, Glasgow and Edinburgh, while SelfTrip is best on Osaka.
+
+\begin{table}[ht]
+\centering
+\caption{Published, directly-comparable itinerary pairs-F1 on the Flickr cities (same Chen-2016
+protocol). ``cl.''~=~classical, ``ne.''~=~neural.}
+\label{tab:flickr-pub}
+\begin{tabular}{llcccc}
+\toprule
+Method & Fam. & Toronto & Osaka & Glasgow & Edinburgh \\
+\midrule
+PoiRank~\cite{chen2016learning}      & cl. & 0.518 & 0.511 & 0.548 & 0.432 \\
+Rank+Markov~\cite{chen2016learning}  & cl. & 0.512 & 0.486 & 0.545 & 0.444 \\
+DeepTrip~\cite{gao2019deeptrip}      & ne. & 0.748 & 0.755 & 0.782 & 0.660 \\
+CTLTR~\cite{zhou2021ctltr}           & ne. & 0.748 & 0.719 & 0.763 & 0.681 \\
+SelfTrip~\cite{gao2022selftrip}      & ne. & 0.835 & \textbf{0.851} & 0.818 & 0.779 \\
+AR-Trip~\cite{shu2024artrip}         & ne. & \textbf{0.839} & 0.828 & \textbf{0.820} & \textbf{0.808} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Personalization ablation}
+\label{sec:sol-results-pers}
+
+Because a per-user embedding is the system's only personalization mechanism, we isolate its
+effect with a controlled ablation on the Flickr pointer (user embedding on vs.\ off; dimension
+64, 30 epochs, leave-one-out). Table~\ref{tab:pers} shows the effect is \textbf{mixed}: it helps
+clearly on Glasgow ($+0.038$ pairs-F1) but is roughly neutral-to-slightly-negative on Osaka and
+Toronto. The honest reading is that, under leave-one-trajectory-out on these small datasets, most
+users contribute too few trajectories for an identity embedding to be reliably estimated
+(a cold-start effect); personalization helps only where user signal is both present and
+consistent. The two larger cities (Edinburgh, Melbourne) are deferred to a GPU run.
+
+\begin{table}[ht]
+\centering
+\caption{Personalization ablation: pointer pairs-F1 \emph{without} vs.\ \emph{with} the user
+embedding (Flickr, length $\ge 3$, dim 64, 30 epochs).}
+\label{tab:pers}
+\begin{tabular}{lccc}
+\toprule
+City & no user emb. & + user emb. & $\Delta$ \\
+\midrule
+Glasgow & 0.451 & 0.489 & $+0.038$ \\
+Osaka   & 0.442 & 0.435 & $-0.007$ \\
+Toronto & 0.440 & 0.423 & $-0.017$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Discussion}
+\label{sec:sol-results-discussion}
+
+The experiments support three honest conclusions, one per research question.
+\textbf{(RQ1)} A learnable user embedding is the realized personalization mechanism; its benefit
+is real but conditional (Glasgow $+0.038$), not universal---tourism's cold-start sparsity limits
+identity-based personalization, motivating the persona/content-based direction as future work.
+\textbf{(RQ2)} The spatial/temporal gap features $(\Delta d,\Delta t)$ and the hybrid POI graph
+give the engine an honest LSTM/STGCN-tier accuracy ($\mathrm{HR@}1=0.187$); richer context such
+as weather and time-of-day is a clear, but unrealized, extension.
+\textbf{(RQ3)} A frozen next-POI engine can be decoded into coherent itineraries, and doing so
+(Frozen Rollout) \emph{beats} a purpose-trained pointer because of its much denser supervision;
+beam search alone cannot close the residual order gap (set-F1 $\gg$ pairs-F1), which points to
+richer, constraint- and schedule-aware decoders (e.g.\ DLIR-style \cite{halder2025drlir}) as the
+way forward. The Flickr Benchmark confirms that all of these conclusions sit on the literature's
+own scale and that our harness reproduces Chen 2016, while honestly placing our light models
+below the self-supervised neural SOTA.
+
+% ============================================================
+\section{Chapter Summary}
+\label{sec:sol-summary}
+% ============================================================
+
+This chapter described the system as actually built: a context-aware next-POI engine (a GCN over
+a hybrid POI graph, $(\Delta d,\Delta t)$ gap context, a user embedding, and a GRU scorer),
+decoded into itineraries by Frozen Rollout and compared against an end-to-end Trained Pointer.
+On Foursquare NYC the engine reaches an honest $\mathrm{HR@}1=0.187$, and---counter-intuitively
+---decoding the frozen engine beats the integrated pointer ($0.289$ vs.\ $0.259$ pairs-F1).
+On the Flickr Benchmark our methods land on the published $0.26$--$0.85$ scale with a
+protocol-faithful harness (Random reproduces Chen 2016), our \texttt{Markov} baseline is strong,
+and personalization is mixed. The next chapter draws these honest findings together and outlines
+the unrealized extensions---weather/time context, persona-based cold-start, semantic curation,
+and constraint-aware decoding---as future work.

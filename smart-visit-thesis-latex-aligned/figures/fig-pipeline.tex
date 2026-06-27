@@ -1,0 +1,92 @@
+% Architecture of the proposed system (real, implemented pipeline).
+%   Phase 1 — context-aware next-POI engine (GCN + Delta d/Delta t + user + GRU + head)
+%   Phase 2 — itinerary decoding (Frozen Rollout / Trained Pointer) + benchmarks
+% Requires: \usepackage{tikz} with libraries
+%   positioning, arrows.meta, fit, shapes.geometric, calc
+\begin{figure}[ht]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    >=Stealth,
+    font=\small,
+    io/.style   ={draw, rounded corners=2pt, fill=gray!12, align=center, minimum height=0.85cm, inner sep=4pt},
+    enc/.style  ={draw, rounded corners=2pt, fill=blue!12, thick, align=center, minimum height=0.85cm, inner sep=4pt},
+    core/.style ={draw, rounded corners=2pt, fill=orange!15, thick, align=center, minimum height=0.85cm, inner sep=4pt},
+    term/.style ={draw, rounded corners=2pt, fill=green!14, align=center, minimum height=0.85cm, inner sep=4pt},
+    dec/.style  ={draw, rounded corners=2pt, fill=blue!8, align=center, minimum height=0.85cm, inner sep=4pt},
+    merge/.style ={draw, circle, fill=white, inner sep=1pt, minimum size=0.5cm, font=\footnotesize},
+    arr/.style  ={->, thick, gray!55!black},
+]
+
+% ---- Inputs / preprocessing ----
+\node[io] (data) at (0,0) {Foursquare NYC\\check-ins};
+\node[io, below=0.55cm of data] (prep) {Preprocessing:\\[-1pt]\footnotesize iter.\ $\ge\!10$ filter,\\[-1pt]\footnotesize 24\,h sessions, $\Delta d,\Delta t$};
+
+% ---- Three encoder branches ----
+\node[io,  right=1.5cm of data.east, yshift=1.35cm] (graph) {Hybrid POI graph\\[-1pt]\footnotesize co-visit $\cup$ 10-NN};
+\node[io,  below=0.5cm of graph] (ctxin) {$\Delta d,\ \Delta t$\\[-1pt]\footnotesize per step};
+\node[io,  below=0.5cm of ctxin] (userid) {User ID};
+
+\node[enc, right=1.2cm of graph]  (gcn)  {2-layer\\GCN};
+\node[enc, right=1.2cm of ctxin]  (cmlp) {Context\\MLPs};
+\node[enc, right=1.2cm of userid] (uemb) {User\\embedding $e_u$};
+
+% ---- Merge POI features + context, feed GRU ----
+\node[merge, right=0.7cm of gcn, yshift=-0.7cm] (cat1) {$\oplus$};
+\node[core, right=0.8cm of cat1] (gru) {GRU};
+\node[merge, right=0.7cm of gru, yshift=-1.4cm] (cat2) {$\oplus$};
+\node[core, right=0.8cm of cat2] (head) {MLP head\\+ softmax};
+\node[term, right=0.9cm of head] (nextpoi) {Next-POI\\ranking over $|\mathcal{V}|$\\[-1pt]\footnotesize HR@k, NDCG, MRR};
+
+% ---- Arrows: Phase 1 ----
+\draw[arr] (data) -- (prep);
+\draw[arr] (prep.east) -- (graph.west);
+\draw[arr] (prep.east) -- (ctxin.west);
+\draw[arr] (prep.east) -- (userid.west);
+\draw[arr] (graph) -- (gcn);
+\draw[arr] (ctxin) -- (cmlp);
+\draw[arr] (userid) -- (uemb);
+\draw[arr] (gcn.east)  -- (cat1);
+\draw[arr] (cmlp.east) -- (cat1);
+\draw[arr] (cat1) -- (gru);
+\draw[arr] (gru.east) -- (cat2);
+\draw[arr] (uemb.east) -| (cat2);
+\draw[arr] (cat2) -- (head);
+\draw[arr] (head) -- (nextpoi);
+
+% ---- Phase 2: itinerary decoding ----
+\node[dec, below=4.7cm of gru, xshift=-2.2cm] (rollout)
+  {\textbf{Frozen Rollout}\\[-1pt]\footnotesize frozen engine + no-revisit mask,\\[-1pt]\footnotesize reserved end, greedy / beam};
+\node[dec, left=1.0cm of rollout] (pointer)
+  {Trained Pointer\\[-1pt]\footnotesize GCN+pointer, end-to-end};
+\node[term, right=1.0cm of rollout] (itin)
+  {Ordered itinerary\\[-1pt]\footnotesize pairs-F1, set-F1};
+\node[dec, right=0.8cm of itin] (flickr)
+  {Flickr Benchmark\\[-1pt]\footnotesize Chen-2016 protocol};
+
+\draw[arr, blue!55!black, densely dashed] (head.south) -| (rollout.north);
+\draw[arr] (pointer) -- (rollout);
+\draw[arr] (rollout) -- (itin);
+\draw[arr] (itin) -- (flickr);
+
+% ---- Phase containers (dashed fit boxes, no fill so they sit over the main layer) ----
+\node[draw, dashed, rounded corners, inner sep=11pt, label={[anchor=north west,font=\footnotesize\bfseries,text=blue!50!black,xshift=2pt,yshift=-2pt]north west:Phase 1 --- context-aware next-POI engine},
+      fit=(data)(graph)(gcn)(gru)(head)(nextpoi)(userid)] (p1box) {};
+\node[draw, dashed, rounded corners, inner sep=9pt, label={[anchor=north west,font=\footnotesize\bfseries,text=orange!55!black,xshift=2pt,yshift=-2pt]north west:Phase 2 --- itinerary decoding \& benchmarks},
+      fit=(pointer)(rollout)(itin)(flickr)] (p2box) {};
+
+\end{tikzpicture}%
+}
+\caption{Architecture of the proposed system. \textbf{Phase~1} (the next-POI engine): a
+two-layer GCN over a hybrid POI graph (training-set co-visitation edges $\cup$ geographic
+10-nearest-neighbour edges) produces POI features; per-step spatial/temporal gaps
+$(\Delta d,\Delta t)$ are lifted by small MLPs; a learnable user embedding $e_u$ encodes
+identity. The concatenated POI-feature/context sequence is read by a GRU, whose final state
+is concatenated with $e_u$ and scored by an MLP head over the full POI vocabulary
+($\mathrm{HR@}k$, $\mathrm{NDCG@}k$, $\mathrm{MRR}$). \textbf{Phase~2} (itinerary
+recommendation): the \emph{frozen} engine is decoded into ordered routes by \emph{Frozen
+Rollout} (no-revisit mask, reserved end POI, greedy or beam), compared against an end-to-end
+\emph{Trained Pointer}; both are scored with set-F1 / pairs-F1 and validated on the Flickr
+datasets under the Chen-2016 protocol.}
+\label{fig:pipeline-overview}
+\end{figure}

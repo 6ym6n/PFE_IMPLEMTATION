@@ -1,0 +1,57 @@
+% Save as figures/tab-comparison.tex
+
+\begin{table}[p]
+\centering
+\caption{High-level comparison of method families for tourist itinerary and POI recommendation.}
+
+\label{tab:comparison}
+\small
+\renewcommand{\arraystretch}{1.2}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{p{2.5cm}ccccccp{2.8cm}}
+\toprule
+\textbf{Method Family} & \rotatebox{70}{\textbf{Personalization}} & \rotatebox{70}{\textbf{Context-aware}} & \rotatebox{70}{\textbf{Sequential output}} & \rotatebox{70}{\textbf{Constraint handling}} & \rotatebox{70}{\textbf{Cold-start robust}} & \rotatebox{70}{\textbf{Itinerary-level eval.}} & \textbf{Typical strategy} \\
+\midrule
+OP / TTDP optimization
+  & -- & $\sim$ & \checkmark & \checkmark & -- & \checkmark
+  & ILP, heuristics, metaheuristics \\
+\addlinespace
+CF / MF
+  & \checkmark & -- & -- & -- & -- & --
+  & Top-$k$ ranking \\
+\addlinespace
+Content-based / Hybrid
+  & \checkmark & $\sim$ & -- & -- & \checkmark & --
+  & Top-$k$ ranking \\
+\addlinespace
+RNN / LSTM
+  & $\sim$ & $\sim$ & $\sim$ & -- & -- & --
+  & Greedy decoding \\
+\addlinespace
+Transformer / Attention
+  & $\sim$ & $\sim$ & $\sim$ & -- & $\sim$ & --
+  & Greedy decoding \\
+\addlinespace
+Graph Neural Networks
+  & \checkmark & $\sim$ & $\sim$ & -- & $\sim$ & --
+  & Greedy or top-$k$ \\
+\addlinespace
+Reinforcement Learning
+  & \checkmark & $\sim$ & \checkmark & \checkmark & -- & \checkmark
+  & MCTS, policy rollout \\
+\addlinespace
+Self-supervised / Contrastive
+  & \checkmark & -- & $\sim$ & -- & \checkmark & --
+  & Greedy or top-$k$ \\
+\addlinespace
+LLM-based
+  & \checkmark & \checkmark & \checkmark & $\sim$ & \checkmark & $\sim$
+  & Text generation; hybrid with solver \\
+\addlinespace
+\midrule
+\textbf{This thesis} \textit{(engine + rollout)}
+  & \checkmark & $\sim$ & \checkmark & $\sim$ & -- & \checkmark
+  & Frozen Rollout (decoded engine) \\
+\bottomrule
+\end{tabular}}% end resizebox
+\end{table}

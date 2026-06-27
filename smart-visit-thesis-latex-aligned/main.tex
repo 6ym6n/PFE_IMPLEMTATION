@@ -1,0 +1,163 @@
+\documentclass[12pt,oneside]{book}
+
+% --------------------
+% Preamble / packages
+% --------------------
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{float}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+% Bold small-caps fallback for lmr (substitute bold upright); deferred so the
+% lmr font family is fully registered before we declare the substitution shape.
+\AtBeginDocument{\DeclareFontShape{T1}{lmr}{bx}{sc}{<->ssub*lmr/bx/n}{}}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\usepackage[edges]{forest}
+\usepackage{pdflscape}
+\usepackage{adjustbox}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\usepackage[numbers]{natbib}
+\bibliographystyle{plainnat}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage[nameinlink]{cleveref}
+\usepackage{pdflscape}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, fit, backgrounds, shapes.geometric, calc, decorations.pathreplacing}
+
+% --------------------
+% Thesis metadata (edit these)
+% --------------------
+\newcommand{\ThesisTitle}{Smart Visit Module for Personalized Tourist Itinerary Recommendation Based on User Preferences and Contextual Data}
+\newcommand{\ThesisAuthor}{Ayman Naaimi}
+\newcommand{\ThesisDegree}{Master's Thesis}
+\newcommand{\ThesisProgram}{D2SM}
+\newcommand{\ThesisUniversity}{Ensam Meknes}
+\newcommand{\ThesisYear}{2026}
+\newcommand{\ThesisSupervisor}{Supervisor: IMADEDDINE MOUNTASSER}
+
+% Convenience
+\newcommand{\RQ}[1]{\textbf{RQ#1.}}
+
+\begin{document}
+
+% --------------------
+% Front matter
+% --------------------
+\frontmatter
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+  {\Large \ThesisUniversity \par}
+  \vspace{1.0cm}
+  {\Large \ThesisProgram \par}
+  \vspace{1.8cm}
+  {\Huge \bfseries \ThesisTitle \par}
+  \vspace{2.0cm}
+  {\Large \ThesisDegree \par}
+  \vspace{1.0cm}
+  {\Large \ThesisAuthor \par}
+  \vfill
+  {\large \ThesisSupervisor \par}
+  \vspace{0.5cm}
+  {\large \ThesisYear \par}
+\end{titlepage}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+This thesis develops a personalized, context-aware engine for tourist recommendation and
+decodes it into ordered itineraries, treating two \emph{formally distinct} sub-tasks and
+evaluating each on its own field-standard benchmark. \textbf{Phase~1} is next-POI prediction:
+a compact engine combining a graph convolutional network (GCN) over a hybrid point-of-interest
+(POI) graph, per-step spatial and temporal gap features ($\Delta d$, $\Delta t$), a learnable
+user embedding, and a gated-recurrent-unit (GRU) scorer, trained on the Foursquare NYC
+check-in dataset and evaluated with full-vocabulary ranking metrics (HR@$k$, NDCG@$k$, MRR).
+\textbf{Phase~2} is itinerary recommendation: the \emph{frozen} engine is decoded into ordered,
+loop-free routes by a constraint-respecting rollout (\emph{Frozen Rollout}) and compared
+against a pointer network trained end-to-end (\emph{Trained Pointer}), using the order-aware
+pairs-F1 metric. Because the Foursquare itinerary scores are not on the same scale as the
+published trip-recommendation literature, the task is re-validated on the Flickr
+photo-trajectory datasets under the exact Chen-2016 protocol. The engine attains an honest
+LSTM/STGCN-tier accuracy (HR@1 = 0.187); decoding the frozen engine \emph{outperforms} the
+purpose-trained pointer (0.289 vs.\ 0.259 pairs-F1), a supervision-density effect rather than
+an integration win; on the Flickr benchmark a Random baseline reproduces Chen 2016 (confirming
+protocol faithfulness), our methods land on the published $0.26$--$0.85$ scale, and
+personalization from the user embedding is beneficial but conditional. The contribution is an
+honest, reproducible next-POI engine, a simple yet strong decoding method for itineraries, and
+a literature-grounded benchmark that places both on a defensible footing.
+
+\chapter*{Keywords}
+\addcontentsline{toc}{chapter}{Keywords}
+Tourism recommender systems; next-POI recommendation; itinerary recommendation; sequential recommendation; graph neural networks; context-aware recommendation; trajectory learning; pairs-F1.
+
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+I would like to express my sincere gratitude to my supervisor, \ThesisSupervisor, for the
+guidance, encouragement, and constructive feedback that shaped this work from its first
+formulation to its final form. I am grateful to the faculty and staff of \ThesisUniversity\ and
+the \ThesisProgram\ programme for the knowledge and the environment that made this research
+possible. I also thank the authors of the open datasets and open-source tools used in this
+thesis---in particular the Foursquare and Flickr trajectory benchmarks---without which the
+experimental study could not have been carried out. Finally, I thank my family and friends for
+their patience and unwavering support throughout this journey.
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\chapter*{List of Abbreviations}
+\addcontentsline{toc}{chapter}{List of Abbreviations}
+\begin{tabular}{@{}ll@{}}
+CARS & Context-Aware Recommender Systems \\
+POI  & Point of Interest \\
+LBSN & Location-Based Social Network \\
+GNN  & Graph Neural Network \\
+GCN  & Graph Convolutional Network \\
+GRU  & Gated Recurrent Unit \\
+RNN  & Recurrent Neural Network \\
+LSTM & Long Short-Term Memory \\
+MLP  & Multilayer Perceptron \\
+HR@$k$  & Hit Rate at $k$ \\
+NDCG & Normalized Discounted Cumulative Gain \\
+MRR  & Mean Reciprocal Rank \\
+CF   & Collaborative Filtering \\
+MF   & Matrix Factorization \\
+RL   & Reinforcement Learning \\
+LLM  & Large Language Model \\
+TTDP & Tourist Trip Design Problem \\
+OP   & Orienteering Problem \\
+\end{tabular}
+
+% --------------------
+% Main matter
+% --------------------
+\mainmatter
+
+\include{chapters/01-introduction}
+\include{chapters/02-problem}
+\include{chapters/03-state-of-art}
+\include{chapters/04-solution}
+\include{chapters/05-conclusion}
+
+% --------------------
+% Back matter
+% --------------------
+\backmatter
+\bibliography{refs}
+
+
+\end{document}

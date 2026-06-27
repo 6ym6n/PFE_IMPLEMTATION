@@ -1,0 +1,33 @@
+% Required in your preamble:
+% \usepackage{booktabs}
+% \usepackage{tabularx}
+% \usepackage{amsmath} % For \text command if needed
+
+\begin{table}[H]
+\centering
+\caption{Commonly used datasets in POI and itinerary recommendation research.}
+
+\label{tab:datasets}
+\small
+\renewcommand{\arraystretch}{1.2} % Slightly more breathing room
+\begin{tabularx}{\textwidth}{l l l l l X}
+\toprule
+\textbf{Dataset} & \textbf{Source} & \textbf{Type} & \textbf{Coverage} & \textbf{Scale} & \textbf{Typical use} \\
+\midrule
+Foursquare NYC & LBSN check-ins & Check-ins & New York & $\sim$227K & Next-POI, top-$k$ \\
+Foursquare TKY & LBSN check-ins & Check-ins & Tokyo & $\sim$573K & Next-POI, top-$k$ \\
+Foursquare SIN & LBSN check-ins & Check-ins & Singapore & $\sim$194K & Next-POI, top-$k$ \\
+Gowalla & LBSN check-ins & Check-ins & Global & $\sim$6.4M & POI rec., social \\
+Yelp & Reviews + check-ins & Hybrid & US cities & $\sim$6.9M & Review-aware rec. \\
+\midrule
+Flickr / YFCC100M & Geo-tagged photos & Photos & Global & $\sim$100M & Trajectory mining \\
+Edinburgh & Geo-tagged photos & Trajectories & Edinburgh & $\sim$5K & Itinerary rec. \\
+Melbourne & Geo-tagged photos & Trajectories & Melbourne & $\sim$3K & Itinerary rec. \\
+Toronto & Geo-tagged photos & Trajectories & Toronto & $\sim$6K & Itinerary rec. \\
+\midrule
+Disney Parks & Theme park visits & Trajectories & 5 Parks & $\sim$1K--6K & Itinerary + queuing \\
+\midrule
+TravelPlanning & Synthetic bench. & Multi-modal & US cities & 1,225 & LLM evaluation \\
+\bottomrule
+\end{tabularx}
+\end{table}

@@ -1,0 +1,86 @@
+% Required in preamble:
+% \usepackage[edges]{forest}
+% \usepackage{pdflscape}
+% \usepackage{adjustbox}
+% \usepackage{xcolor}
+
+\begin{landscape}
+\begin{figure}[p]
+    \centering
+    \caption{Full Taxonomy of Tourist Itinerary and POI Recommendation (2022--2026 Extension). Nodes marked \textsc{new} indicate areas absent from previous surveys~\cite{halder2022thesis} and introduced in the 2022--2026 period.}
+    \label{fig:taxonomy}
+    
+    \begin{adjustbox}{max width=\linewidth}
+    \begin{forest}
+      for tree={
+        draw,
+        rounded corners=2pt,
+        font=\small,
+        align=center,
+        edge={thick, -Stealth},
+        forked edge,
+        l sep=1.2cm,
+        s sep=0.15cm,
+        inner sep=4pt,
+      },
+      /tikz/root/.style={fill=blue!60, text=white, font=\bfseries, minimum width=5cm},
+      /tikz/user/.style={fill=orange!15, draw=orange!80, font=\bfseries},
+      /tikz/comp/.style={fill=purple!10, draw=purple!80, font=\bfseries},
+      /tikz/prov/.style={fill=green!10, draw=green!50!black, font=\bfseries},
+      /tikz/withnew/.style={
+        label={[fill=green!20, draw=green!60!black, font=\tiny\bfseries, inner sep=1.5pt, xshift=-0.4cm, yshift=-0.1cm]above right:\textsc{new}}
+      },
+      [Tourist Itinerary and POI Recommendation, root
+        [User Satisfaction, user
+          [Non-Personalized\\§3.3
+            [OP / TTDP]
+            [General POI]
+          ]
+          [Personalized\\§3.4
+            [CF / MF]
+            [Hybrid
+                [POI / Itinerary rec.]
+            ]
+          ]
+          [Context-Aware\\§3.5
+            [Temporal]
+            [Weather]
+            [Multimodal /\\heterogeneous, withnew]
+          ]
+        ]
+        [Computational Approaches, comp
+          [Classical ML
+            [CF / MF / FM]
+          ]
+          [Deep Learning\\§3.6
+            [RNN / LSTM]
+            [Transformer]
+            [GNN]
+            [RL]
+            [SSL / Contrastive, withnew]
+            [LLM, withnew]
+          ]
+          [Decoding\\§3.7
+            [Beam / constr.]
+            [Two-stage]
+          ]
+        ]
+        [Provider Satisfaction \& System, prov
+          [Fairness\\§3.8
+            [User-side]
+            [Provider]
+          ]
+          [Datasets\\§3.2
+            [LBSN]
+            [GPS/Photo]
+            [LLM benchmarks, withnew]
+          ]
+          [Synthesis\\§3.9
+            [Gaps / positioning]
+          ]
+        ]
+      ]
+    \end{forest}
+    \end{adjustbox}
+\end{figure}
+\end{landscape}

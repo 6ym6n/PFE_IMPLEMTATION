@@ -1,0 +1,111 @@
+\chapter{General Introduction}
+\label{ch:introduction}
+
+% ============================================================
+\section{Background and Motivation}
+\label{sec:intro-background}
+% ============================================================
+
+Tourism is one of the world's largest economic sectors. According to the World Travel and Tourism Council, the global travel and tourism industry contributed approximately USD~9.9 trillion to the world economy in 2023, accounting for roughly 9.1\% of global GDP and supporting over 320~million jobs worldwide~\cite{wttc2024}. Beyond its economic significance, tourism plays a central role in cultural exchange, urban development, and regional growth, with both developed and developing nations relying on tourism flows to sustain local economies and communities~\cite{unwto2024}.
+
+The rapid expansion of digital technologies has fundamentally transformed how travelers plan and experience their journeys. Location-based social networks (LBSNs) such as Foursquare, TripAdvisor, and Google Maps now provide unprecedented volumes of user-generated data---check-ins, reviews, photographs, and ratings---that capture patterns of mobility and preference at a global scale~\cite{werneck2021poi}. At the same time, the proliferation of mobile devices equipped with GPS, real-time connectivity, and contextual sensors (e.g., weather, time, and location awareness) has created new opportunities for delivering personalized travel assistance at the point of need.
+
+However, this abundance of information also creates a significant challenge for tourists. A major city may contain thousands of candidate points of interest (POIs) spanning museums, landmarks, restaurants, parks, cultural sites, and entertainment venues. Selecting which places to visit, in what order, and under what conditions is a combinatorial planning task that most travelers find cognitively overwhelming~\cite{gavalas2014ttdp}. Traditional travel planning tools---guidebooks, curated lists, and generic online platforms---typically recommend popular locations without accounting for individual preferences, time constraints, or real-time contextual factors such as weather or crowd conditions~\cite{lim2018survey}. This gap between the richness of available data and the difficulty of translating it into actionable, personalized travel plans motivates the development of intelligent tourism recommender systems.
+
+% --- From POI recommendation to itinerary recommendation ---
+
+Recommender systems have been extensively studied across domains such as e-commerce, media, and social platforms~\cite{koren2009mf}. In the tourism context, a substantial body of research has focused on \emph{point-of-interest (POI) recommendation}: given a user and their context, the system produces a ranked list of individual venues that the user is likely to enjoy~\cite{werneck2021poi, islam2022deep}. While POI recommendation is a valuable building block, it addresses only the question of \emph{what} to visit, not \emph{how} to visit it. In practice, tourists do not consume recommendations as isolated items. A city visit is inherently sequential and resource-constrained: a traveler typically has a limited time budget (e.g., a half-day or full day), must account for travel effort between locations, and often seeks a balanced and diverse set of experiences.
+
+This observation motivates \emph{itinerary recommendation}, where the output is an ordered sequence of POIs forming an actionable, executable route---not merely a set of standalone suggestions~\cite{gavalas2014ttdp, halder2022thesis}. Itinerary recommendation is closely related to the Tourist Trip Design Problem (TTDP) and the Orienteering Problem (OP) in operations research, which explicitly model the selection and ordering of visits under time and travel constraints~\cite{vansteenwegen2011op}. However, classical optimization formulations typically rely on fixed, non-personalized utility scores (e.g., global popularity) and do not account for the dynamic, context-dependent nature of tourist preferences.
+
+% --- Context-awareness ---
+
+Tourist preferences are strongly context-dependent. The suitability of an activity changes with the time of day (morning visits to markets versus evening dining), weather conditions (outdoor landmarks versus indoor museums during rain), seasonal events, and even the traveler's energy level as a trip progresses. Context-aware recommender systems (CARS) formalize this dependence by extending the classical user--item relevance function to incorporate situational factors, estimating relevance as a function of user, item, and context~\cite{adomavicius2005cars, adomavicius2022cars, villegas2018cars}. Surveys on CARS demonstrate that explicitly modeling context can significantly improve recommendation relevance when contextual effects are present~\cite{raza2019cars}. In tourism, context is not only a preference signal but also a feasibility factor: weather and time influence both what a tourist \emph{wants} to do and what is \emph{practically possible} within a given itinerary.
+
+% --- Evolution of approaches ---
+
+The computational approaches for tourism recommendation have evolved considerably over the past decade. Early methods relied on collaborative filtering, matrix factorization, and content-based techniques adapted from general recommendation research~\cite{koren2009mf, burke2002hybrid}. The operations research community contributed optimization-based formulations that ensure feasibility but often lack personalization~\cite{vansteenwegen2011op, gavalas2014ttdp}. More recently, deep learning techniques have demonstrated superior performance in capturing complex user--POI interactions. Recurrent neural networks (RNNs) and their variants (GRU, LSTM) model sequential check-in behavior~\cite{liu2016strnn}, attention mechanisms and Transformer architectures capture long-range dependencies in visit sequences~\cite{sun2019bert4rec, kang2018sasrec}, graph neural networks (GNNs) encode spatial and social relationships between POIs~\cite{gnnpoi2024survey}, and reinforcement learning enables dynamic itinerary optimization~\cite{halder2022thesis, halder2025drlir}. Most recently, large language models (LLMs) have emerged as a new paradigm for travel planning, offering natural-language preference understanding and zero-shot recommendation capabilities, though they still struggle with constraint satisfaction and logistical feasibility~\cite{xie2024travelplanning, fan2024travelagent}.
+
+Despite this progress, building a practical itinerary recommender that is simultaneously \emph{personalized}, \emph{context-aware}, and \emph{feasible} remains an open challenge. Most existing approaches address only a subset of these requirements: optimization methods ensure feasibility but lack personalization; sequential deep learning models capture preferences but produce infeasible routes when decoded greedily; and LLM-based planners understand user intent but cannot reliably satisfy hard constraints. Figure~\ref{fig:intro-overview} illustrates how this thesis positions the proposed system relative to these existing paradigms. This thesis aims to address this gap.
+
+\input{figures/fig-intro-overview}
+
+
+% ============================================================
+\section{Research Aims}
+\label{sec:intro-aims}
+% ============================================================
+
+The central objective of this thesis is to design and evaluate a personalized, context-aware \emph{next-POI engine} and a method for \emph{decoding} it into tourist itineraries. Unlike approaches that recommend isolated POIs, the system produces a \emph{complete ordered sequence} of visits, obtained by rolling the trained engine forward under loop-free and budget constraints.
+
+For the next-POI task, the engine takes as input: (i)~a session prefix (the POIs visited so far), (ii)~per-step spatial and temporal gap features ($\Delta d$, the distance moved between consecutive visits, and $\Delta t$, the time elapsed), and (iii)~a user identifier encoded as a learnable embedding, all grounded in a city POI catalogue with a graph over its venues. For the itinerary task, a query additionally fixes a start POI, an optional end POI, and a length budget, and the output is an ordered, loop-free route over the catalogue.
+
+This aim is approached through a deliberately \emph{decoupled} design: rather than training one monolithic itinerary generator, the thesis trains a strong next-POI model and obtains itineraries by decoding it. The engine combines (i)~a graph convolutional encoder over a hybrid POI graph, (ii)~spatial/temporal gap context, (iii)~a learnable user embedding for personalization, and (iv)~a GRU sequential backbone with a full-vocabulary scoring head; itineraries are then produced by \emph{Frozen Rollout} and compared against an end-to-end \emph{Trained Pointer}. Explicit weather and time-of-day context, persona-based cold-start, and penalty-augmented constrained decoding are promising extensions discussed as future work rather than claimed in the experiments.
+
+
+% ============================================================
+\section{Research Questions, Objectives, and Contributions}
+\label{sec:intro-rqs}
+% ============================================================
+
+To achieve the aims described above, this thesis addresses three research questions, each targeting a specific challenge in personalized itinerary recommendation. For each question, we state the corresponding objective and the contribution made by this work.
+
+% --- RQ1 ---
+\subsection{RQ1: Personalization under Sparse Tourist Histories}
+\label{sec:intro-rq1}
+
+\textbf{Research Question 1.} \textit{Can a learnable per-user representation personalize tourist recommendation, and under what conditions does it help given the sparse, cold-start nature of tourist histories?}
+
+\medskip
+
+Tourism recommendation frequently operates under sparsity: a visitor may have few interactions in the destination city, and collaborative methods that rely on co-visitation degrade under such conditions~\cite{koren2009mf}. When personalization fails, systems fall back on globally popular POIs, producing homogeneous outputs that ignore individual interests.
+
+\textbf{Objective.} Incorporate a user representation into the sequential engine and \emph{measure} its effect, isolating the contribution of identity-based personalization rather than assuming it always helps.
+
+\textbf{Contribution.} We integrate a learnable user embedding into the engine and quantify its effect with a controlled on/off ablation. The finding is honest and \emph{conditional}: personalization helps where a user's signal is present and consistent (a clear gain on Glasgow) but is roughly neutral elsewhere under leave-one-trajectory-out evaluation---a cold-start effect on datasets with few trajectories per user. A richer persona/content-based representation that personalizes from explicit preferences and POI metadata, and a tourism-specific semantic curation of the catalogue, are identified as directions for future work.
+
+% --- RQ2 ---
+\subsection{RQ2: Spatial--Temporal Context for Sequential Prediction}
+\label{sec:intro-rq2}
+
+\textbf{Research Question 2.} \textit{How do spatial and temporal gap features between consecutive visits, together with a graph over POIs, improve sequential next-POI prediction?}
+
+\medskip
+
+Successive tourist visits are governed by how far and how long a person moves between venues; modelling these spatio-temporal regularities improves next-POI prediction over context-agnostic sequence models~\cite{liu2016strnn}. POIs are also related both spatially and behaviourally, structure that a graph can capture beyond each venue's identity~\cite{adomavicius2005cars, adomavicius2022cars}.
+
+\textbf{Objective.} Condition the sequential model on per-step spatial ($\Delta d$) and temporal ($\Delta t$) gaps, and encode POIs with a graph neural network over a hybrid co-visitation/geographic graph, using shared representations that avoid the data fragmentation of context pre-filtering.
+
+\textbf{Contribution.} We design a context-aware engine in which a two-layer GCN over a hybrid POI graph produces venue features, small MLPs lift the $(\Delta d,\Delta t)$ gaps into a context vector, and a GRU consumes their concatenation. This yields an honest LSTM/STGCN-tier accuracy on Foursquare NYC. Explicit environmental context (weather) and absolute time-of-day are deliberately not modelled and are left as future work---a scoping decision rather than a claimed capability~\cite{villegas2018cars, raza2019cars}.
+
+% --- RQ3 ---
+\subsection{RQ3: From Next-POI Prediction to Itineraries}
+\label{sec:intro-rq3}
+
+\textbf{Research Question 3.} \textit{Can a sequential next-POI model be decoded into complete, loop-free itineraries, and does training a dedicated itinerary model outperform decoding the frozen next-POI model?}
+
+\medskip
+
+Sequential models are trained for next-step prediction and evaluated with ranking metrics, but deploying them with greedy decoding need not yield good itineraries. A locally optimal next-POI choice can produce globally poor routes: excessive back-and-forth travel (zigzag behaviour) and violations of the budget~\cite{wu2025trajectory}. This mismatch between next-step accuracy and itinerary-level quality---which we term the \emph{greedy trap}---is a fundamental challenge for learning-based itinerary generation. Figure~\ref{fig:greedy-trap} illustrates the problem.
+
+\input{figures/fig-greedy-trap}
+
+\textbf{Objective.} Develop an inference-time procedure that turns the trained scorer into an itinerary planner, and test it against a purpose-trained alternative to determine whether end-to-end integration is worth its cost.
+
+\textbf{Contribution.} We introduce \emph{Frozen Rollout}, which decodes the \emph{frozen} engine into ordered, loop-free routes using a no-revisit mask and a reserved end POI (greedy or beam search), and compare it against a \emph{Trained Pointer} trained end-to-end on whole trajectories. The central, somewhat counter-intuitive finding is that decoding the frozen engine \emph{outperforms} the purpose-trained pointer, because the next-POI model enjoys far denser supervision---nuancing the assumption that an integrated itinerary model is necessarily better. We further adopt a two-benchmark evaluation (full-vocabulary ranking metrics for next-POI; order-aware set-F1/pairs-F1 for itineraries, re-validated on the Flickr datasets), and identify penalty-augmented constrained decoding (travel-cost and diversity terms) as a natural extension left for future work.
+
+
+% ============================================================
+\section{Thesis Organization}
+\label{sec:intro-organization}
+% ============================================================
+
+The remainder of this thesis is organized as follows.
+
+\textbf{Chapter~\ref{ch:problem}} formalizes the itinerary recommendation problem addressed in this thesis. It specifies the inputs, outputs, and notation; defines hard feasibility constraints and soft quality objectives; discusses the key technical challenges (data bias, cold-start, and the greedy trap); and presents the research questions and evaluation perspective.
+
+\textbf{Chapter~\ref{ch:sota}} provides a comprehensive state of the art in tourist itinerary and POI recommendation. The chapter is organized as a field taxonomy, covering non-personalized approaches (orienteering problems, general POI recommendation), personalized methods (collaborative filtering, content-based, hybrid), deep learning models (RNN, Transformer, GNN, reinforcement learning), context-aware recommendation, and emerging paradigms (LLM-based planning, self-supervised learning, fairness). The chapter concludes with a comparative synthesis and gap analysis mapped to the research questions.
+
+\textbf{Chapter~\ref{ch:solution}} presents the proposed system in detail: the data preparation, the context-aware next-POI engine (a GCN over a hybrid POI graph, $(\Delta d,\Delta t)$ context, a user embedding, and a GRU scorer), the Frozen Rollout decoder and the Trained Pointer comparison, and the experimental evaluation---including the next-POI results, the NYC integration experiment, the literature-comparable Flickr benchmark, and the personalization ablation.
+
+\textbf{Chapter~\ref{ch:conclusion}} concludes the thesis by summarizing findings, discussing limitations, and outlining directions for future work.

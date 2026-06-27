@@ -1,0 +1,368 @@
+\chapter{Problem Definition}
+\label{ch:problem}
+
+\section{Context and Motivation}
+\label{sec:prob-context}
+
+Tourist recommendation has traditionally focused on suggesting \emph{individual} points of interest (POIs), such as attractions, museums, restaurants, or viewpoints. While these recommendations can be useful, they do not fully match the way tourists plan and experience a city visit. In practice, a visitor typically needs an \emph{itinerary}: a coherent sequence of POIs that can be executed within a limited time budget (e.g., a half-day or a full day), with reasonable travel effort between successive stops and a balance of experiences.
+
+This thesis addresses itinerary recommendation as a problem at the intersection of (i) personalized recommendation and (ii) route planning. From a recommendation perspective, the system should adapt to user-specific interests and preferences, including cold-start scenarios where historical interaction data is limited or absent \citep{koren2009mf, burke2002hybrid}. From a context-aware perspective, suitability depends on situational factors such as \textbf{time-of-day} and \textbf{weather}, which can strongly influence what is appropriate or enjoyable (e.g., outdoor activities in good weather, indoor alternatives during rain). Context-aware recommender systems formalize this dependency by modeling relevance as a function of user, item, and context \citep{adomavicius2005tois, adomavicius2022cars, villegas2018cars}.
+
+Unlike recommending a single POI, itinerary recommendation introduces additional structure and constraints. First, the output is inherently \emph{sequential}: the quality of a candidate POI depends not only on user preference but also on the already selected stops and their geographic placement. Second, itineraries must be \emph{feasible}: travel time and visit durations accumulate and must remain within a budget, and (when available) opening hours impose time-window constraints. These considerations connect the problem to tourism route planning formulations such as the Tourist Trip Design Problem (TTDP), where selecting and ordering locations is constrained by time and travel cost \citep{gavalas2014ttdp}.
+
+Recent learning-based approaches for route-like or itinerary generation show the promise of sequential modeling for this task \citep{wu2025tlmr, chang2025itinerary, halder2025deeptourrec}. However, tourism settings pose additional challenges due to noisy and biased mobility data (e.g., resident-dominated check-ins or vehicle trajectories) and the gap between next-step prediction accuracy and long-horizon itinerary quality. These challenges motivate a careful problem formulation in which personalization, context-awareness, geographic coherence, and feasibility are treated as first-class objectives rather than secondary post-processing steps.
+
+In the remainder of this chapter, we formalize the itinerary recommendation task addressed by the proposed system by specifying the inputs, outputs, constraints, and evaluation criteria, and by clarifying the key technical challenges that guide the research questions of this thesis.
+
+\section{Problem Statement}
+\label{sec:prob-statement}
+
+The goal of the proposed system is to generate a \textbf{personalized and context-aware tourist itinerary} for a given city. In contrast to classic POI recommendation, which outputs a ranked list of venues, itinerary recommendation must output an \emph{ordered sequence} of POIs that forms a geographically coherent route and can be executed within real-world constraints such as limited time and travel cost \citep{gavalas2014ttdp}.
+
+\paragraph{Informal statement.}
+Given (i) a user description (persona and/or explicit preferences), (ii) the current context (time-of-day and weather), and (iii) a city POI catalog with geographic and semantic metadata, the system should recommend an itinerary that:
+\begin{itemize}[leftmargin=*]
+    \item matches the user's interests (personalization),
+    \item is appropriate for the context (context-awareness),
+    \item is geographically coherent (avoids unnecessary back-and-forth travel),
+    \item respects feasibility constraints (time budget and travel cost),
+    \item and provides a diverse set of experiences (avoids redundancy).
+\end{itemize}
+
+\paragraph{Motivating use case.}
+A typical usage scenario is a visitor planning a \emph{half-day} or \emph{full-day} city tour. The visitor may provide high-level preferences (e.g., ``history'', ``architecture'', ``local food'', ``outdoor viewpoints'') and may have little to no historical interaction data in the target city (cold-start). The system then generates a multi-stop itinerary (e.g., 5--10 venues) that can realistically be followed given the available time and current conditions.
+
+\paragraph{Scope of the problem in this thesis.}
+This thesis focuses on \textbf{offline itinerary generation} from Foursquare-style POI data and historical mobility/check-in sequences. The objective is not only to predict the next POI in a trajectory, but to generate a \emph{complete itinerary} that is executable and coherent. In later chapters, we show how this requires going beyond greedy next-step prediction, since step-wise optimization can lead to infeasible or zigzag routes even when next-POI ranking accuracy is high \citep{wu2025tlmr}.
+
+
+\section{Definitions and Notation}
+\label{sec:prob-defs}
+
+This section introduces the objects used to define the itinerary recommendation task and establishes a lightweight notation that will be reused in Chapters~\ref{ch:sota} and \ref{ch:solution}.
+
+\subsection{Points of interest and city catalog}
+Let a \textbf{point of interest (POI)} be a visitable venue such as an attraction, museum, restaurant, park, or landmark. For a given city, we denote the set of available POIs by $\mathcal{V}=\{v_1,\dots,v_{|\mathcal{V}|}\}$. Each POI $v \in \mathcal{V}$ is associated with:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Geographic location:} latitude/longitude coordinates $\mathrm{loc}(v)$,
+    \item \textbf{Semantic attributes:} category labels and/or textual descriptors (e.g., tags, name, short description),
+    \item \textbf{Popularity signals:} optional aggregate statistics such as total check-ins or visits,
+    \item \textbf{Operational attributes (optional):} opening hours, price range, or estimated visit duration.
+\end{itemize}
+
+Since raw LBSN catalogs may contain many non-touristic venues (e.g., offices, local services), this thesis assumes that the city catalog can be transformed into a curated subset of \textbf{tourist-relevant POIs} via semantic filtering. We denote the curated set by $\mathcal{V}^{\star} \subseteq \mathcal{V}$. This curation step is motivated by dataset bias and noise typical of check-in data, where activity may reflect resident routines more than tourist intent.
+
+\subsection{Users, personas, and preference representation}
+Let $\mathcal{U}$ denote the set of users. A user can be represented in two complementary ways:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Interaction history} (when available): a sequence of previously visited POIs,
+    \item \textbf{Explicit persona/preferences:} a high-level description of interests (e.g., ``culture'', ``food'', ``nature'').
+\end{itemize}
+
+To support cold-start settings, the thesis assumes that user interests can be encoded as a \textbf{preference vector} $\mathbf{p}_u \in \mathbb{R}^{d}$ derived from persona inputs and/or observed interactions. Hybrid recommendation is a common strategy for combining preference signals from content with collaborative patterns when available \citep{burke2002hybrid}. In the proposed framework (Chapter~\ref{ch:solution}), $\mathbf{p}_u$ is used as an explicit conditioning signal for itinerary generation.
+
+\subsection{Context variables}
+We define context as a set of situational variables observed at recommendation time. In the realized system, the contextual signal is the pair of \textbf{spatial and temporal gaps} between consecutive visits:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Spatial gap} $\Delta d_t$: the haversine distance moved from the previous POI,
+    \item \textbf{Temporal gap} $\Delta t_t$: the time elapsed since the previous visit.
+\end{itemize}
+We denote the per-step context by $c_t \in \mathcal{C}$. Other situational factors---notably time-of-day and weather---fit the same context-aware formulation, in which relevance is modelled as a function of $(u,v,c)$ rather than $(u,v)$ only \citep{adomavicius2005tois, adomavicius2022cars, villegas2018cars}; they are identified as future extensions (Chapter~\ref{ch:conclusion}) rather than modelled in this thesis.
+
+\subsection{Itineraries and travel cost}
+An itinerary of length $L$ is an ordered sequence of POIs:
+\[
+\mathbf{s} = (s_1, s_2, \dots, s_L), \qquad s_{\ell} \in \mathcal{V}^{\star}.
+\]
+Optionally, an itinerary can be augmented with a schedule of visit start times $\mathbf{t}=(t_1,\dots,t_L)$, but the minimal output required by this thesis is the ordered POI sequence.
+
+We model movement between POIs using a nonnegative \textbf{travel cost} function:
+\[
+\tau: \mathcal{V}^{\star} \times \mathcal{V}^{\star} \rightarrow \mathbb{R}_{\ge 0},
+\]
+which represents travel time or distance between two POIs. In practice, $\tau$ may be approximated using geographic distance or routing estimates. Additionally, each POI $v$ may have an estimated \textbf{visit duration} $\delta(v) \ge 0$, representing expected time spent at the venue.
+
+These quantities are standard in itinerary planning and TTDP-style formulations, where the sequence must satisfy time and travel constraints \citep{gavalas2014ttdp}.
+
+\section{Inputs, Outputs, and System Requirements}
+\label{sec:prob-io}
+
+This section specifies the information available to the system (inputs), the expected output, and the core requirements that define what a ``good'' itinerary means in the setting of this thesis.
+
+\subsection{Inputs}
+At recommendation time, the system receives the following inputs.
+
+\paragraph{User representation.}
+A user $u \in \mathcal{U}$ is represented by a preference signal. In cold-start settings, this signal is primarily derived from an explicit persona/preferences description and encoded as a vector $\mathbf{p}_u \in \mathbb{R}^d$ (see \Cref{sec:prob-defs}). When historical interactions are available, they can be used to refine this representation via hybrid modeling \citep{burke2002hybrid}.
+
+\paragraph{Context.}
+The system observes per-step situational context---in the realized engine, the spatial and temporal gaps $(\Delta d,\Delta t)$ between consecutive visits. We denote the context by $c \in \mathcal{C}$ (or $c_t$ at step $t$), following the context-aware recommendation formulation \citep{adomavicius2005tois, adomavicius2022cars}; time-of-day and weather fit the same formulation and are left as future extensions.
+
+\paragraph{City POI catalog.}
+The system has access to a city-specific POI set $\mathcal{V}$ with semantic and geographic metadata. Because raw catalogs can include many non-touristic venues and bias the learning signal toward resident routines, this thesis assumes the availability of a curated tourist-relevant subset $\mathcal{V}^{\star}\subseteq \mathcal{V}$ obtained through semantic pruning.
+
+\paragraph{Operational parameters.}
+The itinerary generation request includes operational constraints such as:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Time budget} $B$ (e.g., half-day or full-day),
+    \item \textbf{Optional start location} (e.g., hotel area) and/or end location,
+    \item \textbf{Optional constraints} such as maximum number of POIs $L_{\max}$ or category preferences.
+\end{itemize}
+
+\subsection{Outputs}
+The primary output of the system is an itinerary:
+\[
+\mathbf{s} = (s_1, s_2, \dots, s_L), \qquad s_{\ell} \in \mathcal{V}^{\star},
+\]
+where $L$ may be fixed (e.g., requested length) or determined by the budget and constraints.
+
+Optionally, the system may output auxiliary information to support interpretability and downstream use:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Estimated schedule:} visit start times $\mathbf{t}$ and/or per-stop durations,
+    \item \textbf{Cost summary:} estimated travel time/distance and total itinerary duration,
+    \item \textbf{Explanations:} a short justification for recommended POIs based on persona and context.
+\end{itemize}
+In this thesis, the core algorithmic output is the \emph{ordered POI sequence}; schedule generation is considered optional and can be approximated if opening hours are unavailable.
+
+\subsection{System requirements}
+We define the key requirements that a recommended itinerary should satisfy. These requirements guide both model design and evaluation.
+
+\paragraph{R1: Personal relevance.}
+The itinerary should match the user's interests, as encoded by $\mathbf{p}_u$. This requirement is particularly important under cold-start, where preferences must be inferred from persona-level signals rather than dense historical trajectories.
+
+\paragraph{R2: Context suitability.}
+The itinerary should be appropriate for the observed context (time-of-day and weather). Context influences both preference (what feels suitable) and feasibility (e.g., willingness to walk long distances in rain), which motivates explicit context-aware modeling \citep{adomavicius2005tois, adomavicius2022cars}.
+
+\paragraph{R3: Geographic coherence.}
+Successive POIs should form a coherent route with reasonable travel cost, avoiding unnecessary backtracking (zigzag behavior). Geographic coherence is a defining feature of itineraries and cannot be guaranteed by static POI ranking.
+
+\paragraph{R4: Feasibility.}
+The itinerary must respect hard operational constraints, primarily the time budget $B$ and travel cost accumulation. When available, additional constraints such as opening hours/time windows should also be respected.
+
+\paragraph{R5: Diversity and non-redundancy.}
+The itinerary should provide a balanced experience and avoid recommending multiple POIs that are too similar (e.g., repeated venues from the same narrow category) unless explicitly desired. Diversity improves user experience and reduces the tendency to recommend only the most popular venues.
+
+Together, these requirements define itinerary quality in this problem: a high-quality itinerary is personalized, context-aware, feasible, coherent, and diverse.
+
+\section{Constraints and Objective Formulation}
+\label{sec:prob-constraints}
+
+This section makes the feasibility requirements explicit and introduces a practical objective view of itinerary quality. The intent is not to impose a single rigid mathematical formulation, but to define the constraints and trade-offs that any solution must address.
+
+\subsection{Hard feasibility constraints}
+Let $\mathbf{s}=(s_1,\dots,s_L)$ be a candidate itinerary, where each $s_\ell \in \mathcal{V}^{\star}$. We consider the following hard constraints.
+
+\paragraph{C1: Time budget constraint.}
+Given a total available time budget $B$, an itinerary is feasible if the sum of visit durations and travel costs fits within $B$:
+\[
+T(\mathbf{s}) \;=\; \sum_{\ell=1}^{L}\delta(s_\ell) \;+\; \sum_{\ell=1}^{L-1}\tau(s_\ell, s_{\ell+1})
+\;\;\le\;\; B.
+\]
+This is the central feasibility constraint in TTDP-style planning formulations \citep{gavalas2014ttdp}.
+
+\paragraph{C2: Uniqueness constraint.}
+A POI should not appear more than once in the same itinerary:
+\[
+s_i \neq s_j \quad \text{for all } i \neq j.
+\]
+This avoids trivial loops and improves interpretability.
+
+\paragraph{C3: Bound on itinerary length (optional).}
+In practical settings, a user may request a maximum number of stops $L_{\max}$:
+\[
+L \le L_{\max}.
+\]
+Even when $L_{\max}$ is not explicitly given, it can be derived from budget considerations (e.g., typical visit durations).
+
+\paragraph{C4: Opening hours and time windows (optional).}
+If opening hour data is available, each POI $v$ can be associated with an admissible visit interval $[a(v), b(v)]$.
+A scheduled itinerary $(\mathbf{s},\mathbf{t})$ is feasible if each visit starts within its time window:
+\[
+t_\ell \in [a(s_\ell), b(s_\ell)] \quad \forall \ell,
+\]
+and travel and visit times are consistent:
+\[
+t_{\ell+1} \ge t_\ell + \delta(s_\ell) + \tau(s_\ell, s_{\ell+1}).
+\]
+Because opening hours are not always present in Foursquare-style datasets, this constraint is treated as optional in this thesis; however, the framework is designed such that it can be incorporated when such metadata is available.
+
+\subsection{Soft objectives for itinerary quality}
+Among feasible itineraries, the system must choose those that best satisfy user-centric quality objectives. We treat these objectives as \emph{soft} constraints: they guide optimization but can be traded off against each other.
+
+\paragraph{O1: Preference alignment (personalization).}
+An itinerary should maximize alignment with the user's preference representation $\mathbf{p}_u$. This alignment can be expressed through a per-POI relevance score $r(u, v, c)$ learned from data or derived from semantic similarity.
+
+\paragraph{O2: Context alignment.}
+The itinerary should be suitable for the observed context (time-of-day and weather). In practice, this can be captured by context-conditioned scoring (e.g., different relevance for the same POI under different $c$) \citep{adomavicius2005tois, adomavicius2022cars}.
+
+\paragraph{O3: Geographic coherence and travel-effort minimization.}
+Even when the budget constraint is satisfied, itineraries can differ significantly in travel effort. A coherent itinerary should avoid unnecessary long legs and excessive backtracking. This objective can be expressed through penalties based on travel costs, for example minimizing:
+\[
+\mathrm{Travel}(\mathbf{s}) = \sum_{\ell=1}^{L-1}\tau(s_\ell, s_{\ell+1}).
+\]
+
+\paragraph{O4: Diversity and experience balance.}
+To avoid redundant experiences, itineraries should cover diverse categories or semantic themes. Diversity can be measured using category entropy or pairwise dissimilarity between POIs, and then treated as a reward.
+
+\subsection{A practical multi-objective view}
+Combining these components, a useful conceptual objective is to select an itinerary that maximizes a composite score of the form:
+\[
+\max_{\mathbf{s}} \;\;
+\underbrace{\sum_{\ell=1}^{L} r(u, s_\ell, c_\ell)}_{\text{personal relevance + context}}
+\;-\;
+\lambda_{\mathrm{tr}} \underbrace{\sum_{\ell=1}^{L-1}\tau(s_\ell, s_{\ell+1})}_{\text{travel effort}}
+\;+\;
+\lambda_{\mathrm{div}} \underbrace{\mathrm{Div}(\mathbf{s})}_{\text{diversity}}
+\]
+subject to the hard feasibility constraints above.
+
+This formulation makes two important points explicit. First, itinerary generation is inherently \textbf{multi-objective}: the best itinerary is not simply the one with the top-ranked individual POIs, but the one that jointly optimizes relevance, coherence, and diversity under constraints. Second, feasibility is not a post-processing detail: the set of valid itineraries is restricted by budget and operational constraints, which requires algorithms capable of reasoning over \emph{sequences} rather than independent POIs.
+
+In the next section, we discuss why this problem remains challenging in practice, focusing on dataset bias, cold-start, and the limitations of greedy next-step recommendation.
+
+\section{Key Challenges}
+\label{sec:prob-challenges}
+
+Although itinerary recommendation can be expressed using the constraints and objectives in \Cref{sec:prob-constraints}, solving the problem in realistic tourism settings is challenging. This section highlights the main difficulties that motivate the design choices of the proposed system and directly inform the research questions of this thesis.
+
+\subsection{Bias and noise in mobility and check-in data}
+A large portion of POI and trajectory modeling research relies on LBSN check-ins or mobility traces. These data sources provide valuable sequential signals but can be misaligned with the notion of ``tourist interest'' in at least three ways.
+
+\paragraph{Resident dominance.}
+Public check-in datasets often contain a high proportion of residents, and common preprocessing steps (e.g., keeping users with many check-ins) can further amplify routine mobility patterns. As a result, models may learn preferences and transitions that reflect daily habits (home/work neighborhoods, frequent convenience venues) rather than visitor exploration.
+
+\paragraph{Mobility-mode bias (``taxi bias'').}
+Trajectory datasets derived from vehicles (e.g., taxi traces) encode movement optimized for speed, road structure, and service demand. When such trajectories are used to learn route patterns, a model may prioritize transitions that are efficient for transportation rather than meaningful for sightseeing. This can lead to itineraries that appear ``coherent'' in travel-time terms but are not aligned with tourist utility.
+
+\paragraph{Implicit feedback noise.}
+Check-ins and location logs do not directly measure satisfaction: they can be influenced by platform usage habits, social signaling, or convenience rather than genuine preference. Consequently, raw interaction frequency can be a misleading proxy for tourist relevance.
+
+These issues motivate the need for data curation (e.g., semantic pruning of tourist POIs) and for evaluation measures that reflect itinerary quality rather than only next-POI prediction accuracy.
+
+\subsection{Cold-start personalization in tourism (\textbf{RQ1})}
+Cold-start is a fundamental difficulty in tourist recommendation. Many visitors have little to no interaction history in the target city, and even when a user has general history elsewhere, their preferences may not be well represented in the local POI catalog. This produces several practical cold-start regimes:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{New user:} no interaction history; personalization must rely on explicit persona/preferences.
+    \item \textbf{New city/session:} user history exists but is sparse for the target city.
+    \item \textbf{Sparse POI observations:} long-tail tourist venues may have limited check-ins.
+\end{itemize}
+Collaborative filtering methods are known to degrade in sparse regimes \citep{koren2009mf}, which motivates hybrid and content-aware preference representations \citep{burke2002hybrid}. In this thesis, addressing cold-start requires modeling user preferences in a way that remains effective when trajectory data is limited, which is formalized in \textbf{RQ1}.
+
+\subsection{Context variability and data sparsity (\textbf{RQ2})}
+Tourism decisions are highly context-dependent, yet context signals can introduce additional sparsity. Time-of-day and weather create multiple contextual states; if these states are treated as separate cases (e.g., via filtering), the amount of training data per state decreases. CARS research emphasizes this trade-off and motivates contextual modeling with shared representations to avoid the curse of dimensionality \citep{adomavicius2005tois, adomavicius2022cars, villegas2018cars}. In itinerary generation, context also affects feasibility and travel behavior, making it important not only for scoring POIs but also for shaping the overall sequence.
+
+\subsection{The greedy trap: local next-POI accuracy vs.\ itinerary quality (\textbf{RQ3})}
+Sequential POI recommenders are often trained for next-POI prediction and deployed with greedy decoding, selecting the most likely next POI at each step. This introduces a mismatch between the training objective and the desired output:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Myopic decisions:} a locally optimal next POI can lead to globally poor outcomes (e.g., traveling far early reduces remaining budget and forces infeasible endings).
+    \item \textbf{Zigzag routes:} step-wise selection can oscillate between distant areas of the city, harming geographic coherence even if each step is plausible.
+    \item \textbf{Constraint violations:} time budgets and (optional) time windows can be violated if feasibility is not enforced during generation.
+\end{itemize}
+As noted in route-like generation work, producing coherent sequences often requires inference-time strategies that consider multiple future steps rather than only the next prediction \citep{wu2025tlmr}. This motivates \textbf{RQ3}, which focuses on constrained decoding as a mechanism to generate feasible and coherent itineraries.
+
+\subsection{Interdependence of the challenges}
+Importantly, these challenges are not independent. Dataset bias can worsen cold-start (if residents dominate training signals), context modeling can amplify sparsity (if not embedded properly), and greedy decoding can magnify any small scoring errors into globally infeasible itineraries. Therefore, the problem requires a solution that jointly addresses (i) data alignment to tourism intent, (ii) robust preference modeling under sparsity, (iii) explicit context conditioning, and (iv) constraint-aware sequence generation.
+
+\section{Scope and Assumptions}
+\label{sec:prob-scope}
+
+To make the problem tractable and the evaluation reproducible, this thesis adopts a set of scope decisions and assumptions. These choices define what is addressed by the proposed system and what is intentionally left as future work.
+
+\subsection{Scope of the recommendation task}
+\paragraph{Offline itinerary generation.}
+The system is designed and evaluated in an offline setting using historical interaction data (check-ins/trajectories) and POI metadata. While online learning and real-time user feedback could further improve personalization, they are outside the scope of this thesis.
+
+\paragraph{City-level itinerary recommendation.}
+The problem is defined within a single city at a time. For a given city, the system recommends an itinerary from a city-specific POI set $\mathcal{V}^{\star}$. Cross-city transfer (learning general tourist patterns and adapting to new cities) is acknowledged as relevant but is not the primary focus.
+
+\paragraph{Single-day / short-horizon itineraries.}
+The target use case is half-day or full-day itineraries (short-horizon planning). Multi-day trip planning and inter-city travel itineraries are beyond the scope.
+
+\subsection{Assumptions about available data}
+\paragraph{POI metadata availability.}
+We assume that each POI has at least basic geographic coordinates and a semantic representation (category labels and/or text). These attributes are required for semantic pruning and for computing geographic coherence.
+
+\paragraph{Travel cost approximation.}
+We assume access to a travel cost function $\tau(v_i, v_j)$, which can be approximated using geographic distance (e.g., haversine distance) or estimated travel time from routing services. In this thesis, the focus is on comparative evaluation of itinerary coherence rather than perfectly accurate travel-time estimation.
+
+\paragraph{Visit duration estimation.}
+We assume either (i) a fixed average visit duration per POI category or (ii) category-dependent heuristics for $\delta(v)$. Precise individualized dwell-time modeling is beyond scope, but simple duration estimates are sufficient to enforce time budgets and compare feasibility across decoding strategies.
+
+\paragraph{Opening hours and time windows (optional).}
+Opening-hour data may be incomplete or unavailable in Foursquare-style datasets. Therefore, time-window feasibility constraints are treated as optional: when opening hours exist, they can be incorporated; otherwise, the primary feasibility constraint is the global time budget $B$.
+
+\subsection{Assumptions about user input}
+\paragraph{Persona and explicit preferences.}
+We assume the user can provide a persona/preferences description (e.g., interests or preferred categories). This is essential for cold-start personalization and aligns with the thesis focus on explicit preference vectors.
+
+\paragraph{Limited or absent historical interactions.}
+The system is designed to operate even when the user has no prior check-in history in the target city. When history exists, it can be used as an additional signal, but it is not required.
+
+\subsection{Out-of-scope factors}
+The following aspects are recognized as important for real-world tourist planning but are not addressed in this thesis:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Real-time crowd levels and congestion} (dynamic crowding signals),
+    \item \textbf{Ticket availability and pricing dynamics} for attractions,
+    \item \textbf{Personal mobility constraints} (accessibility needs, walking limitations),
+    \item \textbf{Group planning and multi-user negotiation} (itineraries for multiple users),
+    \item \textbf{Real-time re-planning} during the day (e.g., user deviates from the plan).
+\end{itemize}
+
+These scope decisions allow the thesis to focus on a well-defined core: generating personalized, context-aware, feasible, and geographically coherent itineraries from curated POI data using sequential modeling and constraint-aware decoding.
+
+\section{Research Questions and Thesis Objectives}
+\label{sec:prob-rq}
+
+The challenges discussed in \Cref{sec:prob-challenges} motivate three research questions that guide the design of the proposed system. Together, these questions connect personalization under sparsity, context-aware modeling, and feasibility-aware sequence generation.
+
+\subsection{Research Questions}
+\paragraph{RQ1: Can a per-user embedding personalize recommendation under sparse tourist histories?}
+Tourism recommendation frequently operates under limited user history in the target city. This research question investigates whether a learnable user embedding personalizes the sequential model and under what conditions it helps, given the sparsity of tourist trajectories \citep{burke2002hybrid, koren2009mf}; a persona/content-based representation is identified as future work.
+
+\paragraph{RQ2: How do spatial--temporal gap features improve sequential POI recommendation?}
+The distance moved and time elapsed between consecutive visits carry strong signal about where a tourist goes next. This research question examines how to integrate the per-step spatial and temporal gaps $(\Delta d,\Delta t)$, together with a graph over POIs, into a sequential model using shared representations, avoiding the data fragmentation of context pre-filtering \citep{adomavicius2005tois, adomavicius2022cars, villegas2018cars}. Time-of-day and weather fit the same formulation and are left as future extensions.
+
+\paragraph{RQ3: Can the next-POI model be decoded into itineraries, and does a trained itinerary model beat it?}
+Even accurate next-POI predictors can produce low-quality itineraries when deployed with greedy decoding, giving zigzag routes or budget violations. This research question studies an inference-time decoder that turns the frozen scorer into loop-free routes (Frozen Rollout), and asks whether a purpose-trained itinerary model (a Trained Pointer) outperforms it \citep{wu2025tlmr}.
+
+\subsection{Thesis objectives}
+To answer these research questions, this thesis pursues the following objectives:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{O1 (Data preparation):} build a learnable check-in corpus from Foursquare-style data via an iterative $k$-core filter and 24\,h session segmentation, and derive the per-step spatial/temporal gap features; a tourism-specific semantic curation of the catalogue is left as future work.
+    \item \textbf{O2 (Context-aware sequential modeling):} develop a sequential model that conditions on a learnable user embedding and the spatial/temporal gap context $(\Delta d,\Delta t)$, with a GCN over a hybrid POI graph, to predict plausible POI sequences.
+    \item \textbf{O3 (Itinerary generation by decoding):} design an inference-time decoder (\emph{Frozen Rollout}) that produces feasible, loop-free itineraries from the frozen scorer, and compare it against an end-to-end \emph{Trained Pointer}.
+    \item \textbf{O4 (Evaluation framework):} define a two-benchmark protocol combining full-vocabulary ranking metrics (next-POI) with order-aware set-F1/pairs-F1 (itinerary), each on its own dataset and never cross-compared.
+\end{itemize}
+
+These objectives map directly to the contributions presented in Chapter~\ref{ch:introduction} and provide a bridge to the state of the art review in Chapter~\ref{ch:sota}, which examines how prior work addresses each of these dimensions and where gaps remain.
+
+\section{Evaluation Perspective}
+\label{sec:prob-eval}
+
+Although the detailed evaluation protocol is presented later (Chapter~\ref{ch:solution} and the experiments chapter), it is important to clarify early what constitutes success for the defined problem. Because the proposed system generates \emph{sequences} (itineraries), evaluation must address both predictive accuracy at the step level and quality at the itinerary level.
+
+\subsection{Step-level (next-POI) evaluation}
+Sequential recommenders are assessed by their ability to rank the true next POI highly given a partial history, which evaluates whether the model captures short-term intent and transition regularities. We use \textbf{full-vocabulary} ranking metrics---$\mathrm{HR@}k$ (hit rate, equivalently top-$k$ accuracy), $\mathrm{NDCG@}k$, and mean reciprocal rank ($\mathrm{MRR}$)---without sampled negatives, matching the protocol of recent next-POI work \citep{yang2022getnext, li2024llm4poi}.
+
+\subsection{Itinerary-level evaluation}
+Step-level ranking alone is insufficient for itinerary generation, because a model can achieve good next-POI accuracy while producing poor multi-stop routes under greedy decoding. We therefore evaluate complete routes with order-aware structured-prediction metrics from the trip-recommendation literature \citep{chen2016learning}:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{pairs-F1} (primary): the F1 over the set of \emph{ordered POI pairs}, rewarding routes that place the right POIs in the right relative order;
+    \item \textbf{set-F1}: the order-agnostic F1 over the visited POI \emph{set} (did we choose the right places, ignoring order);
+    \item \textbf{exact-match} and a \textbf{feasibility} guard (loop-free, within budget), reported as supporting indicators.
+\end{itemize}
+Travel-cost, geographic-coherence, and diversity metrics are natural complements but are not part of the realized evaluation; they accompany the penalty-augmented decoder left for future work.
+
+\subsection{Two tasks, two benchmarks (comparability)}
+Crucially, next-POI prediction and itinerary recommendation are \emph{formally distinct} sub-tasks with distinct canonical benchmarks \citep{lim2018survey, halder2024survey}: the former is evaluated on Foursquare check-ins with $\mathrm{HR@}k$/$\mathrm{MRR}$, the latter on Flickr photo-trajectory cities with set-F1/pairs-F1 \citep{chen2016learning}. Using a different dataset per task is correct and standard; the only invalid move is to \emph{cross-compare} the two---e.g.\ a next-POI $\mathrm{HR@}1$ against an itinerary pairs-F1, or absolute scores across datasets with different POI-vocabulary sizes and hence different chance levels \citep{krichene2020sampled}. The two tasks are therefore reported in separate tables and never merged into one leaderboard.
+
+\subsection{Reproducibility considerations}
+Tourism recommendation datasets are sensitive to preprocessing choices (e.g., user filtering, sessionization, city selection). To ensure reproducibility, the evaluation protocol specifies the data construction pipeline, train/test splitting strategy, and the definition of cold-start and context-aware test regimes. These design choices are central for a fair comparison between greedy generation and constraint-aware itinerary decoding.
+
+\section{Chapter Summary}
+\label{sec:prob-summary}
+
+This chapter defined the itinerary recommendation problem addressed in this thesis. We introduced the main entities (users/personas, POIs, context), specified the inputs and outputs of the proposed system, and formalized the key requirements for a high-quality itinerary: personalization, context suitability, geographic coherence, feasibility, and diversity. We also described the main challenges that make the problem non-trivial in tourism settings, namely bias and noise in mobility/check-in data, cold-start personalization, context-induced sparsity, and the limitations of greedy next-step recommendation for long-horizon itinerary generation.
+
+Based on these challenges, we stated three research questions (\textbf{RQ1--RQ3}) that guide the thesis and outlined an evaluation perspective that combines ranking metrics with itinerary-quality metrics. Having established a clear problem formulation, the next chapter (Chapter~\ref{ch:sota}) reviews the state of the art in context-aware recommendation, POI and sequential recommendation, itinerary and route planning methods, decoding strategies, and evaluation practices, culminating in a gap analysis that motivates the proposed the proposed system framework.

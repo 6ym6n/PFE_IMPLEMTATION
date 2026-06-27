@@ -1,0 +1,127 @@
+\chapter{Conclusion and Perspectives}
+\label{ch:conclusion}
+
+% ============================================================
+\section{Summary of Contributions}
+\label{sec:conc-summary}
+% ============================================================
+
+This thesis addressed the problem of producing personalized tourist itineraries from check-in
+data, and did so through a deliberately \emph{decoupled} design: a strong next-POI engine,
+decoded into ordered routes. Its contributions, each tied to a research question, are:
+
+\begin{enumerate}
+  \item \textbf{A context-aware next-POI engine (RQ1, RQ2).} The engine combines a graph
+  convolutional network over a hybrid POI graph (training-set co-visitation $\cup$ geographic
+  neighbours), per-step spatial/temporal gap features $(\Delta d,\Delta t)$, a learnable user
+  embedding, and a GRU scorer over the full POI vocabulary. On Foursquare NYC it reaches an
+  honest $\mathrm{HR@}1=0.187$, placing it in the LSTM/STGCN tier---clearly learning, while
+  below the transformer and LLM state of the art. A controlled ablation shows that the user
+  embedding personalizes \emph{conditionally}: it helps where user signal is present and
+  consistent (Glasgow, $+0.038$ pairs-F1) but is roughly neutral under the sparse,
+  cold-start regime of the other cities.
+
+  \item \textbf{Itinerary generation by Frozen Rollout, and an integration study (RQ3).} We
+  obtain itineraries by rolling the \emph{frozen} engine forward under a no-revisit mask and a
+  reserved end POI, changing nothing in the trained model. Against a purpose-trained
+  pointer-network decoder (\emph{Trained Pointer}), the decoupled \emph{Frozen Rollout}
+  \emph{wins} on NYC ($0.289$ vs.\ $0.259$ pairs-F1). The honest lesson---that a strongly
+  (densely) supervised next-POI model is hard to beat by naively training a dedicated itinerary
+  model---nuances the integration narrative of recent deep itinerary work.
+
+  \item \textbf{A literature-comparable Flickr benchmark (validation).} Because the NYC
+  itinerary scores are not on the same scale as the published trip-recommendation literature
+  (a POI-vocabulary artifact, not a quality gap), we re-ran the task on the five Flickr
+  photo-trajectory cities under the exact Chen-2016 protocol. A \texttt{Random} baseline
+  reproduces Chen 2016 within noise---demonstrating protocol faithfulness---and our methods land
+  on the published $0.26$--$0.85$ scale, with a strong first-order \texttt{Markov} baseline and a
+  light learned pointer that reaches the scale but trails the neural state of the art.
+\end{enumerate}
+
+Across both phases, a methodological contribution is the strict separation of the two
+sub-tasks: next-POI prediction (Foursquare, $\mathrm{HR@}k$/$\mathrm{MRR}$) and itinerary
+recommendation (Flickr, set-F1/pairs-F1) are reported on their own benchmarks and never
+cross-compared.
+
+% ============================================================
+\section{Limitations}
+\label{sec:conc-limitations}
+% ============================================================
+
+Several limitations should be acknowledged honestly:
+
+\begin{itemize}
+  \item \textbf{Accuracy below the neural/LLM SOTA.} The engine's $\mathrm{HR@}1=0.187$ is an
+  LSTM/STGCN-tier result; attention/transformer models (GETNext, STHGCN) and LLM-based methods
+  (LLM4POI) score higher. The contribution is an honest, reproducible baseline, not a new SOTA.
+
+  \item \textbf{Decoding cannot fix engine myopia.} Beam search barely improves on greedy
+  ($+0.0015$ pairs-F1 on NYC), and the persistent set-F1\,$\gg$\,pairs-F1 gap (right places,
+  wrong order) shows that the residual error is in the scorer, not the search.
+
+  \item \textbf{Light learned models trail strong simple ones.} On both NYC (Trained Pointer
+  $<$ Frozen Rollout) and Flickr (pointer $<$ Markov), purpose-trained models lose to simpler
+  baselines---a supervision-density and data-size effect on these small datasets.
+
+  \item \textbf{Limited context and personalization.} The realized context is only the
+  $(\Delta d,\Delta t)$ gaps, with no weather or absolute time-of-day; personalization is a
+  user embedding whose benefit is conditional. The decode-time $\Delta t$ is an assumed
+  constant rather than an observed value.
+
+  \item \textbf{Single Foursquare city and offline evaluation.} The next-POI engine is trained
+  on NYC only, and all evaluation is offline against historical sequences; no user study or
+  deployment was conducted.
+\end{itemize}
+
+% ============================================================
+\section{Future Work}
+\label{sec:conc-future}
+% ============================================================
+
+The audit of what was \emph{designed but not evaluated} maps directly onto a concrete research
+agenda:
+
+\begin{itemize}
+  \item \textbf{Richer context.} Add explicit time-of-day and weather embeddings (and, where
+  available, real rather than assumed inter-visit times), testing whether environmental context
+  measurably improves next-POI accuracy and itinerary suitability.
+
+  \item \textbf{Persona-based cold-start personalization.} Replace (or augment) the identity
+  embedding with a content/persona encoder that derives a preference vector from explicit
+  interests and POI semantic metadata, targeting the cold-start regime where the user embedding
+  is weakest.
+
+  \item \textbf{Tourism-specific data curation.} Move from the simple iterative $k$-core filter
+  to a semantic curation of tourist-relevant venues (category taxonomy plus embedding-based
+  refinement), and measure its effect on transition quality and bias.
+
+  \item \textbf{Constraint- and schedule-aware decoding.} Augment the rollout beam objective
+  with travel-cost penalties, diversity bonuses, and time-window/opening-hour constraints, and
+  compare against richer scheduling-aware itinerary models (e.g.\ DLIR-style architectures
+  \cite{halder2025drlir}). A complementary orienteering-problem / iterated-local-search solver
+  over the learned scores was scoped but not implemented, and remains a useful upper-reference.
+
+  \item \textbf{Closing the neural gap.} Reach the SelfTrip/AR-Trip band on Flickr with the
+  machinery those methods use---self-supervised/contrastive pre-training on the unlabelled
+  trajectories, trajectory augmentation, and adversarial training---rather than a light
+  from-scratch pointer.
+
+  \item \textbf{Multi-city generalization and deployment.} Validate across cities (transfer or
+  city-agnostic POI representations) and conduct user studies within a deployed planning
+  application.
+\end{itemize}
+
+% ============================================================
+\section{Closing Remarks}
+\label{sec:conc-closing}
+% ============================================================
+
+Tourist itinerary recommendation sits at the intersection of personalization, sequential
+prediction, and constrained generation. This thesis showed that a compact, honestly-evaluated
+next-POI engine---a graph encoder, spatial/temporal gap context, a user embedding, and a
+recurrent scorer---can be decoded into coherent itineraries simply and effectively, and that
+this decoupled route is a stronger baseline than it first appears: it beats a purpose-trained
+itinerary model on Foursquare NYC and, on the Flickr benchmark, lands on the literature's own
+scale with a protocol-faithful harness. By reporting both tasks on their proper benchmarks and
+resisting the temptation to overclaim, the work offers a defensible foundation and a clear,
+honest path toward a fuller scheduling- and context-aware itinerary module.

@@ -1,0 +1,60 @@
+% Save as figures/tab-dlmodels.tex
+% \input{figures/tab-dlmodels} in the SOTA chapter
+
+\begin{table}[p]
+\centering
+\caption{Deep learning-based POI and itinerary recommendation models. Entries marked with $\star$ denote work published after 2022.}
+\label{tab:dlmodels}
+\small
+\renewcommand{\arraystretch}{1.12}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcccccl}
+\toprule
+\textbf{Model} & \textbf{Year} & \textbf{ST} & \textbf{UI} & \textbf{Ctx} & \textbf{QT} & \textbf{MT} & \textbf{Technique} \\
+\midrule
+\multicolumn{8}{l}{\textit{RNN / LSTM-based}} \\
+\midrule
+ST-RNN~\cite{liu2016strnn}        & 2016 & \checkmark & \checkmark & -- & -- & -- & RNN + spatial-temporal matrices \\
+GRU4Rec~\cite{hidasi2016gru4rec}  & 2016 & -- & -- & -- & -- & -- & GRU session model \\
+ATST-LSTM~\cite{huang2019atstlstm}& 2019 & \checkmark & \checkmark & -- & -- & -- & Attention + LSTM \\
+CAPS-LSTM~\cite{baral2018capsrnn} & 2018 & \checkmark & -- & -- & -- & -- & Context-aware LSTM \\
+MSTP-LSTM~\cite{hu2018mstp}       & 2018 & \checkmark & -- & -- & -- & -- & Multi-source LSTM \\
+\midrule
+\multicolumn{8}{l}{\textit{Attention / Transformer-based}} \\
+\midrule
+SASRec~\cite{kang2018sasrec}      & 2018 & -- & -- & -- & -- & -- & Unidirectional Transformer \\
+BERT4Rec~\cite{sun2019bert4rec}   & 2019 & -- & -- & -- & -- & -- & Bidirectional Transformer \\
+TLR~\cite{halder2022tlr}          & 2022 & \checkmark & -- & -- & \checkmark & -- & Multi-head attention \\
+TLR-M\_UI~\cite{halder2022tlr}    & 2022 & \checkmark & \checkmark & -- & \checkmark & \checkmark & Transformer + multi-task \\
+$\star$~MobTree~\cite{huang2024timeslot} & 2024 & \checkmark & \checkmark & -- & -- & -- & Mobility tree + Transformer \\
+$\star$~ROTAN~\cite{feng2024rotan}& 2024 & \checkmark & -- & -- & -- & -- & Rotation temporal attention \\
+\midrule
+\multicolumn{8}{l}{\textit{Graph Neural Networks}} \\
+\midrule
+T-GCN~\cite{zhao2019tgcn}        & 2019 & \checkmark & -- & -- & -- & -- & GCN + GRU \\
+STGCN~\cite{yu2018stgcn}         & 2018 & \checkmark & \checkmark & -- & -- & -- & Spectral graph convolution \\
+$\star$~DisenPOI~\cite{qin2023disenpoi}  & 2023 & \checkmark & \checkmark & -- & -- & -- & Disentangled graph \\
+$\star$~MGMCL~\cite{chen2025mgmcl}      & 2025 & \checkmark & \checkmark & -- & -- & -- & Multi-graph + contrastive \\
+$\star$~DPRL~\cite{dprl2025ijcai}        & 2025 & \checkmark & \checkmark & -- & -- & -- & Disentangled + personalized \\
+$\star$~TraFriendF.~\cite{liu2025trafriend} & 2025 & \checkmark & \checkmark & -- & -- & -- & GCN + GraphSAGE + Transformer \\
+\midrule
+\multicolumn{8}{l}{\textit{Reinforcement Learning}} \\
+\midrule
+PersQ~\cite{lim2017persq}         & 2017 & \checkmark & \checkmark & -- & \checkmark & -- & MCTS \\
+EffiTourRec~\cite{halder2022effitour} & 2022 & \checkmark & \checkmark & -- & \checkmark & -- & MCTS + pruning \\
+$\star$~DRLIR~\cite{halder2025drlir}  & 2025 & \checkmark & \checkmark & -- & \checkmark & -- & Deep RL + GCN + Transformer \\
+\midrule
+\multicolumn{8}{l}{\textit{Self-Supervised / Contrastive}} \\
+\midrule
+$\star$~Diff-POI~\cite{qin2023diffpoi}  & 2023 & \checkmark & -- & -- & -- & -- & Diffusion model \\
+$\star$~CLSPRec~\cite{duan2023clsprec}   & 2023 & \checkmark & \checkmark & -- & -- & -- & Contrastive long/short pref. \\
+$\star$~CLLP~\cite{wang2024cllp}         & 2024 & \checkmark & \checkmark & -- & -- & -- & Contrastive + location prompt \\
+\midrule
+\multicolumn{8}{l}{\textit{Large Language Models}} \\
+\midrule
+$\star$~LLMmove~\cite{feng2024llmmove}       & 2024 & -- & \checkmark & -- & -- & -- & LLM zero-shot \\
+$\star$~TravelAgent~\cite{fan2024travelagent} & 2024 & \checkmark & \checkmark & \checkmark & -- & -- & LLM + SMT solver \\
+$\star$~LLM-Modulo~\cite{kambhampati2024llmmodulo} & 2024 & \checkmark & \checkmark & \checkmark & -- & -- & LLM + external critics \\
+\bottomrule
+\end{tabular}}% end resizebox
+\end{table}

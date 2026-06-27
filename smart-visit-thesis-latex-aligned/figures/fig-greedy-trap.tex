@@ -1,0 +1,62 @@
+% Save this as figures/fig-greedy-trap.tex
+% Include in the introduction with:
+%   \input{figures/fig-greedy-trap}
+%
+% Requires: \usepackage{tikz}
+%           \usetikzlibrary{positioning, arrows.meta, decorations.pathreplacing, calc}
+
+\begin{figure}[!ht]
+\centering
+\begin{tikzpicture}[
+    >=Stealth,
+    poi/.style={circle, draw, thick, minimum size=0.7cm, font=\footnotesize\bfseries},
+    start/.style={poi, fill=green!25},
+    visit/.style={poi, fill=blue!15},
+    visitbad/.style={poi, fill=red!15},
+    label/.style={font=\tiny, text=gray!50!black},
+    route/.style={->, thick},
+    badroute/.style={->, thick, red!60!black, densely dashed},
+    goodroute/.style={->, thick, blue!60!black},
+]
+
+% ---- Left: Greedy decoding (zigzag) ----
+\node[font=\small\bfseries] at (1.5, 3.8) {(a) Greedy decoding};
+\node[font=\tiny\itshape, text=red!50!black] at (1.5, 3.4) {Highest-score next POI at each step};
+
+\node[start]   (gS) at (0, 2.5) {S};
+\node[visitbad] (gA) at (3, 2.8) {A};
+\node[visitbad] (gB) at (0.5, 0.8) {B};
+\node[visitbad] (gC) at (2.8, 0.5) {C};
+
+% Greedy path (zigzag)
+\draw[badroute] (gS) -- (gA) node[midway, above, label] {2.1\,km};
+\draw[badroute] (gA) -- (gB) node[midway, right, label, xshift=2pt] {3.0\,km};
+\draw[badroute] (gB) -- (gC) node[midway, below, label] {2.5\,km};
+
+% Total
+\node[font=\tiny, text=red!60!black, align=center] at (1.5, -0.3) {Total travel: 7.6\,km\\Zigzag route};
+
+% ---- Right: Constrained decoding (coherent) ----
+\node[font=\small\bfseries] at (7, 3.8) {(b) Constrained beam search};
+\node[font=\tiny\itshape, text=blue!50!black] at (7, 3.4) {Global route quality + feasibility};
+
+\node[start]  (cS) at (5.5, 2.5) {S};
+\node[visit]  (cB) at (6.2, 0.8) {B};
+\node[visit]  (cC) at (8.2, 0.5) {C};
+\node[visit]  (cA) at (8.5, 2.8) {A};
+
+% Coherent path
+\draw[goodroute] (cS) -- (cB) node[midway, left, label] {1.8\,km};
+\draw[goodroute] (cB) -- (cC) node[midway, below, label] {2.0\,km};
+\draw[goodroute] (cC) -- (cA) node[midway, right, label] {2.4\,km};
+
+% Total
+\node[font=\tiny, text=blue!60!black, align=center] at (7, -0.3) {Total travel: 6.2\,km\\Coherent route};
+
+% --- Separator ---
+\draw[gray!30, thick] (4.2, -0.6) -- (4.2, 4.0);
+
+\end{tikzpicture}
+\caption{Illustration of the ``greedy trap'' in itinerary generation. (a)~Greedy decoding selects the highest-scoring next POI at each step, resulting in a zigzag route with excessive travel. (b)~Constrained beam search considers global route quality, producing a geographically coherent itinerary visiting the same POIs with less travel cost.}
+\label{fig:greedy-trap}
+\end{figure}
