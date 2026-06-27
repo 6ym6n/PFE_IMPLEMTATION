@@ -99,6 +99,17 @@ PHASE1_TIER = [
     ("STAN", 0.220), ("GETNext", 0.240), ("STHGCN", 0.270), ("LLM4POI", 0.340),
 ]
 
+#: Personalization ablation — pointer pairs-F1 WITHOUT vs WITH the user embedding
+#: (leave-one-out, length>=3, dim 64, 30 epochs, CPU). Edinburgh/Melbourne are deferred
+#: to the GPU/Colab run (notebook section 5b) — too slow on CPU here.
+PERSONALIZATION = {
+    "Osaka":   {"no_user": 0.442, "user": 0.435},   # 28% recurring users
+    "Glasgow": {"no_user": 0.451, "user": 0.489},   # 32% recurring users
+    "Toronto": {"no_user": 0.440, "user": 0.423},   # 55% recurring users
+}
+PERSONALIZATION_PENDING = ["Edinburgh", "Melbourne"]
+
+
 #: Phase 2 NYC itinerary — the integration experiment (length>=3 test, n=2,880).
 #: Strategy A = decoupled decoding of the next-POI engine; Strategy B = integrated pointer.
 AVSB_NYC = {

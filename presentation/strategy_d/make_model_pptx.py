@@ -23,7 +23,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import charts  # noqa: E402
 from flickr_results_data import (  # noqa: E402
-    AVSB_NYC, CITIES, OURS_PAIRS_F1, PHASE1_METRICS, PHASE1_TIER, POINTER_PAIRS_F1,
+    AVSB_NYC, CITIES, OURS_PAIRS_F1, PERSONALIZATION, PHASE1_METRICS, PHASE1_TIER,
+    POINTER_PAIRS_F1,
 )
 
 ASSETS = charts.make_charts(os.path.join(HERE, "assets"))
@@ -401,9 +402,32 @@ def s_beyond(n):
          (" On the small Flickr data, a Markov transition baseline is the strongest of my methods — an honest "
           "result I quantified rather than hid.", GREY, False)],
         [("Does personalization help?", NAVY, True),
-         (" I ablate the user embedding (on/off) per city — it can help where tourists recur (55–61% of "
-          "Edinburgh/Melbourne/Toronto), little on Osaka/Glasgow.", GREY, False)],
+         (" I ablate the user embedding (on/off) per city — measured on the next slide.", GREY, False)],
     ], size=16.5, gap=15)
+    footer(s, n)
+
+
+def s_personalization(n):
+    s = slide()
+    header(s, "Does personalization help? (measured)", "the “user preferences” claim")
+    text(s, 0.55, 1.35, 12.2, 0.5,
+         [[("I switch the user embedding OFF vs ON (identical otherwise) on the comparable Flickr benchmark:",
+            15, GREY, False, False)]])
+    rec = {"Osaka": "28%", "Glasgow": "32%", "Toronto": "55%"}
+    rows = [["City", "no user", "with user", "delta", "recurring users"]]
+    for c in ("Osaka", "Glasgow", "Toronto"):
+        d = PERSONALIZATION[c]
+        rows.append([c, f"{d['no_user']:.3f}", f"{d['user']:.3f}", f"{d['user'] - d['no_user']:+.3f}", rec[c]])
+    rows.append(["Edinburgh, Melbourne", "—", "—", "(GPU run)", "59%, 61%"])
+    table(s, rows, 1.6, 2.1, 10.1, 2.6, font=13, highlight_row=2)
+    bullets(s, 0.7, 5.1, 12.0, 1.8, [
+        [("Mixed / near-neutral", NAVY, True),
+         (" — a clear gain on Glasgow (+0.038), roughly neutral on Osaka and Toronto.", GREY, False)],
+        [("Honest reason", NAVY, True),
+         (" — in leave-one-out, even recurring users have very few trips, so the embedding is weakly "
+          "estimated (cold-start). Personalization is a real lever, not a guaranteed win on small data.",
+          GREY, False)],
+    ], size=15)
     footer(s, n)
 
 
@@ -456,8 +480,9 @@ def build():
     s_A_results(10)
     s_validation(11)
     s_beyond(12)
-    s_future(13)
-    s_conclusion(14)
+    s_personalization(13)
+    s_future(14)
+    s_conclusion(15)
     prs.save(OUTPUT)
     print(f"Wrote {OUTPUT}  ({len(prs.slides._sldIdLst)} slides)")
 
