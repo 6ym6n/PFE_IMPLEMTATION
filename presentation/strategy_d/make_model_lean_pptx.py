@@ -18,7 +18,9 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import make_model_pptx as mm  # noqa: E402  (reuse its prs, helpers, slide funcs)
-from flickr_results_data import AVSB_NYC  # noqa: E402
+from flickr_results_data import (  # noqa: E402
+    AVSB_NYC, OURS_PAIRS_F1, PHASE1_TIER, PUBLISHED_PAIRS_F1,
+)
 
 OUTPUT = os.path.join(HERE, "model_slides_lean.pptx")
 NAVY, INDIGO, TEAL, ORANGE, RED = mm.NAVY, mm.INDIGO, mm.TEAL, mm.ORANGE, mm.RED
@@ -73,28 +75,39 @@ def s_frozen_results(n):
     mm.footer(s, n)
 
 
-def s_rigor(n):
+def s_nextpoi_comparison(n):
     s = mm.slide()
-    mm.header(s, "Rigor — what else I tested", "honest checks")
-    mm.bullets(s, 0.7, 1.5, 12.0, 3.0, [
-        [("Integration (the Trained Pointer).", NAVY, True),
-         (" A dedicated pointer trained end-to-end did NOT beat the Frozen Rollout — the engine's far "
-          "denser supervision wins. (Directly tests Halder/DLIR's integration claim.)", GREY, False)],
-        [("Simple baselines are strong.", NAVY, True),
-         (" On the Flickr benchmark a Markov transition model is the strongest of my methods — "
-          "quantified, not hidden.", GREY, False)],
-        [("Personalization.", NAVY, True),
-         (" User-embedding ablation: mixed (Glasgow +0.038; Osaka / Toronto ~neutral) — helps where "
-          "users recur, cold-start otherwise.", GREY, False)],
-    ], size=15.5, gap=12)
-    fr = AVSB_NYC["A — frozen rollout (beam 3)"]
-    tp = AVSB_NYC["B-v2 — pointer (+ context)"]
-    rows = [["NYC, len≥3", "pairs-F1"], ["Frozen Rollout", f"{fr[0]:.3f}"], ["Trained Pointer", f"{tp[0]:.3f}"]]
-    mm.table(s, rows, 0.7, 4.95, 4.3, 1.5, font=13, highlight_row=1)
-    mm.text(s, 5.4, 5.25, 7.2, 1.1,
-            [[("Takeaway: ", 15, NAVY, True, False),
-              ("the simple, decoupled Frozen Rollout is the right headline — the learned / integrated "
-               "variants don't beat it on this data.", 15, GREY, False, False)]])
+    mm.header(s, "Next-POI engine — comparison with published methods", "Foursquare NYC, HR@1")
+    fam = {"LSTM": "sequence (RNN)", "STGCN": "spatio-temporal GCN",
+           "Ours (GCN+GRU+user)": "this work", "STAN": "self-attention",
+           "GETNext": "transformer", "STHGCN": "hypergraph", "LLM4POI": "frozen LLM"}
+    rows = [["Method", "HR@1", "family"]]
+    for m, v in PHASE1_TIER:
+        rows.append([m, f"{v:.3f}", fam.get(m, "")])
+    hl = next(i for i, (m, _v) in enumerate(PHASE1_TIER) if m.startswith("Ours")) + 1
+    mm.table(s, rows, 2.1, 1.55, 9.1, 3.7, font=13, highlight_row=hl)
+    mm.text(s, 0.7, 5.6, 12.0, 1.1,
+            [[("Full-vocabulary HR@1 on Foursquare NYC, against the LLM4POI benchmark table. ", 15, GREY, False, False),
+              ("Our engine sits in the LSTM/STGCN tier", 15, NAVY, True, False),
+              (" — an honest, leakage-free baseline, below the transformer / LLM state of the art.", 15, GREY, False, False)]])
+    mm.footer(s, n)
+
+
+def s_itinerary_comparison(n):
+    s = mm.slide()
+    mm.header(s, "Itinerary recommendation on Flickr — the literature", "pairs-F1, same protocol")
+    cities4 = ["Toronto", "Osaka", "Glasgow", "Edinburgh"]
+    rows = [["Method", "Tor", "Osa", "Gla", "Edi", "source"]]
+    rows.append(["Markov  (ours)"] + [f"{OURS_PAIRS_F1['Markov'][c]:.2f}" for c in cities4] + ["reproduces Chen"])
+    for name in ["PoiRank (Chen)", "Rank+Markov (Chen)", "DeepTrip", "CTLTR", "SelfTrip", "AR-Trip"]:
+        vals, _fam, yr = PUBLISHED_PAIRS_F1[name]
+        rows.append([name] + [f"{v:.2f}" for v in vals] + [str(yr)])
+    mm.table(s, rows, 0.7, 1.55, 12.0, 3.9, font=12, highlight_row=1)
+    mm.text(s, 0.7, 5.75, 12.0, 1.1,
+            [[("All on the ", 14, GREY, False, False), ("same benchmark + protocol", 14, NAVY, True, False),
+              (" (Flickr, leave-one-out, endpoints given, length≥3). Our classical methods reproduce the "
+               "classical literature (Chen 2016); the neural line (DeepTrip 2019 → AR-Trip 2024) is the "
+               "state of the art to aim for.", 14, GREY, False, False)]])
     mm.footer(s, n)
 
 
@@ -105,12 +118,12 @@ def build():
     mm.s_arch(4)            # 4  the model
     mm.s_parts(5)           # 5
     mm.s_title_fit(6)       # 6
-    mm.s_engine_results(7)  # 7  engine works
+    s_nextpoi_comparison(7) # 7  next-POI vs published methods
     mm.s_strategyA(8)       # 8  Frozen Rollout method
     mm.s_example(9)         # 9  worked example
     s_frozen_results(10)    # 10 Frozen Rollout result (pillar 1)
     mm.s_validation(11)     # 11 Flickr Benchmark (pillar 2)
-    s_rigor(12)             # 12 (NEW: Trained Pointer collapsed here)
+    s_itinerary_comparison(12)  # 12 itinerary vs published methods (literature)
     mm.s_future(13)         # 13
     mm.s_conclusion(14)     # 14
     mm.prs.save(OUTPUT)
