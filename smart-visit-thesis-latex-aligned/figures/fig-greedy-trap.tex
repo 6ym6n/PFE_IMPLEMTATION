@@ -56,12 +56,8 @@
 \node[badge] at (7.9,-0.9) {\textcolor{svGreen}{\ding{51}}\;\, \textbf{6.2\,km} total $\cdot$ coherent};
 
 \end{tikzpicture}
-\caption[The greedy trap in itinerary generation]{The \emph{greedy trap} in itinerary
-generation. (a)~Greedy decoding commits to the highest-scoring next POI at each step,
-producing a zigzag route with excessive travel. (b)~A decoder that looks beyond the next step
-can visit the \emph{same} POIs in a globally coherent order at lower travel cost. This thesis
-addresses the greedy trap by decoding a frozen next-POI engine under loop-free constraints
-(\emph{Frozen Rollout}, Chapter~\ref{ch:solution}); enriching the decoder with explicit
-travel-cost and diversity penalties is identified as future work.}
+\caption[The greedy trap in itinerary generation]{The \emph{greedy trap}: (a)~greedy decoding
+yields a zigzag route, whereas (b)~looking beyond the next step visits the \emph{same} POIs in a
+coherent order at lower travel cost.}
 \label{fig:greedy-trap}
 \end{figure}

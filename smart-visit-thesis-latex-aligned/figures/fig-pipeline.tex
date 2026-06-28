@@ -83,17 +83,9 @@
 \end{adjustbox}
 
 \vspace{0.6cm}
-\caption{Architecture of the proposed system. \textbf{Phase~1} (the next-POI engine): a
-two-layer GCN over a hybrid POI graph (training-set co-visitation edges $\cup$ geographic
-10-nearest-neighbour edges) produces POI features; per-step spatial/temporal gaps
-$(\Delta d,\Delta t)$ are lifted by small MLPs; a learnable user embedding $e_u$ encodes
-identity. The concatenated POI-feature/context sequence is read by a GRU, whose final state
-is concatenated with $e_u$ and scored by an MLP head over the full POI vocabulary
-($\mathrm{HR@}k$, $\mathrm{NDCG@}k$, $\mathrm{MRR}$). \textbf{Phase~2} (itinerary
-recommendation): the \emph{frozen} engine is decoded into ordered routes by \emph{Frozen
-Rollout} (no-revisit mask, reserved end POI, greedy or beam), compared against an end-to-end
-\emph{Trained Pointer}; both are scored with set-F1 / pairs-F1 and validated on the Flickr
-datasets under the Chen-2016 protocol.}
+\caption[Architecture of the proposed system]{Architecture of the proposed system: a
+context-aware next-POI engine (Phase~1) decoded into itineraries by \emph{Frozen Rollout},
+compared with a \emph{Trained Pointer} and validated on the Flickr benchmark (Phase~2).}
 \label{fig:pipeline-overview}
 \vspace*{\fill}
 \end{figure}
