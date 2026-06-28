@@ -1,0 +1,57 @@
+\begin{figure}[h]
+\centering
+\begin{adjustbox}{max width=\textwidth}
+\begin{tikzpicture}[font=\small]
+% ---- encode (shared with the engine) ----
+\node[io]   (graph) at (0,2.4)   {Hybrid POI\\graph};
+\node[sh]   (gcn)   at (2.8,2.4) {2-layer GCN\\\textit{(shared)}};
+\node[data] (H)     at (6.0,2.4) {POI features $H$\\$|V|\times d_p$};
+\node[io]   (user)  at (0,1.0)   {User $u$};
+\node[sh]   (uemb)  at (2.8,1.0) {User emb.\ $e_u$\\\textit{(shared)}};
+\node[io]   (query) at (0,-0.5)  {Query:\\start $s$, end $e$};
+\node[ptr]  (init)  at (4.7,-0.5){$h_0=\tanh\!\big(W_{\mathrm{init}}[H_s;H_e;e_u]\big)$};
+
+\draw[arr] (graph)--(gcn);
+\draw[arr] (gcn)--(H);
+\draw[arr] (user)--(uemb);
+\draw[arr] (query)--(init);
+\draw[arr] (H)    -- node[right,font=\scriptsize]{$H_s,H_e$} (init);
+\draw[arr] (uemb) -- node[above,font=\scriptsize]{$e_u$} (init);
+
+% ---- decode row ----
+\node[io]   (prev) at (0,-3.0)   {prev POI\\$H[p_{t-1}]\;(+\,c_t)$};
+\node[core] (gru)  at (3.2,-3.0) {GRU\\decoder};
+\node[core] (op)   at (6.3,-3.0) {$q_t=W_o[h_t;e_u]$};
+\node[ptr]  (ptrn) at (9.6,-3.0) {pointer\\$\ell_t=q_t H^{\!\top}\!\in\!\mathbb{R}^{|V|}$};
+\node[data] (pick) at (12.9,-3.0){no-revisit mask\\$+$ reserved end\\$\Rightarrow\;p_t$};
+\node[draw=svTeal,rounded corners=2pt,fill=svTealT,line width=1pt,align=center,
+      inner sep=4pt,font=\footnotesize,text=svInk] (route) at (12.9,-0.8) {Ordered route\\$s\to\cdots\to e$};
+
+\draw[arr] (init) -- node[left,font=\scriptsize]{$h_0$} (gru);
+\draw[arr] (prev)--(gru);
+\draw[arr] (gru)--(op);
+\draw[arr] (op)--(ptrn);
+\draw[arr] (ptrn)--(pick);
+\draw[arr] (H) -- node[right,font=\scriptsize]{$H$} (ptrn);
+\draw[arr] (pick)--(route);
+\draw[arr] ([xshift=-3.5mm]gru.south) to[out=-90,in=-90,looseness=6]
+       node[below,font=\scriptsize]{$h_{t-1}$} ([xshift=3.5mm]gru.south);
+% autoregressive feedback (below the decoder box)
+\draw[darr] (pick.south) -- ++(0,-1.0) -| (prev.south);
+\node[font=\scriptsize,text=svGray] at (6.3,-4.35) {autoregress $p_t$};
+
+% decoder container
+\begin{scope}[on background layer]
+\node[draw=svGray,dashed,rounded corners,fill=svGray!6,inner sep=11pt,
+      fit=(prev)(gru)(op)(ptrn)(pick),
+      label={[font=\scriptsize\itshape,text=svGray,anchor=north west,yshift=-1pt]north west:Decoder --- repeat for $t=1,\dots,K-1$}]{};
+\end{scope}
+\end{tikzpicture}
+\end{adjustbox}
+\caption{Architecture of the \textbf{Trained Pointer}. \textcolor{svGreen}{Green} marks the modules
+shared with the next-POI engine (the GCN encoder and the user embedding). The query $(s,e,u)$
+initialises the GRU \emph{decoder}; at each step the decoder state becomes a query vector $q_t$ whose
+\emph{inner product} with every POI feature $H_v$ produces the next-POI scores; the route is rolled
+out loop-free with a reserved end. ($e_u$ also enters $q_t$ through $W_o[h_t;e_u]$.)}
+\label{fig:ptr}
+\end{figure}

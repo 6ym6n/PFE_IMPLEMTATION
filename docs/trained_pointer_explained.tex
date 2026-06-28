@@ -1,0 +1,208 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=2cm]{geometry}
+\usepackage{setspace}\onehalfspacing
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{pifont}
+\usepackage{tcolorbox}
+\usepackage{adjustbox}
+\usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, fit, calc, backgrounds, shapes.geometric}
+
+% ---- palette (matches the thesis figures) ----
+\definecolor{svInk}{HTML}{1A2330}
+\definecolor{svBlue}{HTML}{21487A}\definecolor{svBlueT}{HTML}{DBE5F1}
+\definecolor{svOrange}{HTML}{E07B2C}\definecolor{svOrangeT}{HTML}{FAE6D2}
+\definecolor{svTeal}{HTML}{2C7A7B}\definecolor{svTealT}{HTML}{D6E8E8}
+\definecolor{svGreen}{HTML}{4F8A4C}\definecolor{svGreenT}{HTML}{E1EFDD}
+\definecolor{svGray}{HTML}{8A9099}\definecolor{svGrayT}{HTML}{ECEEF1}
+\definecolor{svRed}{HTML}{C0504D}\definecolor{svRedT}{HTML}{F6DEDD}
+
+\newcommand{\yes}{\textcolor{svGreen}{\ding{51}}}
+\newcommand{\no}{\textcolor{svRed}{\ding{55}}}
+\newcommand{\shared}{\textcolor{svGreen}{\textbf{shared}}}
+
+\title{\vspace{-1.5cm}\bfseries The Trained Pointer\\[2pt]
+\large and how it relates to the Next-POI Engine}
+\author{Smart Visit Module --- companion note}
+\date{}
+
+% ---- shared tikz node styles ----
+\tikzset{
+  io/.style   ={draw=svGray,  rounded corners=2pt, fill=svGrayT,   align=center, inner sep=4pt, font=\footnotesize, text=svInk},
+  sh/.style   ={draw=svGreen, rounded corners=2pt, fill=svGreenT,  line width=1pt, align=center, inner sep=4pt, font=\footnotesize, text=svInk},
+  core/.style ={draw=svBlue,  rounded corners=2pt, fill=svBlueT,   line width=1pt, align=center, inner sep=4pt, font=\footnotesize, text=svInk},
+  ptr/.style  ={draw=svOrange,rounded corners=2pt, fill=svOrangeT, line width=1pt, align=center, inner sep=4pt, font=\footnotesize, text=svInk},
+  data/.style ={draw=svInk, dashed, rounded corners=2pt, fill=white, align=center, inner sep=4pt, font=\footnotesize, text=svInk},
+  arr/.style  ={->, line width=0.8pt, svInk!75},
+  darr/.style ={->, line width=0.8pt, svGray, densely dashed},
+}
+
+\begin{document}
+\maketitle
+\vspace{-1.2cm}
+
+\begin{tcolorbox}[colback=svBlueT, colframe=svBlue, arc=2pt, boxrule=0.8pt,
+  left=6pt,right=6pt,top=4pt,bottom=4pt]
+\textbf{Short answer --- is it similar to your next-POI engine?}
+\textbf{Yes, to a large degree.} The Trained Pointer \emph{reuses the very same building blocks}:
+the 2-layer GCN over the hybrid POI graph, the learnable user embedding, a GRU of the same size,
+and an output distribution over the \emph{whole} POI vocabulary. It is decoded with the
+\emph{same} loop-free, reserved-end discipline as Frozen Rollout. It differs in three places:
+(1)~the \textbf{output head} (an inner-product \emph{pointer} instead of an MLP),
+(2)~what the \textbf{GRU does} (it \emph{decodes the output route} autoregressively from the query,
+instead of \emph{encoding the input history}), and
+(3)~the \textbf{training signal} (one whole-trajectory example per trip, instead of one example for
+every prefix). Point~(3) is why it loses to Frozen Rollout.
+\end{tcolorbox}
+
+\section{The two models at a glance}
+
+Both models are built from the \emph{same} encoder stack and only diverge at the ``head'' and in
+how they are trained and rolled out. Concretely (file references in \texttt{src/}):
+
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{Next-POI engine} --- \texttt{src/models/next\_poi.py} (\texttt{NextPOIModel}). Phase~1.
+        Predicts the \emph{single next} POI from a session prefix.
+  \item \textbf{Trained Pointer} --- \texttt{src/itinerary/pointer\_model.py}
+        (\texttt{PointerItineraryModel}). Phase~2, the ``integrated'' alternative.
+        Generates a \emph{whole ordered route} from a query.
+  \item Both import the \emph{identical} encoder modules \texttt{POIGraphEncoder} and
+        \texttt{ContextEncoder} from \texttt{src/models/components.py}. Default dimensions match:
+        $d_p=128$ (POI), $d_u=64$ (user), $d_c=32$ (context), $d_h=128$ (GRU).
+\end{itemize}
+
+\section{Recap: the Next-POI Engine (Phase 1)}
+
+A 2-layer GCN turns a learnable POI table into graph-aware features
+$H=\mathrm{GCN}(\text{graph})\in\mathbb{R}^{|V|\times d_p}$. For each visited POI $p_t$ in the
+session, its feature row $H_{p_t}$ is concatenated with a context vector
+$c_t=\mathrm{ContextMLP}(\Delta d_t,\Delta t_t)$; a GRU reads the whole prefix and its final state
+$h_T$ is combined with the user embedding $e_u$ and scored by an MLP head over all $|V|$ POIs:
+\begin{align}
+x_t &= [\,H_{p_t}\,\Vert\,c_t\,], &
+h_T &= \mathrm{GRU}(x_1,\dots,x_T), \\
+z &= [\,h_T\,\Vert\,e_u\,], &
+\hat{y} &= \mathrm{MLP}(z)\in\mathbb{R}^{|V|},\quad P(\text{next})=\mathrm{softmax}(\hat{y}).
+\end{align}
+It is trained with cross-entropy on \emph{every prefix} of every session (a session of length $L$
+yields $L-1$ training pairs --- \emph{dense} supervision), early-stopped on validation HR@10.
+
+\section{The Trained Pointer (Phase 2), step by step}
+
+The pointer keeps the GCN encoder $H$ and the user embedding $e_u$, but instead of \emph{reading} a
+history it \emph{writes} a route. Figure~\ref{fig:ptr} shows the data flow.
+
+\paragraph{1.\ Encode (shared with Phase~1).}
+$H=\mathrm{GCN}(\text{graph})\in\mathbb{R}^{|V|\times d_p}$ and $e_u\in\mathbb{R}^{d_u}$ --- the same
+modules and weights-shape as the engine.
+
+\paragraph{2.\ Initialise the decoder from the query.}
+The query fixes a start $s$, an end $e$ and a user $u$. These seed the decoder's hidden state:
+\begin{equation}
+h_0 = \tanh\!\big(W_{\mathrm{init}}\,[\,H_s\,\Vert\,H_e\,\Vert\,e_u\,]\big)\in\mathbb{R}^{d_h}.
+\end{equation}
+This is something the engine never does --- the engine has no notion of a fixed end.
+
+\paragraph{3.\ Decode the route autoregressively.}
+At step $t$ the decoder input is the \emph{previous} POI's GCN feature (plus the
+$(\Delta d,\Delta t)$ context in the B-v2 variant), the GRU advances its state, and the state is
+projected to a \emph{query vector} $q_t$:
+\begin{align}
+g_t &= H_{p_{t-1}}\;(\Vert\,c_t\ \text{if context}), &
+h_t &= \mathrm{GRU}(g_t,\,h_{t-1}), &
+q_t &= W_o\,[\,h_t\,\Vert\,e_u\,]\in\mathbb{R}^{d_p}.
+\end{align}
+
+\paragraph{4.\ Point at a POI (the key difference).}
+Instead of an MLP head with its own per-POI weights, the score of POI $v$ is just the
+\emph{inner product} of the query vector with that POI's GCN feature:
+\begin{equation}
+\boxed{\ \ell_t(v) = \langle q_t,\,H_v\rangle\ }\qquad \ell_t = q_t H^\top \in\mathbb{R}^{|V|}.
+\end{equation}
+The output is therefore tied directly to the graph features --- there is no separate classification
+matrix to learn.
+
+\paragraph{5.\ Train on whole trajectories; decode loop-free.}
+Training is teacher-forced sequence cross-entropy over the \emph{whole} ordered trajectory --- one
+example per session (\texttt{ItinerarySeqDataset}), early-stopped on validation pairs-F1. At
+inference the route is rolled out with a \textbf{no-revisit mask} (visited POIs set to $-\infty$) and
+a \textbf{reserved end} (the last step is forced to $e$), greedy or beam --- exactly the discipline
+Frozen Rollout applies to the frozen engine.
+
+\input{fig-ptr-arch}
+
+\section{Side by side}
+
+Figure~\ref{fig:cmp} lines the two pipelines up; \textcolor{svGreen}{green} marks the modules that are
+\shared, \textcolor{svBlue}{blue} the engine-specific head, \textcolor{svOrange}{orange} the
+pointer-specific head.
+
+\input{fig-cmp}
+
+\begin{table}[h]
+\centering\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.5cm} >{\raggedright\arraybackslash}p{5.0cm} >{\raggedright\arraybackslash}p{5.0cm}}
+\toprule
+& \textbf{Next-POI engine} & \textbf{Trained Pointer} \\
+\midrule
+GCN graph encoder      & \yes\ \texttt{POIGraphEncoder} & \yes\ \emph{same} \texttt{POIGraphEncoder} \\
+User embedding $e_u$   & \yes\ $d_u=64$ & \yes\ \emph{same} ($d_u=64$) \\
+$(\Delta d,\Delta t)$ context & \yes\ always & \yes\ optional (B-v2 only) \\
+GRU                    & encodes the \emph{input} history & decodes the \emph{output} route (autoregressive) \\
+Hidden init            & zeros (reads a prefix) & $h_0=\tanh(W_{init}[H_s;H_e;e_u])$ from the query \\
+Output head            & \textcolor{svBlue}{MLP $\to$ softmax over $|V|$} & \textcolor{svOrange}{inner product $q_t H^\top$} \\
+End POI                & not modelled & given; reserved at the last step \\
+Training examples      & every prefix ($L\!-\!1$ per session; $\sim$$10^5$ on NYC) & one whole trajectory per session \\
+Early-stop metric      & validation HR@10 & validation pairs-F1 \\
+Output                 & a ranked next POI & an ordered, loop-free route $s\!\to\!\cdots\!\to\!e$ \\
+\bottomrule
+\end{tabular}
+\caption{What is shared (\yes) and what differs between the two models.}
+\label{tab:cmp}
+\end{table}
+
+\section{Why the Pointer does \emph{not} beat Frozen Rollout}
+
+On Foursquare NYC (length-$\ge\!3$ test, $n=2{,}880$), decoding the \emph{frozen} engine
+(\textbf{Frozen Rollout}) actually \emph{beats} the purpose-trained pointer:
+
+\begin{center}\small
+\begin{tabular}{lcc}
+\toprule
+Method & Type & pairs-F1 \\
+\midrule
+\textbf{Frozen Rollout} (greedy) & decoupled & \textbf{0.289} \\
+Frozen Rollout (beam~3) & decoupled & 0.290 \\
+Trained Pointer v1 (no context) & integrated & 0.259 \\
+Trained Pointer v2 ($+$ context) & integrated & 0.261 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The decisive reason is \textbf{supervision density}. The engine learns from every prefix of
+every session ($\sim$$10^5$ next-POI examples on NYC); the pointer sees only \emph{one}
+whole-trajectory example per session --- far fewer gradient signals, and it trains its encoder from
+scratch rather than reusing a converged one. Two secondary effects: the v1 pointer conditions only on
+the previous POI's feature (adding $(\Delta d,\Delta t)$ in v2 recovers a little), and beam search
+barely helps either model ($+0.0015$), showing the limit is the \emph{scorer}, not the search. The
+honest lesson: \emph{naively training a dedicated itinerary model does not automatically beat
+cleverly decoding a strong next-POI model.}
+
+\begin{tcolorbox}[colback=svGrayT, colframe=svGray, arc=2pt, boxrule=0.6pt,
+  left=6pt,right=6pt,top=4pt,bottom=4pt]
+\textbf{In one line.} The Trained Pointer is your next-POI engine's encoder (GCN $+$ user embedding)
+re-wired into a query-initialised, autoregressive route \emph{decoder} with an inner-product head ---
+same parts, different head, sparser training --- and that sparser training is exactly why the simple
+decoupled Frozen Rollout wins. A lighter sibling of this pointer is used for the Flickr literature
+benchmark (\texttt{src/flickr/pointer.py}).
+\end{tcolorbox}
+
+\end{document}

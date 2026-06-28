@@ -1,0 +1,61 @@
+\begin{figure}[h]
+\centering
+\begin{adjustbox}{max width=\textwidth}
+\begin{tikzpicture}[font=\small,
+  col/.style={align=center, minimum width=4.7cm, rounded corners=2pt, inner sep=4pt, font=\footnotesize},
+  ioc/.style ={col, draw=svGray,  fill=svGrayT,  text=svInk},
+  shc/.style ={col, draw=svGreen, fill=svGreenT, line width=1pt, text=svInk},
+  coc/.style ={col, draw=svBlue,  fill=svBlueT,  line width=1pt, text=svInk},
+  ptc/.style ={col, draw=svOrange,fill=svOrangeT,line width=1pt, text=svInk},
+  dac/.style ={col, draw=svInk, dashed, fill=white, text=svInk},
+  vlink/.style={->, line width=0.8pt, svInk!70},
+  note/.style={align=center, font=\scriptsize\itshape, text=svGray},
+]
+\def\lx{0}      % left column x
+\def\rx{7.4}    % right column x
+
+% titles
+\node[font=\bfseries, text=svBlue]   at (\lx,5.0) {Next-POI Engine \;(Phase 1)};
+\node[font=\bfseries, text=svOrange] at (\rx,5.0) {Trained Pointer \;(Phase 2)};
+
+% ---- left column (engine) ----
+\node[ioc] (e1) at (\lx,4.1) {Session prefix\\$p_1,\dots,p_T$};
+\node[shc] (e2) at (\lx,3.0) {GCN $\to H$ \ \&\ user emb.\ $e_u$\\\textit{(shared modules)}};
+\node[ioc] (e3) at (\lx,1.9) {per step $[\,H_{p_t}\Vert c_t\,]$};
+\node[coc] (e4) at (\lx,0.8) {GRU\\\textit{encodes the input history}};
+\node[ioc] (e5) at (\lx,-0.3){$z=[\,h_T\Vert e_u\,]$};
+\node[coc] (e6) at (\lx,-1.4){MLP head $\to$ softmax};
+\node[dac] (e7) at (\lx,-2.5){$P(\text{next POI})$ over $|V|$};
+\foreach \a/\b in {e1/e2,e2/e3,e3/e4,e4/e5,e5/e6,e6/e7}{\draw[vlink] (\a)--(\b);}
+
+% ---- right column (pointer) ----
+\node[ioc] (p1) at (\rx,4.1) {Query $s,e,u$};
+\node[shc] (p2) at (\rx,3.0) {GCN $\to H$ \ \&\ user emb.\ $e_u$\\\textit{(shared modules)}};
+\node[ptc] (p3) at (\rx,1.9) {$h_0=\tanh(W_{init}[H_s;H_e;e_u])$};
+\node[coc] (p4) at (\rx,0.8) {GRU\\\textit{decodes the output route}};
+\node[ioc] (p5) at (\rx,-0.3){$q_t=W_o[\,h_t\Vert e_u\,]$};
+\node[ptc] (p6) at (\rx,-1.4){inner-product pointer\\$q_t H^{\!\top}$};
+\node[dac] (p7) at (\rx,-2.5){route $s\to\cdots\to e$ over $|V|$};
+\foreach \a/\b in {p1/p2,p2/p3,p3/p4,p4/p5,p5/p6,p6/p7}{\draw[vlink] (\a)--(\b);}
+
+% ---- contrast annotations in the gap ----
+\node[note] at (3.7,0.8)  {GRU role:\\encode input\\vs decode output};
+\node[note] at (3.7,-1.4) {head:\\MLP weights\\vs ties to $H$};
+\draw[darr] (e4.east)--(2.6,0.8); \draw[darr] (p4.west)--(4.8,0.8);
+\draw[darr] (e6.east)--(2.6,-1.4); \draw[darr] (p6.west)--(4.8,-1.4);
+
+% ---- bottom banner: the key difference ----
+\node[draw=svRed, fill=svRedT, rounded corners=2pt, line width=0.8pt, align=center,
+      font=\footnotesize, text=svInk, minimum width=12cm, inner sep=6pt] at (3.7,-3.9)
+   {\textbf{Training signal (the decisive difference).} \;
+    dense: one example \emph{per prefix} ($\sim$$10^5$ on NYC) \quad vs \quad
+    sparse: \emph{one whole trajectory} per session \;$\Rightarrow$\; supervision-density gap};
+\end{tikzpicture}
+\end{adjustbox}
+\caption{The next-POI engine and the Trained Pointer side by side.
+\textcolor{svGreen}{Green} = modules shared by both (GCN encoder $+$ user embedding);
+\textcolor{svBlue}{blue} = the engine's MLP head; \textcolor{svOrange}{orange} = the pointer-specific
+parts (query-initialised decoder and inner-product head). Same encoder, different head, and --- the
+decisive difference --- a far sparser training signal.}
+\label{fig:cmp}
+\end{figure}
