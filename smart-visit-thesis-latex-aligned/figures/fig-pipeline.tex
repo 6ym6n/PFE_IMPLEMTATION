@@ -4,11 +4,9 @@
 %   Phase 2 — itinerary decoding (Frozen Rollout / Trained Pointer) + Flickr benchmark
 % Requires: tikz (positioning, arrows.meta, fit, calc), adjustbox, pdflscape, sv* palette.
 
-\begin{landscape}
-\begin{figure}[p]
+\begin{sidewaysfigure}
 \centering
-\vspace*{\fill}
-\begin{adjustbox}{max width=\linewidth, max totalheight=0.72\textheight}
+\begin{adjustbox}{max width=\linewidth, max totalheight=0.92\textwidth}
 \begin{tikzpicture}[
     >=Stealth, font=\small,
     io/.style   ={draw=svGray,   rounded corners=2pt, fill=svGrayT,   align=center, minimum height=0.9cm, inner sep=4pt, text=svInk},
@@ -87,13 +85,10 @@
 \end{tikzpicture}
 \end{adjustbox}
 
-\vspace{0.6cm}
 \caption[Architecture of the proposed system]{Architecture of the proposed system. A
 context-aware next-POI engine (Phase~1) is turned into itineraries by \emph{two alternative
 decoders} (Phase~2): \emph{Frozen Rollout}, which decodes the \emph{frozen} engine (dashed
 arrow), and an end-to-end \emph{Trained Pointer}. The two are independent --- neither feeds the
 other --- and each is scored, then validated on the Flickr benchmark.}
 \label{fig:pipeline-overview}
-\vspace*{\fill}
-\end{figure}
-\end{landscape}
+\end{sidewaysfigure}
