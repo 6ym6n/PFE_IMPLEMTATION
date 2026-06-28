@@ -8,16 +8,16 @@
 \begin{axis}[
   sv base,
   xbar,
-  width=0.84\linewidth, height=8.2cm,
+  width=0.84\linewidth, height=8.6cm,
   bar width=0.40cm,
   xmin=0, xmax=0.42,
   xtick={0,0.1,0.2,0.3,0.4},
   minor x tick num=1,
   xticklabel style={/pgf/number format/fixed, /pgf/number format/precision=1, font=\scriptsize},
   xlabel={HR@1 \;(full vocabulary, $\sim$5{,}100 POIs; higher is better)},
-  symbolic y coords={pad,STGCN,Ours,STAN,GETNext,STHGCN,LLM4POI},
-  ytick={STGCN,Ours,STAN,GETNext,STHGCN,LLM4POI},% blank "pad" row keeps STGCN off the x-axis
-  enlarge y limits=0.14,
+  symbolic y coords={pad,STGCN,Ours,STAN,GETNext,STHGCN,LLM4POI,padtop},
+  ytick={STGCN,Ours,STAN,GETNext,STHGCN,LLM4POI},% blank pad rows keep the top/bottom bars off the edges
+  enlarge y limits=0.06,
   xmajorgrids=true,
   axis lines=left,
   nodes near coords,
@@ -26,9 +26,9 @@
     /pgf/number format/fixed, /pgf/number format/precision=3,
     /pgf/number format/fixed zerofill},
 ]
-% invisible anchor so the blank "pad" row actually occupies space (keeps STGCN off the axis)
+% invisible anchors so the blank pad rows actually occupy space (top + bottom clearance)
 \addplot[draw=none, fill=none, forget plot,
-         every node near coord/.append style={opacity=0}] coordinates {(0,pad)};
+         every node near coord/.append style={opacity=0}] coordinates {(0,pad)(0,padtop)};
 % published tier (bar shift=0pt: each bar centred on its own row, no series grouping)
 \addplot[draw=svBlue, line width=0.8pt, fill=svBlueT, bar shift=0pt]
   coordinates {(0.180,STGCN)(0.220,STAN)(0.240,GETNext)(0.270,STHGCN)(0.340,LLM4POI)};
