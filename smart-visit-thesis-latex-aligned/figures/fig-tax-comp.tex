@@ -1,0 +1,35 @@
+% figures/fig-tax-comp.tex  —  \input{figures/fig-tax-comp}
+% Detail of the "Computational Approaches" branch (covers Sections 3.6--3.7).
+% Requires forest [edges] + sv* palette + shared tax* styles.
+
+\begin{figure}[ht]
+\centering
+\begin{adjustbox}{max width=\linewidth}
+\begin{forest}
+  for tree={draw=svGray, rounded corners=2pt, font=\small, align=center, text=svInk,
+            edge={svGray, line width=0.7pt, -Stealth}, forked edge,
+            l sep=0.9cm, s sep=0.20cm, inner sep=5pt},
+  [Computational Approaches, taxcomp
+    [Classical ML
+      [CF / MF / FM]
+    ]
+    [Deep Learning\\§3.6
+      [RNN / LSTM]
+      [Transformer]
+      [GNN]
+      [RL]
+      [SSL / Contrastive, taxnew]
+      [LLM, taxnew]
+    ]
+    [Decoding\\§3.7
+      [Beam / constr.]
+      [Two-stage]
+    ]
+  ]
+\end{forest}
+\end{adjustbox}
+\caption[Computational approaches]{The \emph{Computational Approaches} branch of the field
+taxonomy (Figure~\ref{fig:taxonomy}): classical machine learning, the deep-learning families,
+and itinerary decoding strategies.}
+\label{fig:tax-comp}
+\end{figure}

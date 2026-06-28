@@ -1,0 +1,35 @@
+% figures/fig-tax-user.tex  —  \input{figures/fig-tax-user}
+% Detail of the "User Satisfaction" branch (covers Sections 3.3--3.5).
+% Requires forest [edges] + sv* palette + shared tax* styles.
+
+\begin{figure}[ht]
+\centering
+\begin{adjustbox}{max width=\linewidth}
+\begin{forest}
+  for tree={draw=svGray, rounded corners=2pt, font=\small, align=center, text=svInk,
+            edge={svGray, line width=0.7pt, -Stealth}, forked edge,
+            l sep=0.9cm, s sep=0.22cm, inner sep=5pt},
+  [User Satisfaction, taxuser
+    [Non-Personalized\\§3.3
+      [OP / TTDP]
+      [General POI]
+    ]
+    [Personalized\\§3.4
+      [CF / MF]
+      [Hybrid
+        [POI / Itinerary rec.]
+      ]
+    ]
+    [Context-Aware\\§3.5
+      [Temporal]
+      [Weather]
+      [Multimodal /\\heterogeneous, taxnew]
+    ]
+  ]
+\end{forest}
+\end{adjustbox}
+\caption[User-satisfaction methods]{The \emph{User Satisfaction} branch of the field taxonomy
+(Figure~\ref{fig:taxonomy}): user-facing objectives, from non-personalized optimization to
+personalized and context-aware recommendation.}
+\label{fig:tax-user}
+\end{figure}

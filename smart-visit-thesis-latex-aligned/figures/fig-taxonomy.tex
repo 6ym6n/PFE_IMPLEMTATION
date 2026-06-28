@@ -1,87 +1,24 @@
 % figures/fig-taxonomy.tex  —  \input{figures/fig-taxonomy}
-% Field taxonomy (forest). Reader-facing: NO fairness/provider branch.
-% Requires: forest (with [edges]), pdflscape, adjustbox, + shared sv* palette.
+% OVERVIEW: root + three top-level branches. Each branch is expanded in its own
+% figure (fig-tax-user / fig-tax-comp / fig-tax-sys). Requires forest + sv* palette
+% + shared tax* node styles (preamble).
 
-\begin{landscape}
-\begin{figure}[p]
-    \centering
-    \vspace*{\fill}
-    \begin{adjustbox}{max width=\linewidth, max totalheight=0.74\textheight}
-    \begin{forest}
-      for tree={
-        draw=svGray,
-        rounded corners=2pt,
-        font=\small,
-        align=center,
-        text=svInk,
-        edge={svGray, line width=0.7pt, -Stealth},
-        forked edge,
-        l sep=1.25cm,
-        s sep=0.18cm,
-        inner sep=4.5pt,
-      },
-      /tikz/root/.style={fill=svBlue, draw=svBlue, text=white, font=\bfseries, minimum width=5cm},
-      /tikz/user/.style={fill=svOrangeT, draw=svOrange, line width=0.9pt, font=\bfseries},
-      /tikz/comp/.style={fill=svBlueT,   draw=svBlue,   line width=0.9pt, font=\bfseries},
-      /tikz/prov/.style={fill=svGreenT,  draw=svGreen,  line width=0.9pt, font=\bfseries},
-      /tikz/withnew/.style={
-        label={[fill=svGreenT, draw=svGreen, text=svGreen, font=\tiny\bfseries,
-                rounded corners=1.5pt, inner sep=1.5pt, xshift=-0.4cm, yshift=-0.1cm]above right:\textsc{new}}
-      },
-      [Tourist Itinerary and POI Recommendation, root
-        [User Satisfaction, user
-          [Non-Personalized\\§3.3
-            [OP / TTDP]
-            [General POI]
-          ]
-          [Personalized\\§3.4
-            [CF / MF]
-            [Hybrid
-                [POI / Itinerary rec.]
-            ]
-          ]
-          [Context-Aware\\§3.5
-            [Temporal]
-            [Weather]
-            [Multimodal /\\heterogeneous, withnew]
-          ]
-        ]
-        [Computational Approaches, comp
-          [Classical ML
-            [CF / MF / FM]
-          ]
-          [Deep Learning\\§3.6
-            [RNN / LSTM]
-            [Transformer]
-            [GNN]
-            [RL]
-            [SSL / Contrastive, withnew]
-            [LLM, withnew]
-          ]
-          [Decoding\\§3.7
-            [Beam / constr.]
-            [Two-stage]
-          ]
-        ]
-        [Systems \& Evaluation, prov
-          [Datasets\\§3.2
-            [LBSN]
-            [GPS/Photo]
-            [LLM benchmarks, withnew]
-          ]
-          [Synthesis\\§3.8
-            [Gaps / positioning]
-          ]
-        ]
-      ]
-    \end{forest}
-    \end{adjustbox}
-
-    \vspace{0.6cm}
-    \caption[Field taxonomy of itinerary and POI recommendation]{Field taxonomy of tourist
-    itinerary and POI recommendation; nodes marked \textsc{new} are areas developed since 2022
-    (extending~\cite{halder2022thesis}).}
-    \label{fig:taxonomy}
-    \vspace*{\fill}
+\begin{figure}[ht]
+\centering
+\begin{adjustbox}{max width=\linewidth}
+\begin{forest}
+  for tree={draw=svGray, rounded corners=2pt, font=\small, align=center, text=svInk,
+            edge={svGray, line width=0.8pt, -Stealth}, l sep=1.0cm, s sep=0.9cm, inner sep=6pt},
+  [Tourist Itinerary and POI Recommendation, taxroot, minimum width=5cm
+    [User Satisfaction\\{\footnotesize\mdseries §3.3--3.5}, taxuser]
+    [Computational Approaches\\{\footnotesize\mdseries §3.6--3.7}, taxcomp]
+    [Systems \& Evaluation\\{\footnotesize\mdseries §3.2, 3.8}, taxsys]
+  ]
+\end{forest}
+\end{adjustbox}
+\caption[Top-level field taxonomy]{Top-level organization of the field taxonomy. Each branch is
+expanded as its sections are reached: User Satisfaction (Figure~\ref{fig:tax-user}),
+Computational Approaches (Figure~\ref{fig:tax-comp}), and Systems \& Evaluation
+(Figure~\ref{fig:tax-sys}).}
+\label{fig:taxonomy}
 \end{figure}
-\end{landscape}

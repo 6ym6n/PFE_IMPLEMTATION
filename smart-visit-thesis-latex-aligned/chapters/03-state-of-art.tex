@@ -8,7 +8,7 @@
 
 Tourist itinerary and point-of-interest recommendation has attracted growing research attention over the past two decades, driven by the expansion of location-based social networks, the availability of large-scale mobility data, and advances in machine learning. The field draws on multiple research communities---operations research, information retrieval, recommender systems, and deep learning---each contributing distinct formulations, techniques, and evaluation practices.
 
-This chapter provides a comprehensive review of the state of the art organized as a \emph{field taxonomy} rather than a problem-specific literature review. The taxonomy, illustrated in Figure~\ref{fig:taxonomy}, structures existing work along three complementary facets: (i)~the user-facing objective (from non-personalized to personalized and context-aware recommendation), (ii)~the computational approach employed (classical methods, deep learning, and emerging paradigms), and (iii)~the supporting data sources and evaluation practice. This organization extends the taxonomy proposed by Halder~\cite{halder2022thesis}, which covered the landscape through 2022, by incorporating major developments from 2022 to 2026---notably graph neural networks with contrastive learning, self-supervised pretraining, large language model-based travel planning, and multimodal context integration.
+This chapter provides a comprehensive review of the state of the art organized as a \emph{field taxonomy} rather than a problem-specific literature review. The taxonomy, illustrated in Figure~\ref{fig:taxonomy}, structures existing work along three complementary facets: (i)~the user-facing objective (from non-personalized to personalized and context-aware recommendation), (ii)~the computational approach employed (classical methods, deep learning, and emerging paradigms), and (iii)~the supporting data sources and evaluation practice. Each top-level branch is expanded in a dedicated figure as its sections are reached (Figures~\ref{fig:tax-user}, \ref{fig:tax-comp}, and~\ref{fig:tax-sys}). This organization extends the taxonomy proposed by Halder~\cite{halder2022thesis}, which covered the landscape through 2022, by incorporating major developments from 2022 to 2026---notably graph neural networks with contrastive learning, self-supervised pretraining, large language model-based travel planning, and multimodal context integration.
 
 \input{figures/fig-taxonomy}
 
@@ -22,6 +22,8 @@ The remainder of this chapter is organized as follows. Section~\ref{sec:sota-dat
 \label{sec:sota-data}
 
 The quality and characteristics of the underlying data fundamentally shape the design, evaluation, and limitations of tourism recommendation methods. This section reviews the principal data sources used in the literature, discusses their strengths and biases, and summarizes the most widely used benchmark datasets.
+
+\input{figures/fig-tax-sys}
 
 % -----------------------------------------------------------
 \subsection{Geo-Tagged Photos}
@@ -90,6 +92,8 @@ Table~\ref{tab:datasets} summarizes the most commonly used datasets in POI and i
 \label{sec:sota-nonpers}
 
 This section reviews approaches in which all users receive the same recommendation for a given set of inputs (e.g., starting location and time budget). These methods do not model individual user preferences; instead, they optimize global objectives such as POI popularity or aggregate utility. Despite this limitation, non-personalized formulations have been foundational to the field, providing the constraint-handling and route-optimization machinery that later personalized and learning-based methods build upon.
+
+\input{figures/fig-tax-user}
 
 % -----------------------------------------------------------
 \subsection{The Orienteering Problem and Variants}
@@ -304,6 +308,8 @@ In summary, context-aware recommendation provides the conceptual and technical f
 \label{sec:sota-dl}
 
 Deep learning has become the dominant paradigm for POI and itinerary recommendation, progressively replacing classical collaborative filtering and optimization-based methods. This section provides a comprehensive review of deep learning approaches organized by architectural family: recurrent networks, attention and Transformer models, graph neural networks, reinforcement learning, self-supervised and contrastive learning, and large language models. Table~\ref{tab:dlmodels} at the end of this section provides a structured comparison across these families.
+
+\input{figures/fig-tax-comp}
 
 % -----------------------------------------------------------
 \subsection{Recurrent Neural Network-Based Models}

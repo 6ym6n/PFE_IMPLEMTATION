@@ -1,0 +1,28 @@
+% figures/fig-tax-sys.tex  —  \input{figures/fig-tax-sys}
+% Detail of the "Systems & Evaluation" branch (Datasets, Section 3.2; Synthesis, Section 3.8).
+% Requires forest [edges] + sv* palette + shared tax* styles.
+
+\begin{figure}[ht]
+\centering
+\begin{adjustbox}{max width=\linewidth}
+\begin{forest}
+  for tree={draw=svGray, rounded corners=2pt, font=\small, align=center, text=svInk,
+            edge={svGray, line width=0.7pt, -Stealth}, forked edge,
+            l sep=0.9cm, s sep=0.24cm, inner sep=5pt},
+  [Systems \& Evaluation, taxsys
+    [Datasets\\§3.2
+      [LBSN]
+      [GPS/Photo]
+      [LLM benchmarks, taxnew]
+    ]
+    [Synthesis\\§3.8
+      [Gaps / positioning]
+    ]
+  ]
+\end{forest}
+\end{adjustbox}
+\caption[Systems and evaluation]{The \emph{Systems \& Evaluation} branch of the field taxonomy
+(Figure~\ref{fig:taxonomy}): the data sources that underpin the field and the comparative
+synthesis that positions the proposed system.}
+\label{fig:tax-sys}
+\end{figure}

@@ -79,6 +79,16 @@
   },
 }
 
+% --- Shared taxonomy node styles (used by the overview + the three branch figures) ---
+\tikzset{
+  taxroot/.style={fill=svBlue,   draw=svBlue,  text=white, font=\bfseries},
+  taxuser/.style={fill=svOrangeT, draw=svOrange, line width=0.9pt, font=\bfseries},
+  taxcomp/.style={fill=svBlueT,   draw=svBlue,   line width=0.9pt, font=\bfseries},
+  taxsys/.style={ fill=svGreenT,  draw=svGreen,  line width=0.9pt, font=\bfseries},
+  taxnew/.style={label={[fill=svGreenT, draw=svGreen, text=svGreen, font=\tiny\bfseries,
+                 rounded corners=1.5pt, inner sep=1.5pt, xshift=-0.4cm, yshift=-0.1cm]above right:\textsc{new}}},
+}
+
 % --------------------
 % Thesis metadata (edit these)
 % --------------------
