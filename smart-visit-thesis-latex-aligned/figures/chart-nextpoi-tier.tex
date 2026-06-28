@@ -15,9 +15,9 @@
   minor x tick num=1,
   xticklabel style={/pgf/number format/fixed, /pgf/number format/precision=1, font=\scriptsize},
   xlabel={HR@1 \;(full vocabulary, $\sim$5{,}100 POIs; higher is better)},
-  symbolic y coords={LSTM,STGCN,Ours,STAN,GETNext,STHGCN,LLM4POI},
+  symbolic y coords={STGCN,Ours,STAN,GETNext,STHGCN,LLM4POI},
   ytick=data,
-  enlarge y limits=0.16,
+  enlarge y limits=0.18,
   xmajorgrids=true,
   axis lines=left,
   nodes near coords,
@@ -28,7 +28,7 @@
 ]
 % published tier
 \addplot[draw=svBlue, line width=0.8pt, fill=svBlueT]
-  coordinates {(0.130,LSTM)(0.180,STGCN)(0.220,STAN)(0.240,GETNext)(0.270,STHGCN)(0.340,LLM4POI)};
+  coordinates {(0.180,STGCN)(0.220,STAN)(0.240,GETNext)(0.270,STHGCN)(0.340,LLM4POI)};
 % our engine (highlighted)
 \addplot[draw=svOrange, line width=1pt, fill=svOrange!75]
   coordinates {(0.187,Ours)};
