@@ -56,19 +56,24 @@
 \draw[arr] (cat2) -- (head);
 \draw[arr] (head) -- (nextpoi);
 
-% ---- Phase 2: itinerary decoding ----
-\node[dec, below=4.7cm of gru, xshift=-2.2cm] (rollout)
+% ---- Phase 2: two ALTERNATIVE itinerary decoders (not a pipeline) ----
+\node[dec, below=4.4cm of gru, xshift=-1.2cm] (rollout)
   {\textbf{Frozen Rollout}\\[-1pt]\footnotesize frozen engine + no-revisit mask,\\[-1pt]\footnotesize reserved end, greedy / beam};
-\node[dec, left=1.0cm of rollout] (pointer)
+\node[dec, below=0.7cm of rollout] (pointer)
   {Trained Pointer\\[-1pt]\footnotesize GCN+pointer, end-to-end};
-\node[term, right=1.0cm of rollout] (itin)
+\node[term, right=2.3cm of rollout, yshift=-0.85cm] (itin)
   {Ordered itinerary\\[-1pt]\footnotesize pairs-F1, set-F1};
-\node[dec, right=0.8cm of itin] (flickr)
+\node[dec, right=1.0cm of itin] (flickr)
   {Flickr Benchmark\\[-1pt]\footnotesize Chen-2016 protocol};
+\node[font=\scriptsize\itshape, text=svGray, align=center] (altlbl)
+  at ($(rollout.west)!0.5!(pointer.west) + (-0.95,0)$) {two\\decoders\\compared};
 
+% Frozen Rollout decodes the FROZEN engine (dashed arrow from the head); the
+% Trained Pointer is a separate end-to-end model. Both independently produce an
+% itinerary -- they are alternatives, neither feeds the other.
 \draw[arr, svBlue, densely dashed] (head.south) -| (rollout.north);
-\draw[arr] (pointer) -- (rollout);
-\draw[arr] (rollout) -- (itin);
+\draw[arr] (rollout.east) -- (itin.west);
+\draw[arr] (pointer.east) -- (itin.west);
 \draw[arr] (itin) -- (flickr);
 
 % ---- Phase containers (titles float just ABOVE each box to avoid overlap) ----
@@ -77,15 +82,17 @@
       fit=(data)(graph)(gcn)(gru)(head)(nextpoi)(userid)] (p1box) {};
 \node[draw=svOrange, dashed, rounded corners, inner sep=12pt,
       label={[anchor=south west, font=\footnotesize\bfseries, text=svOrange, fill=white, inner sep=2pt, xshift=10pt, yshift=2pt]north west:Phase 2 --- itinerary decoding \& benchmarks},
-      fit=(pointer)(rollout)(itin)(flickr)] (p2box) {};
+      fit=(pointer)(rollout)(itin)(flickr)(altlbl)] (p2box) {};
 
 \end{tikzpicture}
 \end{adjustbox}
 
 \vspace{0.6cm}
-\caption[Architecture of the proposed system]{Architecture of the proposed system: a
-context-aware next-POI engine (Phase~1) decoded into itineraries by \emph{Frozen Rollout},
-compared with a \emph{Trained Pointer} and validated on the Flickr benchmark (Phase~2).}
+\caption[Architecture of the proposed system]{Architecture of the proposed system. A
+context-aware next-POI engine (Phase~1) is turned into itineraries by \emph{two alternative
+decoders} (Phase~2): \emph{Frozen Rollout}, which decodes the \emph{frozen} engine (dashed
+arrow), and an end-to-end \emph{Trained Pointer}. The two are independent --- neither feeds the
+other --- and each is scored, then validated on the Flickr benchmark.}
 \label{fig:pipeline-overview}
 \vspace*{\fill}
 \end{figure}
