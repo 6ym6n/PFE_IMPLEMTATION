@@ -71,12 +71,12 @@
 \draw[arr] (rollout) -- (itin);
 \draw[arr] (itin) -- (flickr);
 
-% ---- Phase containers ----
-\node[draw=svBlue, dashed, rounded corners, inner sep=11pt,
-      label={[anchor=north west,font=\footnotesize\bfseries,text=svBlue,xshift=2pt,yshift=-2pt]north west:Phase 1 --- context-aware next-POI engine},
+% ---- Phase containers (titles float just ABOVE each box to avoid overlap) ----
+\node[draw=svBlue, dashed, rounded corners, inner sep=12pt,
+      label={[anchor=south west, font=\footnotesize\bfseries, text=svBlue, fill=white, inner sep=2pt, xshift=10pt, yshift=2pt]north west:Phase 1 --- context-aware next-POI engine},
       fit=(data)(graph)(gcn)(gru)(head)(nextpoi)(userid)] (p1box) {};
-\node[draw=svOrange, dashed, rounded corners, inner sep=9pt,
-      label={[anchor=north west,font=\footnotesize\bfseries,text=svOrange,xshift=2pt,yshift=-2pt]north west:Phase 2 --- itinerary decoding \& benchmarks},
+\node[draw=svOrange, dashed, rounded corners, inner sep=12pt,
+      label={[anchor=south west, font=\footnotesize\bfseries, text=svOrange, fill=white, inner sep=2pt, xshift=10pt, yshift=2pt]north west:Phase 2 --- itinerary decoding \& benchmarks},
       fit=(pointer)(rollout)(itin)(flickr)] (p2box) {};
 
 \end{tikzpicture}
