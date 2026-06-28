@@ -1,0 +1,55 @@
+% figures/chart-scale.tex  —  \input in Ch.4 (comparability)
+% Same task, different benchmark => different scale. Hand-drawn range strip (vector TikZ).
+% Ranges: Flickr literature 0.26-0.85; our Flickr 0.23-0.59 (pointer 0.31-0.49);
+%         our Foursquare NYC 0.26-0.29 (NOT comparable).
+% Requires: tikz (backgrounds) + sv* palette.  x maps value v -> 12v cm.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+    font=\small,
+    rng/.style={rounded corners=2.5pt, line width=0.8pt},
+    rlabel/.style={font=\footnotesize, text=svInk, align=right, anchor=east},
+    note/.style={font=\scriptsize, text=svInk},
+]
+% --- faint vertical guides + axis ---
+\begin{scope}[on background layer]
+  \foreach \v in {0,0.2,0.4,0.6,0.8,1.0}
+    \draw[svGrayT, line width=0.5pt] ({\v*12},-0.30) -- ({\v*12},3.05);
+\end{scope}
+\draw[svGray, line width=0.6pt] (0,-0.30) -- (12,-0.30);
+\foreach \v in {0,0.2,0.4,0.6,0.8,1.0}
+  \draw[svGray] ({\v*12},-0.30) -- ({\v*12},-0.44)
+        node[below, font=\footnotesize, text=svInk] {\v};
+\node[font=\small, text=svInk] at (6,-1.05) {pairs-F1};
+
+% ===== Row 1: Flickr literature (same task) =====
+\node[rlabel] at (-0.25,2.40) {Flickr literature\\(same task)};
+\fill[svTealT] ({0.26*12},2.09) rectangle ({0.85*12},2.71);
+\draw[rng, draw=svTeal] ({0.26*12},2.09) rectangle ({0.85*12},2.71);
+\node[note, text=svTeal] at ({((0.26+0.85)/2)*12},2.40) {published methods \;0.26--0.85};
+
+% ===== Row 2: Ours - Flickr Benchmark =====
+\node[rlabel] at (-0.25,1.40) {Ours --- Flickr\\Benchmark};
+\fill[svBlueT] ({0.23*12},1.09) rectangle ({0.59*12},1.71);
+\draw[rng, draw=svBlue] ({0.23*12},1.09) rectangle ({0.59*12},1.71);
+\node[note, text=svBlue, anchor=west] at ({0.235*12},1.40) {classical 0.23--0.59};
+% pointer sub-range overlay
+\fill[svOrange!75] ({0.31*12},1.16) rectangle ({0.49*12},1.64);
+\draw[rng, draw=svOrange] ({0.31*12},1.16) rectangle ({0.49*12},1.64);
+\node[note, text=white, font=\scriptsize\bfseries] at ({((0.31+0.49)/2)*12},1.40) {pointer};
+
+% ===== Row 3: Ours - Foursquare NYC (not comparable) =====
+\node[rlabel] at (-0.25,0.40) {Ours --- Foursquare\\NYC \textit{(not comparable)}};
+\fill[svRedT] ({0.26*12},0.09) rectangle ({0.29*12},0.71);
+\draw[rng, draw=svRed] ({0.26*12},0.09) rectangle ({0.29*12},0.71);
+\node[note, text=svRed, anchor=west] at ({0.30*12},0.40) {0.26--0.29};
+
+\end{tikzpicture}
+\caption{Same task, different benchmark $\Rightarrow$ different scale. Itinerary pairs-F1 is
+only comparable within an identical dataset/protocol/metric. Our NYC numbers (bottom, $\sim$5{,}100
+POIs) are \emph{not} comparable to the published trip-recommendation literature (top, $\sim$25--90
+POIs); the Flickr Benchmark (middle) is the valid bridge, placing our methods on the literature's
+own $0.26$--$0.85$ scale.}
+\label{fig:chart-scale}
+\end{figure}

@@ -1,21 +1,23 @@
-% Architecture of the proposed system (real, implemented pipeline).
+% figures/fig-pipeline.tex  —  \input{figures/fig-pipeline}
+% Architecture of the real, implemented system (landscape, full page).
 %   Phase 1 — context-aware next-POI engine (GCN + Delta d/Delta t + user + GRU + head)
-%   Phase 2 — itinerary decoding (Frozen Rollout / Trained Pointer) + benchmarks
-% Requires: \usepackage{tikz} with libraries
-%   positioning, arrows.meta, fit, shapes.geometric, calc
-\begin{figure}[ht]
+%   Phase 2 — itinerary decoding (Frozen Rollout / Trained Pointer) + Flickr benchmark
+% Requires: tikz (positioning, arrows.meta, fit, calc), adjustbox, pdflscape, sv* palette.
+
+\begin{landscape}
+\begin{figure}[p]
 \centering
-\resizebox{\textwidth}{!}{%
+\vspace*{\fill}
+\begin{adjustbox}{max width=\linewidth, max totalheight=0.72\textheight}
 \begin{tikzpicture}[
-    >=Stealth,
-    font=\small,
-    io/.style   ={draw, rounded corners=2pt, fill=gray!12, align=center, minimum height=0.85cm, inner sep=4pt},
-    enc/.style  ={draw, rounded corners=2pt, fill=blue!12, thick, align=center, minimum height=0.85cm, inner sep=4pt},
-    core/.style ={draw, rounded corners=2pt, fill=orange!15, thick, align=center, minimum height=0.85cm, inner sep=4pt},
-    term/.style ={draw, rounded corners=2pt, fill=green!14, align=center, minimum height=0.85cm, inner sep=4pt},
-    dec/.style  ={draw, rounded corners=2pt, fill=blue!8, align=center, minimum height=0.85cm, inner sep=4pt},
-    merge/.style ={draw, circle, fill=white, inner sep=1pt, minimum size=0.5cm, font=\footnotesize},
-    arr/.style  ={->, thick, gray!55!black},
+    >=Stealth, font=\small,
+    io/.style   ={draw=svGray,   rounded corners=2pt, fill=svGrayT,   align=center, minimum height=0.9cm, inner sep=4pt, text=svInk},
+    enc/.style  ={draw=svBlue,   rounded corners=2pt, fill=svBlueT,   line width=1pt, align=center, minimum height=0.9cm, inner sep=4pt, text=svInk},
+    core/.style ={draw=svOrange, rounded corners=2pt, fill=svOrangeT, line width=1pt, align=center, minimum height=0.9cm, inner sep=4pt, text=svInk},
+    term/.style ={draw=svGreen,  rounded corners=2pt, fill=svGreenT,  line width=1pt, align=center, minimum height=0.9cm, inner sep=4pt, text=svInk},
+    dec/.style  ={draw=svBlue,   rounded corners=2pt, fill=svBlueT,   align=center, minimum height=0.9cm, inner sep=4pt, text=svInk},
+    merge/.style={draw=svInk, circle, fill=white, inner sep=1pt, minimum size=0.52cm, font=\footnotesize},
+    arr/.style  ={->, line width=0.9pt, svInk!75},
 ]
 
 % ---- Inputs / preprocessing ----
@@ -64,19 +66,23 @@
 \node[dec, right=0.8cm of itin] (flickr)
   {Flickr Benchmark\\[-1pt]\footnotesize Chen-2016 protocol};
 
-\draw[arr, blue!55!black, densely dashed] (head.south) -| (rollout.north);
+\draw[arr, svBlue, densely dashed] (head.south) -| (rollout.north);
 \draw[arr] (pointer) -- (rollout);
 \draw[arr] (rollout) -- (itin);
 \draw[arr] (itin) -- (flickr);
 
-% ---- Phase containers (dashed fit boxes, no fill so they sit over the main layer) ----
-\node[draw, dashed, rounded corners, inner sep=11pt, label={[anchor=north west,font=\footnotesize\bfseries,text=blue!50!black,xshift=2pt,yshift=-2pt]north west:Phase 1 --- context-aware next-POI engine},
+% ---- Phase containers ----
+\node[draw=svBlue, dashed, rounded corners, inner sep=11pt,
+      label={[anchor=north west,font=\footnotesize\bfseries,text=svBlue,xshift=2pt,yshift=-2pt]north west:Phase 1 --- context-aware next-POI engine},
       fit=(data)(graph)(gcn)(gru)(head)(nextpoi)(userid)] (p1box) {};
-\node[draw, dashed, rounded corners, inner sep=9pt, label={[anchor=north west,font=\footnotesize\bfseries,text=orange!55!black,xshift=2pt,yshift=-2pt]north west:Phase 2 --- itinerary decoding \& benchmarks},
+\node[draw=svOrange, dashed, rounded corners, inner sep=9pt,
+      label={[anchor=north west,font=\footnotesize\bfseries,text=svOrange,xshift=2pt,yshift=-2pt]north west:Phase 2 --- itinerary decoding \& benchmarks},
       fit=(pointer)(rollout)(itin)(flickr)] (p2box) {};
 
-\end{tikzpicture}%
-}
+\end{tikzpicture}
+\end{adjustbox}
+
+\vspace{0.6cm}
 \caption{Architecture of the proposed system. \textbf{Phase~1} (the next-POI engine): a
 two-layer GCN over a hybrid POI graph (training-set co-visitation edges $\cup$ geographic
 10-nearest-neighbour edges) produces POI features; per-step spatial/temporal gaps
@@ -89,4 +95,6 @@ Rollout} (no-revisit mask, reserved end POI, greedy or beam), compared against a
 \emph{Trained Pointer}; both are scored with set-F1 / pairs-F1 and validated on the Flickr
 datasets under the Chen-2016 protocol.}
 \label{fig:pipeline-overview}
+\vspace*{\fill}
 \end{figure}
+\end{landscape}

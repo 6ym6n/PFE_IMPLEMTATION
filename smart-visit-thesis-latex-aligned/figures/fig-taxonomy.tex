@@ -1,34 +1,32 @@
-% Required in preamble:
-% \usepackage[edges]{forest}
-% \usepackage{pdflscape}
-% \usepackage{adjustbox}
-% \usepackage{xcolor}
+% figures/fig-taxonomy.tex  —  \input{figures/fig-taxonomy}
+% Field taxonomy (forest). Reader-facing: NO fairness/provider branch.
+% Requires: forest (with [edges]), pdflscape, adjustbox, + shared sv* palette.
 
 \begin{landscape}
 \begin{figure}[p]
     \centering
-    \caption{Full Taxonomy of Tourist Itinerary and POI Recommendation (2022--2026 Extension). Nodes marked \textsc{new} indicate areas absent from previous surveys~\cite{halder2022thesis} and introduced in the 2022--2026 period.}
-    \label{fig:taxonomy}
-    
-    \begin{adjustbox}{max width=\linewidth}
+    \vspace*{\fill}
+    \begin{adjustbox}{max width=\linewidth, max totalheight=0.74\textheight}
     \begin{forest}
       for tree={
-        draw,
+        draw=svGray,
         rounded corners=2pt,
         font=\small,
         align=center,
-        edge={thick, -Stealth},
+        text=svInk,
+        edge={svGray, line width=0.7pt, -Stealth},
         forked edge,
-        l sep=1.2cm,
-        s sep=0.15cm,
-        inner sep=4pt,
+        l sep=1.25cm,
+        s sep=0.18cm,
+        inner sep=4.5pt,
       },
-      /tikz/root/.style={fill=blue!60, text=white, font=\bfseries, minimum width=5cm},
-      /tikz/user/.style={fill=orange!15, draw=orange!80, font=\bfseries},
-      /tikz/comp/.style={fill=purple!10, draw=purple!80, font=\bfseries},
-      /tikz/prov/.style={fill=green!10, draw=green!50!black, font=\bfseries},
+      /tikz/root/.style={fill=svBlue, draw=svBlue, text=white, font=\bfseries, minimum width=5cm},
+      /tikz/user/.style={fill=svOrangeT, draw=svOrange, line width=0.9pt, font=\bfseries},
+      /tikz/comp/.style={fill=svBlueT,   draw=svBlue,   line width=0.9pt, font=\bfseries},
+      /tikz/prov/.style={fill=svGreenT,  draw=svGreen,  line width=0.9pt, font=\bfseries},
       /tikz/withnew/.style={
-        label={[fill=green!20, draw=green!60!black, font=\tiny\bfseries, inner sep=1.5pt, xshift=-0.4cm, yshift=-0.1cm]above right:\textsc{new}}
+        label={[fill=svGreenT, draw=svGreen, text=svGreen, font=\tiny\bfseries,
+                rounded corners=1.5pt, inner sep=1.5pt, xshift=-0.4cm, yshift=-0.1cm]above right:\textsc{new}}
       },
       [Tourist Itinerary and POI Recommendation, root
         [User Satisfaction, user
@@ -65,22 +63,25 @@
             [Two-stage]
           ]
         ]
-        [Provider Satisfaction \& System, prov
-          [Fairness\\§3.8
-            [User-side]
-            [Provider]
-          ]
+        [Systems \& Evaluation, prov
           [Datasets\\§3.2
             [LBSN]
             [GPS/Photo]
             [LLM benchmarks, withnew]
           ]
-          [Synthesis\\§3.9
+          [Synthesis\\§3.8
             [Gaps / positioning]
           ]
         ]
       ]
     \end{forest}
     \end{adjustbox}
+
+    \vspace{0.6cm}
+    \caption{Field taxonomy of tourist itinerary and POI recommendation (2022--2026
+    extension). Nodes marked \textsc{new} indicate areas largely absent from earlier
+    surveys~\cite{halder2022thesis} and developed in the 2022--2026 period.}
+    \label{fig:taxonomy}
+    \vspace*{\fill}
 \end{figure}
 \end{landscape}

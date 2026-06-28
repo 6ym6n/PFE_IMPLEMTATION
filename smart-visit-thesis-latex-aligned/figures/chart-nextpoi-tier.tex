@@ -1,0 +1,39 @@
+% figures/chart-nextpoi-tier.tex  —  \input in Ch.4 (next-POI results)
+% HR@1 tier on Foursquare NYC (numbers from Table~\ref{tab:nextpoi-tier}).
+% Requires: pgfplots + sv* palette (sv base style).
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  sv base,
+  xbar,
+  width=0.84\linewidth, height=6.4cm,
+  bar width=0.42cm,
+  xmin=0, xmax=0.40,
+  xlabel={HR@1 \;(full vocabulary, $\sim$5{,}100 POIs; higher is better)},
+  symbolic y coords={LSTM,STGCN,Ours,STAN,GETNext,STHGCN,LLM4POI},
+  ytick=data,
+  enlarge y limits=0.10,
+  xmajorgrids=true,
+  axis lines=left,
+  nodes near coords,
+  every node near coord/.append style={
+    anchor=west, font=\scriptsize,
+    /pgf/number format/fixed, /pgf/number format/precision=3,
+    /pgf/number format/fixed zerofill},
+]
+% published tier
+\addplot[draw=svBlue, line width=0.8pt, fill=svBlueT]
+  coordinates {(0.130,LSTM)(0.180,STGCN)(0.220,STAN)(0.240,GETNext)(0.270,STHGCN)(0.340,LLM4POI)};
+% our engine (highlighted)
+\addplot[draw=svOrange, line width=1pt, fill=svOrange!75]
+  coordinates {(0.187,Ours)};
+\end{axis}
+\end{tikzpicture}
+\caption{Where the proposed engine sits on the next-POI HR@1 tier for Foursquare NYC (numbers
+as collated in the LLM4POI benchmark; cf.\ Table~\ref{tab:nextpoi-tier}). The engine
+(highlighted) is in the LSTM/STGCN band---clearly learning, but below the
+attention/transformer and LLM state of the art.}
+\label{fig:chart-nextpoi-tier}
+\end{figure}

@@ -1,74 +1,71 @@
+% figures/fig-intro-overview.tex  —  \input{figures/fig-intro-overview}
+% Positions the proposed system in the landscape; pillars map to RQ1/RQ2/RQ3.
+% Requires: tikz (positioning, arrows.meta, calc) + shared sv* palette.
+
 \begin{figure}[t]
 \centering
 \begin{tikzpicture}[
-    >=Stealth,
-    node distance=1.2cm and 1.5cm,
-    box/.style={draw, rounded corners=3pt, minimum width=2.6cm, minimum height=0.8cm, 
-                align=center, font=\small},
-    mainbox/.style={box, fill=blue!12, thick},
-    graybox/.style={box, fill=gray!10},
-    greenbox/.style={box, fill=green!10},
-    orangebox/.style={box, fill=orange!10},
-    label/.style={font=\footnotesize\itshape, text=gray!70!black},
-    arrow/.style={->, thick, gray!60!black},
-    darrow/.style={->, thick, blue!60!black, dashed},
+    >=Stealth, font=\small,
+    box/.style={draw=svInk, rounded corners=3pt, minimum width=2.7cm,
+                minimum height=0.85cm, align=center, font=\small, fill=white},
+    poibox/.style={box, fill=svGrayT, draw=svGray},
+    itinbox/.style={box, fill=svBlueT, draw=svBlue, line width=1pt, font=\small\bfseries},
+    poichild/.style={box, fill=svGrayT, draw=svGray, font=\footnotesize, minimum width=2.5cm},
+    itinchild/.style={box, fill=svOrangeT, draw=svOrange, font=\footnotesize, minimum width=2.5cm},
+    qlabel/.style={font=\footnotesize\itshape, text=svGray},
+    arrow/.style={->, line width=0.8pt, svGray!85!black},
+    flow/.style={->, line width=1.2pt, svBlue},
 ]
+% ---- top: the two recommendation tasks ----
+\node[poibox] (poi) {POI Recommendation};
+\node[qlabel, above=0.18cm of poi] {``What to visit?''};
 
-% --- Left: POI Recommendation ---
-\node[graybox] (poi) {POI Recommendation};
-\node[label, above=0.2cm of poi] (poilabel) {``What to visit?''};
+\node[itinbox, right=5.2cm of poi] (itin) {Itinerary Recommendation};
+\node[qlabel, above=0.18cm of itin] {``What, in what order, and is it feasible?''};
 
-% Sub-nodes for POI
-\node[graybox, below left=1.5cm and -0.5cm of poi] (cf) {\footnotesize Collaborative\\[-2pt] \footnotesize Filtering};
-\node[graybox, below right=1.5cm and -0.5cm of poi] (cb) {\footnotesize Content-based\\[-2pt] \footnotesize / Hybrid};
+\draw[flow] (poi.east) --
+   node[above, font=\footnotesize, text=svBlue] {$+$ sequencing}
+   node[below, font=\footnotesize, text=svBlue] {$+$ constraints, context} (itin.west);
 
+% ---- POI children ----
+\node[poichild, below left=1.4cm and -0.7cm of poi]  (cf) {Collaborative\\filtering};
+\node[poichild, below right=1.4cm and -0.7cm of poi] (cb) {Content-based\\/ hybrid};
 \draw[arrow] (poi) -- (cf);
 \draw[arrow] (poi) -- (cb);
+\node[font=\scriptsize, text=svGray] at ($(cf)!0.5!(cb)+(0,-0.62)$) {ranked list of POIs};
 
-% Output Label (Positioned between POI and its children)
-\node[font=\footnotesize, text=gray!60!black, anchor=center] at ($(poi)!0.5!(cb)-(0.8,0.5)$) {Output: ranked list of POIs};
-
-% --- Right: Itinerary Recommendation ---
-\node[mainbox, right=5cm of poi] (itin) {Itinerary\\Recommendation};
-\node[label, above=0.2cm of itin] (itinlabel) {``What, in what order, and is it feasible?''};
-
-% Sub-nodes for Itinerary
-\node[orangebox, below left=1.5cm and -0.5cm of itin] (seq) {\footnotesize Sequential\\[-2pt] \footnotesize Models};
-\node[orangebox, below right=1.5cm and -0.5cm of itin] (opt) {\footnotesize Optimization\\[-2pt] \footnotesize / Planning};
-
+% ---- Itinerary children ----
+\node[itinchild, below left=1.4cm and -0.7cm of itin]  (seq) {Sequential\\models};
+\node[itinchild, below right=1.4cm and -0.7cm of itin] (opt) {Optimization\\/ planning};
 \draw[arrow] (itin) -- (seq);
 \draw[arrow] (itin) -- (opt);
+\node[font=\scriptsize, text=svBlue] at ($(seq)!0.5!(opt)+(0,-0.62)$) {ordered, feasible route};
 
-% Output Label
-\node[font=\footnotesize, text=blue!60!black, anchor=center] at ($(itin)!0.5!(opt)-(0.8,0.5)$) {Output: ordered, feasible route};
+% ---- proposed system ----
+\node[box, fill=svBlue, text=white, draw=svBlue, line width=1pt,
+      minimum width=5.0cm, minimum height=1.05cm, font=\small\bfseries,
+      below=3.3cm of itin, xshift=-1.1cm] (sv)
+      {Proposed system\\[1pt]\footnotesize\normalfont Next-POI engine $\;+\;$ Frozen Rollout};
+\draw[flow] (seq.south) -- ++(0,-0.55) -| ([xshift=-1.1cm]sv.north);
+\draw[flow] (opt.south) -- ++(0,-0.55) -| ([xshift= 1.1cm]sv.north);
 
-% --- Connection: POI to Itinerary ---
-\draw[darrow, very thick] (poi.east) -- node[above, font=\footnotesize, text=blue!50!black] {+ sequencing} 
-                                      node[below, font=\footnotesize, text=blue!50!black] {+ constraints + context} (itin.west);
-
-% --- Proposed-system box (Centered below the itinerary branches) ---
-\node[draw, thick, rounded corners=5pt, fill=blue!25, minimum width=4.5cm, minimum height=1.2cm,
-      below=3.5cm of itin, xshift=-1.2cm, align=center, font=\small\bfseries] (sv) {Proposed system\\[2pt] \footnotesize\normalfont Next-POI engine + Frozen Rollout};
-
-% Arrows into Smart Visit
-\draw[->, very thick, blue!60!black] (seq.south) -- ++(0,-0.6) -| ([xshift=-1cm]sv.north);
-\draw[->, very thick, blue!60!black] (opt.south) -- ++(0,-0.6) -| ([xshift=1cm]sv.north);
-
-% --- Three pillars under the proposed system ---
-\node[greenbox, below=1.2cm of sv, minimum width=2.4cm] (p2) {\footnotesize $\Delta d,\Delta t$ + graph\\[-2pt] \footnotesize context};
-\node[greenbox, left=0.8cm of p2, minimum width=2.4cm] (p1) {\footnotesize User-embedding\\[-2pt] \footnotesize personalization};
-\node[greenbox, right=0.8cm of p2, minimum width=2.4cm] (p3) {\footnotesize Frozen-rollout\\[-2pt] \footnotesize decoding};
-
+% ---- three pillars (= RQ1/RQ2/RQ3) ----
+\node[box, fill=svGreenT, draw=svGreen, minimum width=2.8cm, minimum height=1.0cm,
+      font=\footnotesize, below=1.25cm of sv] (p2) {$\Delta d,\Delta t$ $+$ graph\\context};
+\node[box, fill=svGreenT, draw=svGreen, minimum width=2.8cm, minimum height=1.0cm,
+      font=\footnotesize, left=0.7cm of p2]  (p1) {User-embedding\\personalization};
+\node[box, fill=svGreenT, draw=svGreen, minimum width=2.8cm, minimum height=1.0cm,
+      font=\footnotesize, right=0.7cm of p2] (p3) {Frozen-rollout\\decoding};
 \draw[arrow] (sv.south) -- (p1.north);
 \draw[arrow] (sv.south) -- (p2.north);
 \draw[arrow] (sv.south) -- (p3.north);
-
-% --- RQ labels ---
-\node[below=0.1cm of p1, font=\small\bfseries, text=blue!50!black] {RQ1};
-\node[below=0.1cm of p2, font=\small\bfseries, text=blue!50!black] {RQ2};
-\node[below=0.1cm of p3, font=\small\bfseries, text=blue!50!black] {RQ3};
+\node[below=0.12cm of p1, font=\footnotesize\bfseries, text=svBlue] {RQ1};
+\node[below=0.12cm of p2, font=\footnotesize\bfseries, text=svBlue] {RQ2};
+\node[below=0.12cm of p3, font=\footnotesize\bfseries, text=svBlue] {RQ3};
 
 \end{tikzpicture}
-\caption{Positioning of the proposed system in the itinerary recommendation landscape.}
+\caption{Positioning of the proposed system in the itinerary-recommendation landscape: a
+next-POI engine, personalized by a user embedding (RQ1) and conditioned on $(\Delta d,\Delta t)$
+graph context (RQ2), decoded into ordered, loop-free routes by Frozen Rollout (RQ3).}
 \label{fig:intro-overview}
 \end{figure}

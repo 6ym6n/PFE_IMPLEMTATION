@@ -22,6 +22,7 @@
 \usepackage{subcaption}
 \usepackage{enumitem}
 \usepackage{xcolor}
+\usepackage{pifont}
 
 \usepackage[edges]{forest}
 \usepackage{pdflscape}
@@ -37,7 +38,46 @@
 \usepackage[nameinlink]{cleveref}
 \usepackage{pdflscape}
 \usepackage{tikz}
-\usetikzlibrary{positioning, arrows.meta, fit, backgrounds, shapes.geometric, calc, decorations.pathreplacing}
+\usetikzlibrary{positioning, arrows.meta, fit, backgrounds, shapes.geometric, calc, decorations.pathreplacing, shadows.blur}
+
+% ============================================================
+% Shared visual system for all figures/charts
+% ============================================================
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{groupplots}
+
+% --- Unified colour palette (print-friendly, consistent across every figure) ---
+\definecolor{svInk}{HTML}{1A2330}   % near-black ink (text, arrows)
+\definecolor{svBlue}{HTML}{21487A}  % primary
+\definecolor{svBlueT}{HTML}{DBE5F1} % primary tint (fill)
+\definecolor{svOrange}{HTML}{E07B2C}% accent — "our method" highlight
+\definecolor{svOrangeT}{HTML}{FAE6D2}
+\definecolor{svTeal}{HTML}{2C7A7B}  % secondary data series
+\definecolor{svTealT}{HTML}{D6E8E8}
+\definecolor{svGreen}{HTML}{4F8A4C} % "good"/context
+\definecolor{svGreenT}{HTML}{E1EFDD}
+\definecolor{svGray}{HTML}{8A9099}  % neutral / baselines
+\definecolor{svGrayT}{HTML}{ECEEF1}
+\definecolor{svRed}{HTML}{C0504D}   % "bad"/greedy
+\definecolor{svRedT}{HTML}{F6DEDD}
+
+% --- Shared pgfplots base style ---
+\pgfplotsset{
+  sv base/.style={
+    font=\small,
+    axis line style={svGray, line width=0.6pt},
+    tick style={svGray, line width=0.6pt},
+    tick align=outside,
+    label style={font=\small, text=svInk},
+    tick label style={font=\footnotesize, text=svInk},
+    title style={font=\bfseries, text=svInk},
+    grid style={svGrayT, line width=0.5pt},
+    legend style={font=\footnotesize, draw=svGrayT, fill=white,
+                  /tikz/every even column/.append style={column sep=8pt}},
+    nodes near coords style={font=\scriptsize, text=svInk},
+  },
+}
 
 % --------------------
 % Thesis metadata (edit these)

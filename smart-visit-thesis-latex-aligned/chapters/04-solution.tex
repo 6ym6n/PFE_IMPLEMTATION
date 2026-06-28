@@ -344,6 +344,8 @@ LLM4POI~\cite{li2024llm4poi} & 0.340 \\
 \end{tabular}
 \end{table}
 
+\input{figures/chart-nextpoi-tier}
+
 \subsection{Itinerary on NYC: Frozen Rollout vs.\ Trained Pointer}
 \label{sec:sol-results-nyc}
 
@@ -389,7 +391,9 @@ A second, important caveat is that these NYC pairs-F1 values ($\approx0.26$--$0.
 the published works evaluate on Flickr cities of $\sim$25--90 POIs, whereas NYC has $\sim$5{,}100
 POIs, so the chance level differs by two orders of magnitude. The gap is a dataset/vocabulary
 artifact, not a quality gap---which is precisely why the next subsection re-runs the task on the
-literature's own benchmark.
+literature's own benchmark. Figure~\ref{fig:chart-scale} makes this scale gap explicit.
+
+\input{figures/chart-scale}
 
 \subsection{The Flickr Benchmark (literature-comparable)}
 \label{sec:sol-results-flickr}
@@ -441,13 +445,15 @@ Method & Source & Toronto & Osaka & Glasgow & Edinburgh & Melbourne \\
 \end{tabular}
 \end{table}
 
+\input{figures/chart-validation}
+
 \paragraph{Our results.} Table~\ref{tab:flickr-ours} reports our classical baselines and the
 learned pointer. The headline is that \textbf{our pairs-F1 now spans $0.23$--$0.59$, on the
 published $0.26$--$0.85$ scale}, versus $0.26$--$0.29$ on NYC---confirming that the low NYC
 numbers were a property of the data and protocol, not the method. Among our methods the
-first-order \texttt{Markov} transition baseline is strongest, and the light from-scratch pointer
-(0.31--0.49) reaches the scale and beats \texttt{Random} comfortably but trails \texttt{Markov}
-on every city---the same supervision-density lesson seen on NYC.
+Markov-family baselines (\texttt{Markov} and \texttt{MarkovPath}) are strongest, and the light
+from-scratch pointer (0.31--0.49) reaches the scale and beats \texttt{Random} comfortably but
+trails \texttt{Markov} on every city---the same supervision-density lesson seen on NYC.
 
 \begin{table}[ht]
 \centering
@@ -459,8 +465,8 @@ Method & Toronto & Osaka & Glasgow & Edinburgh & Melbourne \\
 \midrule
 Random        & 0.298 & 0.301 & 0.301 & 0.270 & 0.227 \\
 PoiPopularity & 0.443 & 0.413 & 0.510 & 0.439 & 0.320 \\
-Markov (greedy) & \textbf{0.504} & \textbf{0.421} & \textbf{0.587} & 0.449 & 0.333 \\
-MarkovPath (beam) & 0.528 & 0.398 & 0.543 & \textbf{0.452} & \textbf{0.346} \\
+Markov (greedy) & 0.504 & \textbf{0.421} & \textbf{0.587} & 0.449 & 0.333 \\
+MarkovPath (beam) & \textbf{0.528} & 0.398 & 0.543 & \textbf{0.452} & \textbf{0.346} \\
 Pointer (learned, beam~3) & 0.431 & 0.399 & 0.489 & 0.414 & 0.312 \\
 \bottomrule
 \end{tabular}
@@ -492,6 +498,8 @@ AR-Trip~\cite{shu2024artrip}         & ne. & \textbf{0.839} & 0.828 & \textbf{0.
 \bottomrule
 \end{tabular}
 \end{table}
+
+\input{figures/chart-flickr-pub}
 
 \subsection{Personalization ablation}
 \label{sec:sol-results-pers}

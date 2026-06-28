@@ -1,0 +1,38 @@
+% figures/chart-validation.tex  —  \input in Ch.4 (faithfulness check)
+% Our pairs-F1 vs Chen 2016 published pairs-F1; points on y=x => protocol-faithful.
+% Numbers from Table~\ref{tab:flickr-faith}.
+% Requires: pgfplots + sv* palette (sv base style).
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  sv base,
+  width=0.66\linewidth, height=0.66\linewidth,
+  xmin=0.20, xmax=0.55, ymin=0.20, ymax=0.55,
+  xlabel={Chen 2016 published pairs-F1},
+  ylabel={our pairs-F1},
+  grid=both, minor tick num=1,
+  axis lines=left,
+  legend pos=north west,
+  legend cell align=left,
+]
+% y = x reference
+\addplot[domain=0.20:0.55, samples=2, dashed, svGray, line width=0.9pt]{x};
+\addlegendentry{$y=x$ (perfect match)}
+% Random
+\addplot[only marks, mark=*, mark size=2.6pt, color=svGray]
+  coordinates {(0.310,0.298)(0.304,0.301)(0.320,0.301)(0.261,0.270)(0.248,0.227)};
+\addlegendentry{Random}
+% PoiPopularity
+\addplot[only marks, mark=square*, mark size=2.6pt, color=svTeal]
+  coordinates {(0.384,0.443)(0.365,0.413)(0.507,0.510)(0.436,0.439)(0.316,0.320)};
+\addlegendentry{PoiPopularity}
+\end{axis}
+\end{tikzpicture}
+\caption{Protocol-faithfulness check: our reproductions of the assumption-free baselines fall
+on the $y=x$ line of Chen 2016 (each marker is one Flickr city; cf.\
+Table~\ref{tab:flickr-faith}). \texttt{Random} in particular has no modelling choices, so its
+agreement confirms that our data, protocol, and metric match the literature.}
+\label{fig:chart-validation}
+\end{figure}
