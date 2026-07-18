@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Preserve generated presentation assets byte-for-byte across platforms.
+*.pdf binary
+*.pptx binary
+*.png binary
